@@ -1,74 +1,93 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 use ink_lang as ink;
 
-#[ink::contract]
+pub use action_evm_transaction::*;
+
+#[ink::contract(env = pink::PinkEnvironment)]
 mod action_evm_transaction {
+    use alloc::string::String;
+    use alloc::vec::Vec;
+    use ink_storage::traits::{PackedLayout, SpreadLayout};
+    use pink_extension as pink;
+    use pink_web3::api::{Eth, Namespace};
+    use pink_web3::transports::pink_http::PinkHttp;
+    use scale::{Decode, Encode};
 
     /// Defines the storage of your contract.
     /// Add new fields to the below struct in order
     /// to add new static storage fields to your contract.
     #[ink(storage)]
     pub struct ActionEvmTransaction {
-        /// Stores a single `bool` value on the storage.
-        value: bool,
+        owner: AccountId,
+        config: Option<Config>,
     }
+
+    #[derive(Encode, Decode, Debug, PackedLayout, SpreadLayout)]
+    #[cfg_attr(
+        feature = "std",
+        derive(scale_info::TypeInfo, ink_storage::traits::StorageLayout)
+    )]
+    struct Config {
+        rpc: String,
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    pub enum Error {
+        BadOrigin,
+        NotConfigured,
+        FailedToSendTransaction,
+    }
+    pub type Result<T> = core::result::Result<T, Error>;
 
     impl ActionEvmTransaction {
-        /// Constructor that initializes the `bool` value to the given `init_value`.
-        #[ink(constructor)]
-        pub fn new(init_value: bool) -> Self {
-            Self { value: init_value }
-        }
-
-        /// Constructor that initializes the `bool` value to `false`.
-        ///
-        /// Constructors can delegate to other constructors.
         #[ink(constructor)]
         pub fn default() -> Self {
-            Self::new(Default::default())
+            Self {
+                owner: Self::env().caller(),
+                config: None,
+            }
         }
 
-        /// A message that can be called on instantiated contracts.
-        /// This one flips the value of the stored `bool` from `true`
-        /// to `false` and vice versa.
+        /// Gets the owner of the contract
         #[ink(message)]
-        pub fn flip(&mut self) {
-            self.value = !self.value;
+        pub fn owner(&self) -> AccountId {
+            self.owner
         }
 
-        /// Simply returns the current value of our `bool`.
+        /// Configures the transaction sending target
         #[ink(message)]
-        pub fn get(&self) -> bool {
-            self.value
+        pub fn config(&mut self, rpc: String) -> Result<()> {
+            self.ensure_owner()?;
+            self.config = Some(Config { rpc });
+            Ok(())
+        }
+
+        #[ink(message)]
+        pub fn maybe_send_transaction(&self, rlp: Vec<u8>) -> Result<()> {
+            let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
+            let phttp = PinkHttp::new(config.rpc.clone());
+            let eth = Eth::new(phttp);
+
+            eth.send_raw_transaction(rlp.into())
+                .resolve()
+                .map_err(|_| Error::FailedToSendTransaction)?;
+            Ok(())
+        }
+
+        /// Returns BadOrigin error if the caller is not the owner
+        fn ensure_owner(&self) -> Result<()> {
+            if self.env().caller() == self.owner {
+                Ok(())
+            } else {
+                Err(Error::BadOrigin)
+            }
         }
     }
 
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
     #[cfg(test)]
-    mod tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
-        use super::*;
-
-        /// Imports `ink_lang` so we can use `#[ink::test]`.
-        use ink_lang as ink;
-
-        /// We test if the default constructor does its job.
-        #[ink::test]
-        fn default_works() {
-            let action_evm_transaction = ActionEvmTransaction::default();
-            assert_eq!(action_evm_transaction.get(), false);
-        }
-
-        /// We test a simple use case of our contract.
-        #[ink::test]
-        fn it_works() {
-            let mut action_evm_transaction = ActionEvmTransaction::new(false);
-            assert_eq!(action_evm_transaction.get(), false);
-            action_evm_transaction.flip();
-            assert_eq!(action_evm_transaction.get(), true);
-        }
-    }
+    mod tests {}
 }
