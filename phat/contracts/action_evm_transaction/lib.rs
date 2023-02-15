@@ -3,18 +3,18 @@
 use ink_lang as ink;
 
 #[ink::contract]
-mod lego {
+mod action_evm_transaction {
 
     /// Defines the storage of your contract.
     /// Add new fields to the below struct in order
     /// to add new static storage fields to your contract.
     #[ink(storage)]
-    pub struct Lego {
+    pub struct ActionEvmTransaction {
         /// Stores a single `bool` value on the storage.
         value: bool,
     }
 
-    impl Lego {
+    impl ActionEvmTransaction {
         /// Constructor that initializes the `bool` value to the given `init_value`.
         #[ink(constructor)]
         pub fn new(init_value: bool) -> Self {
@@ -58,17 +58,17 @@ mod lego {
         /// We test if the default constructor does its job.
         #[ink::test]
         fn default_works() {
-            let lego = Lego::default();
-            assert_eq!(lego.get(), false);
+            let action_evm_transaction = ActionEvmTransaction::default();
+            assert_eq!(action_evm_transaction.get(), false);
         }
 
         /// We test a simple use case of our contract.
         #[ink::test]
         fn it_works() {
-            let mut lego = Lego::new(false);
-            assert_eq!(lego.get(), false);
-            lego.flip();
-            assert_eq!(lego.get(), true);
+            let mut action_evm_transaction = ActionEvmTransaction::new(false);
+            assert_eq!(action_evm_transaction.get(), false);
+            action_evm_transaction.flip();
+            assert_eq!(action_evm_transaction.get(), true);
         }
     }
 }
