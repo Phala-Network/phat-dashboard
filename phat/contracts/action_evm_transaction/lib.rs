@@ -14,6 +14,7 @@ mod action_evm_transaction {
     use pink_extension as pink;
     use pink_web3::api::{Eth, Namespace};
     use pink_web3::transports::pink_http::PinkHttp;
+    use primitive_types::H256;
     use scale::{Decode, Encode};
 
     /// Defines the storage of your contract.
@@ -67,15 +68,16 @@ mod action_evm_transaction {
         }
 
         #[ink(message)]
-        pub fn maybe_send_transaction(&self, rlp: Vec<u8>) -> Result<()> {
+        pub fn maybe_send_transaction(&self, rlp: Vec<u8>) -> Result<H256> {
             let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
             let phttp = PinkHttp::new(config.rpc.clone());
             let eth = Eth::new(phttp);
 
-            eth.send_raw_transaction(rlp.into())
+            let tx_id = eth
+                .send_raw_transaction(rlp.into())
                 .resolve()
                 .map_err(|_| Error::FailedToSendTransaction)?;
-            Ok(())
+            Ok(tx_id)
         }
 
         /// Returns BadOrigin error if the caller is not the owner
