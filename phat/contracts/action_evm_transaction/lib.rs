@@ -8,13 +8,17 @@ pub use action_evm_transaction::*;
 
 #[ink::contract(env = pink::PinkEnvironment)]
 mod action_evm_transaction {
-    use alloc::string::String;
-    use alloc::vec::Vec;
+    use alloc::{string::String, vec::Vec};
     use ink_storage::traits::{PackedLayout, SpreadLayout};
     use pink_extension as pink;
-    use pink_web3::api::{Eth, Namespace};
-    use pink_web3::transports::pink_http::PinkHttp;
-    use primitive_types::H256;
+    use pink_json as json;
+    use pink_web3::{
+        api::{Eth, Namespace},
+        contract::{tokens::Tokenize, Options},
+        transports::pink_http::PinkHttp,
+        types::{Bytes, TransactionRequest},
+    };
+    use primitive_types::{H160, H256};
     use scale::{Decode, Encode};
 
     /// Defines the storage of your contract.
@@ -40,6 +44,9 @@ mod action_evm_transaction {
     pub enum Error {
         BadOrigin,
         NotConfigured,
+        BadAbi,
+        BadParams,
+        BadTransaction,
         FailedToSendTransaction,
     }
     pub type Result<T> = core::result::Result<T, Error>;
@@ -65,6 +72,51 @@ mod action_evm_transaction {
             self.ensure_owner()?;
             self.config = Some(Config { rpc });
             Ok(())
+        }
+
+        #[ink(message)]
+        pub fn build_transaction(
+            &self,
+            from_addr: H160,
+            to_contract: H160,
+            abi: Vec<u8>,
+            func: String,
+            params: Vec<Vec<u8>>,
+        ) -> Result<Vec<u8>> {
+            let abi: ethabi::Contract = json::from_slice(&abi).map_err(|_| Error::BadAbi)?;
+            let data = abi
+                .function(&func)
+                .and_then(|function| function.encode_input(&params.into_tokens()))
+                .map_err(|_| Error::BadParams)?;
+            let Options {
+                gas,
+                gas_price,
+                value,
+                nonce,
+                condition,
+                transaction_type,
+                access_list,
+                max_fee_per_gas,
+                max_priority_fee_per_gas,
+            } = Options::default();
+
+            let tx = TransactionRequest {
+                from: from_addr,
+                to: Some(to_contract),
+                gas,
+                gas_price,
+                value,
+                nonce,
+                data: Some(Bytes(data)),
+                condition,
+                transaction_type,
+                access_list,
+                max_fee_per_gas,
+                max_priority_fee_per_gas,
+            };
+            let tx = json::to_vec(&tx).map_err(|_| Error::BadTransaction)?;
+
+            Ok(tx)
         }
 
         #[ink(message)]

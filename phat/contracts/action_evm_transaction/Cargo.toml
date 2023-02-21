@@ -16,7 +16,12 @@ scale-info = { version = "2", default-features = false, features = ["derive"], o
 primitive-types = { version = "0.11", default-features = false, features = ["codec", "scale-info"] }
 
 pink-extension = { version = "0.2", default-features = false }
+pink-json = { git = "https://github.com/Phala-Network/pink-json.git", branch = "pink", default-features = false, features = ["de-number-as-str"] }
 pink-web3 = { version = "0.19", default-features = false, features = ["pink", "signing"] }
+ethabi = { version = "17.2.0", package = "pink-ethabi", default-features = false, features = [
+    "serde",
+    "rlp",
+]}
 
 [dev-dependencies]
 pink-extension-runtime = { version = "0.2", default-features = false }
@@ -41,6 +46,11 @@ std = [
     "scale-info/std",
     "primitive-types/std",
     "pink-extension/std",
+    "pink-json/std",
     "pink-web3/std",
 ]
 ink-as-dependency = []
+
+# magic to remove floats in pink-json
+[patch.crates-io]
+serde = { git = "https://github.com/kvinwang/serde.git", branch = "pink" }
