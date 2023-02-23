@@ -1,9 +1,63 @@
-import type { ProjectConfigOptions } from 'devphase';
+import { ProjectConfigOptions } from 'devphase';
+import { spawn } from 'child_process';
+import * as fs from 'fs';
 
-const config : ProjectConfigOptions = {
+async function initChain(devphase: any): Promise<void> {
+    console.log('######################## Initializing blockchain ########################');
+    // Necessary to run; copied from devphase `defaultSetupenv()`
+    devphase.mainClusterId = devphase.options.clusterId;
+    // Run our custom init script
+    return new Promise((resolve) => {
+        const init = spawn(
+            'node',
+            ['src/setup-drivers.js'],
+            {
+                stdio: 'inherit',
+                cwd: './setup',
+                env: {
+                    ...process.env,
+                    'ENDPOINT': devphase.options.nodeUrl,
+                    'WORKERS': devphase.options.workerUrl,
+                    'GKS': devphase.options.workerUrl,
+                },
+            },
+        );
+        init.on('exit', code => {
+            console.log('initChain script exited with code', code);
+            resolve();
+        });
+    });
+}
+
+async function saveLog(devphase: any, outPath): Promise<void> {
+    console.log('######################## Saving worker logs ########################');
+    const logging = fs.createWriteStream(outPath, { flags: 'w' });
+    await new Promise((resolve: (_: void) => void) => {
+        const readLog = spawn(
+            'node', ['src/read-log.js'],
+            {
+                cwd: './setup',
+                env: {
+                    ...process.env,
+                    'ENDPOINT': devphase.options.nodeUrl,
+                    'WORKERS': devphase.options.workerUrl,
+                    'CLUSTER': devphase.options.clusterId,
+                }
+            }
+        );
+        readLog.stdout.pipe(logging);
+        readLog.stderr.pipe(logging);
+        readLog.on('exit', code => {
+            console.log('saveLog script exited with code', code);
+            resolve();
+        });
+    });
+}
+
+const config: ProjectConfigOptions = {
     /*
-     * Project directories
-     */
+ * Project directories
+ */
     directories: {
         artifacts: 'artifacts',
         contracts: 'contracts',
@@ -29,35 +83,42 @@ const config : ProjectConfigOptions = {
      * }
      */
     stack: {
-        blockTime: 6000, // default block time for direct stack running
-        version: 'latest', // version which you want to pull from official repository (tag name) or "latest" one
+        blockTime: 500,
+        version: 'nightly-2022-12-27',
         node: {
-            port: 9944, // ws port
+            port: 39944,
             binary: '{{directories.stacks}}/{{stack.version}}/phala-node',
             workingDir: '{{directories.stacks}}/.data/node',
             envs: {},
             args: {
                 '--dev': true,
+                '--port': 33333,
+                '--rpc-port': 39933,
+                '--ws-external': true,
+                '--unsafe-ws-external': true,
                 '--rpc-methods': 'Unsafe',
                 '--block-millisecs': '{{stack.blockTime}}',
-                '--ws-port': '{{stack.node.port}}'
+                '--ws-port': '{{stack.node.port}}',
             },
             timeout: 10000,
         },
         pruntime: {
-            port: 8000, // server port
+            port: 38000, // server port
             binary: '{{directories.stacks}}/{{stack.version}}/pruntime',
             workingDir: '{{directories.stacks}}/.data/pruntime',
-            envs: {},
+            envs: {
+                'RUST_LOG': 'debug,runtime=trace'
+            },
             args: {
                 '--allow-cors': true,
                 '--cores': 0,
-                '--port': '{{stack.pruntime.port}}'
+                '--port': '{{stack.pruntime.port}}',
+                '--address': '0.0.0.0',
             },
             timeout: 2000,
         },
         pherry: {
-            gkMnemonic: '//Alice', // gate keeper mnemonic
+            gkMnemonic: '//Ferdie', // super user mnemonic
             binary: '{{directories.stacks}}/{{stack.version}}/pherry',
             workingDir: '{{directories.stacks}}/.data/pherry',
             envs: {},
@@ -68,8 +129,9 @@ const config : ProjectConfigOptions = {
                 '--substrate-ws-endpoint': 'ws://localhost:{{stack.node.port}}',
                 '--pruntime-endpoint': 'http://localhost:{{stack.pruntime.port}}',
                 '--dev-wait-block-ms': '{{stack.blockTime}}',
+                '--attestation-provider': 'none',
             },
-            timeout: 2000,
+            timeout: 5000,
         }
     },
     /**
@@ -77,19 +139,21 @@ const config : ProjectConfigOptions = {
      */
     testing: {
         mocha: {}, // custom mocha configuration
-        spawnStack: true, // spawn runtime stack? or assume there is running one
-        stackLogOutput: false, // if specifed pipes output of all stack component to file (by default it is ignored)
-        blockTime: 100, // overrides block time specified in node (and pherry) component
         envSetup: { // environment setup
             setup: {
-                custom: undefined, // custom setup procedure callback; (devPhase) => Promise<void>
-                timeout: 60 * 1000,
+                // custom setup procedure callback; (devPhase) => Promise<void>
+                custom: initChain,
+                timeout: 120 * 1000,
             },
             teardown: {
-                custom: undefined, // custom teardown procedure callback ; (devPhase) => Promise<void>
+                // custom teardown procedure callback ; (devPhase) => Promise<void>
+                custom: devphase =>
+                    saveLog(devphase, `${devphase.runtimeContext.paths.currentLog}/worker.log`),
                 timeout: 10 * 1000,
             }
         },
+        blockTime: 500, // overrides block time specified in node (and pherry) component
+        stackLogOutput: true, // if specifed pipes output of all stack component to file (by default it is ignored)
     },
     /**
      * Configuration options of DevPhase instance used in testing
@@ -97,6 +161,18 @@ const config : ProjectConfigOptions = {
     devPhaseOptions: {
         nodeUrl: 'ws://localhost:{{stack.node.port}}',
         workerUrl: 'http://localhost:{{stack.pruntime.port}}',
+        accountsMnemonic: '', // default account
+        accountsPaths: {
+            alice: '//Alice',
+            bob: '//Bob',
+            charlie: '//Charlie',
+            dave: '//Dave',
+            eve: '//Eve',
+            ferdie: '//Ferdie',
+        },
+        sudoAccount: 'alice',
+        ss58Prefix: 30,
+        clusterId: '0x0000000000000000000000000000000000000000000000000000000000000000',
     },
 };
 
