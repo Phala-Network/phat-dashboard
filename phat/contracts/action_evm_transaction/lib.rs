@@ -8,13 +8,12 @@ pub use action_evm_transaction::*;
 
 #[ink::contract(env = pink::PinkEnvironment)]
 mod action_evm_transaction {
-    use alloc::{string::String, vec::Vec};
+    use alloc::{format, str::FromStr, string::String, vec::Vec};
     use ink_storage::traits::{PackedLayout, SpreadLayout};
     use pink_extension as pink;
     use pink_json as json;
     use pink_web3::{
-        api::{Eth, Namespace},
-        contract::{tokens::Tokenize, Options},
+        contract::tokens::Tokenize,
         transports::pink_http::PinkHttp,
         types::{Bytes, TransactionRequest},
     };
@@ -45,7 +44,8 @@ mod action_evm_transaction {
         BadOrigin,
         NotConfigured,
         BadAbi,
-        BadParams,
+        BadParams(String),
+        BadToAddress,
         BadTransaction,
         FailedToSendTransaction,
     }
@@ -77,42 +77,22 @@ mod action_evm_transaction {
         #[ink(message)]
         pub fn build_transaction(
             &self,
-            from_addr: H160,
-            to_contract: H160,
+            to: String,
             abi: Vec<u8>,
             func: String,
             params: Vec<Vec<u8>>,
         ) -> Result<Vec<u8>> {
+            let to = H160::from_str(to.as_str()).map_err(|_| Error::BadToAddress)?;
             let abi: ethabi::Contract = json::from_slice(&abi).map_err(|_| Error::BadAbi)?;
             let data = abi
                 .function(&func)
                 .and_then(|function| function.encode_input(&params.into_tokens()))
-                .map_err(|_| Error::BadParams)?;
-            let Options {
-                gas,
-                gas_price,
-                value,
-                nonce,
-                condition,
-                transaction_type,
-                access_list,
-                max_fee_per_gas,
-                max_priority_fee_per_gas,
-            } = Options::default();
+                .map_err(|err| Error::BadParams(format!("{:?}", err)))?;
 
             let tx = TransactionRequest {
-                from: from_addr,
-                to: Some(to_contract),
-                gas,
-                gas_price,
-                value,
-                nonce,
+                to: Some(to),
                 data: Some(Bytes(data)),
-                condition,
-                transaction_type,
-                access_list,
-                max_fee_per_gas,
-                max_priority_fee_per_gas,
+                ..Default::default()
             };
             let tx = json::to_vec(&tx).map_err(|_| Error::BadTransaction)?;
 
@@ -123,9 +103,10 @@ mod action_evm_transaction {
         pub fn maybe_send_transaction(&self, rlp: Vec<u8>) -> Result<H256> {
             let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
             let phttp = PinkHttp::new(config.rpc.clone());
-            let eth = Eth::new(phttp);
+            let web3 = pink_web3::Web3::new(phttp);
 
-            let tx_id = eth
+            let tx_id = web3
+                .eth()
                 .send_raw_transaction(rlp.into())
                 .resolve()
                 .map_err(|_| Error::FailedToSendTransaction)?;
