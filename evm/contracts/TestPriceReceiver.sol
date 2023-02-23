@@ -15,7 +15,7 @@ contract TestPriceReceiver is PhatRollupReceiver {
         recvFroms.push(from);
         recvActions.push(action);
 
-        require(action.length == 3, "cannot parse action");
+        require(action.length == 32, "cannot parse action");
         uint256 data = abi.decode(action, (uint256));
         emit PriceReceived(data);
 

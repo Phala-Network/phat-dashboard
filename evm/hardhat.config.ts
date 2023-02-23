@@ -7,7 +7,7 @@ const config: HardhatUserConfig = {
   networks: {
     goerli: {
       url: process.env['GOERLI_API'],
-      gasPrice: 1500000000,
+      gasPrice: 2500000000,
       accounts: [process.env['GOERLI_SK']!],
       chainId: 5,
     },
