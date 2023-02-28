@@ -2,14 +2,11 @@
 
 extern crate alloc;
 
-use ink_lang as ink;
-
 pub use action_evm_transaction::*;
 
 #[ink::contract(env = pink::PinkEnvironment)]
 mod action_evm_transaction {
     use alloc::{format, str::FromStr, string::String, vec::Vec};
-    use ink_storage::traits::{PackedLayout, SpreadLayout};
     use pink_extension as pink;
     use pink_json as json;
     use pink_web3::{
@@ -29,10 +26,10 @@ mod action_evm_transaction {
         config: Option<Config>,
     }
 
-    #[derive(Encode, Decode, Debug, PackedLayout, SpreadLayout)]
+    #[derive(Encode, Decode, Debug)]
     #[cfg_attr(
         feature = "std",
-        derive(scale_info::TypeInfo, ink_storage::traits::StorageLayout)
+        derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout)
     )]
     struct Config {
         rpc: String,
