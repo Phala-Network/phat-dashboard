@@ -2,12 +2,10 @@
 
 extern crate alloc;
 
-use ink_lang as ink;
-
 #[ink::contract]
 mod lego {
-    use pink_extension::ResultExt;
     use alloc::string::String;
+    use pink_extension::ResultExt;
 
     #[ink(storage)]
     pub struct Lego {}
@@ -21,7 +19,9 @@ mod lego {
         #[ink(message)]
         pub fn run(&self, actions: String) -> bool {
             let script = include_str!("./js/dist/index.js");
-            crate::js::eval(script, &[actions]).log_err("Failed to run actions").is_ok()
+            crate::js::eval(script, &[actions])
+                .log_err("Failed to run actions")
+                .is_ok()
         }
     }
 }
@@ -42,21 +42,21 @@ mod js {
     }
 
     pub fn eval(script: &str, args: &[String]) -> Result<Output, String> {
-        use ink_env::call;
+        use ink::env::call;
         let system = pink::system::SystemRef::instance();
         let delegate = system
             .get_driver("JsDelegate".into())
             .ok_or("No JS driver found")?;
 
         let result = call::build_call::<pink::PinkEnvironment>()
-            .call_type(call::DelegateCall::new().code_hash(delegate.convert_to()))
+            .call_type(call::DelegateCall::new(delegate.convert_to()))
             .exec_input(
                 call::ExecutionInput::new(call::Selector::new(0x49bfcd24_u32.to_be_bytes()))
                     .push_arg(script)
                     .push_arg(args),
             )
-            .returns::<Result<Output, String>>()
-            .fire();
+            .returns::<ink::MessageResult<Result<Output, String>>>()
+            .invoke();
         pink::info!("eval result: {result:?}");
         result.unwrap()
     }
