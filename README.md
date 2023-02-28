@@ -3,6 +3,7 @@
 ## Run with
 
 ```bash
+cd phat
 yarn devphase contract compile # this will fail, refer to the known issue
 yarn devphase contract test
 ```

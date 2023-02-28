@@ -31,11 +31,11 @@ async function checkUntil(async_fn, timeout) {
 }
 
 describe("Run lego actions", () => {
-  let legoFactory: Lego.Factory;
-  let qjsFactory: ContractFactory;
-  let lego: Lego.Contract;
   let systemFactory: PinkSystem.Factory;
   let system: PinkSystem.Contract;
+  let qjsFactory: ContractFactory;
+  let legoFactory: Lego.Factory;
+  let lego: Lego.Contract;
 
   let api: ApiPromise;
   let alice: KeyringPair;
@@ -50,7 +50,6 @@ describe("Run lego actions", () => {
     console.log(`currentStack: ${currentStack}`);
 
     api = this.api;
-
     const clusterInfo =
       await api.query.phalaFatContracts.clusters(
         this.devPhase.mainClusterId
@@ -58,23 +57,24 @@ describe("Run lego actions", () => {
     systemContract = clusterInfo.unwrap().systemContract.toString();
     console.log("system contract:", systemContract);
 
-    legoFactory = await this.devPhase.getFactory('lego');
+    systemFactory = await this.devPhase.getFactory(`${currentStack}/system.contract`);
     qjsFactory = await this.devPhase.getFactory('qjs', {
       clusterId: this.devPhase.mainClusterId,
       contractType: "IndeterministicInkCode" as any,
     });
-    systemFactory = await this.devPhase.getFactory(`${currentStack}/system.contract`);
+    legoFactory = await this.devPhase.getFactory('lego');
 
     await qjsFactory.deploy();
     await legoFactory.deploy();
 
-    api = this.api;
     alice = this.devPhase.accounts.alice;
     certAlice = await PhalaSdk.signCertificate({
       api,
       pair: alice,
     });
+    console.log("Signer:", alice.address.toString());
 
+    // register the qjs to JsDelegate driver
     system = (await systemFactory.attach(systemContract)) as any;
     await TxHandler.handle(
       system.tx["system::setDriver"](
@@ -85,7 +85,6 @@ describe("Run lego actions", () => {
       alice,
       true,
     );
-
     await checkUntil(async () => {
       const { output } = await system.query["system::getDriver"](
         certAlice,
@@ -94,7 +93,6 @@ describe("Run lego actions", () => {
       );
       return !output.isEmpty;
     }, 1000 * 10);
-    console.log("Signer:", alice.address.toString());
   });
 
   describe("Run actions", () => {
@@ -123,7 +121,7 @@ describe("Run lego actions", () => {
       ]`;
       const result = await lego.query.run(certAlice, {}, actions_json);
       expect(result.result.isOk).to.be.true;
-      expect(result.output?.valueOf()).to.be.true;
+      expect(!result.output?.valueOf().isEmpty).to.be.true;
     });
   });
 });

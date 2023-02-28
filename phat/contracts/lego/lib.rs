@@ -55,10 +55,10 @@ mod js {
                     .push_arg(script)
                     .push_arg(args),
             )
-            .returns::<ink::MessageResult<Result<Output, String>>>()
+            .returns::<Result<Output, String>>()
             .invoke();
         pink::info!("eval result: {result:?}");
-        result.unwrap()
+        result
     }
 
     pub trait ConvertTo<To> {
