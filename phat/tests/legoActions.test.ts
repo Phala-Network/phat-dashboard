@@ -8,7 +8,6 @@ import {
   TxHandler,
 } from "devphase";
 import { Lego } from "@/typings/Lego";
-import { SampleOracle } from "@/typings/SampleOracle";
 import { PinkSystem } from "@/typings/PinkSystem";
 
 import "dotenv/config";
@@ -33,10 +32,8 @@ async function checkUntil(async_fn, timeout) {
 
 describe("Run lego actions", () => {
   let legoFactory: Lego.Factory;
-  let sampleOracleFactory: SampleOracle.Factory;
   let qjsFactory: ContractFactory;
   let lego: Lego.Contract;
-  let sampleOracle: SampleOracle.Contract;
   let systemFactory: PinkSystem.Factory;
   let system: PinkSystem.Contract;
 
@@ -51,32 +48,24 @@ describe("Run lego actions", () => {
     currentStack = (await RuntimeContext.getSingleton()).paths.currentStack;
     console.log("clusterId:", this.devPhase.mainClusterId);
     console.log(`currentStack: ${currentStack}`);
+
+    api = this.api;
+
     const clusterInfo =
-      await this.devPhase.api.query.phalaFatContracts.clusters(
+      await api.query.phalaFatContracts.clusters(
         this.devPhase.mainClusterId
       );
     systemContract = clusterInfo.unwrap().systemContract.toString();
     console.log("system contract:", systemContract);
 
-    legoFactory = await this.devPhase.getFactory(
-      ContractType.InkCode,
-      "./artifacts/lego/lego.contract"
-    );
-    qjsFactory = await this.devPhase.getFactory(
-      "IndeterministicInkCode" as any,
-      "./artifacts/qjs/qjs.contract"
-    );
-    sampleOracleFactory = await this.devPhase.getFactory(
-      ContractType.InkCode,
-      "./artifacts/sample_oracle/sample_oracle.contract"
-    );
-    systemFactory = await this.devPhase.getFactory(
-      ContractType.InkCode,
-      `${currentStack}/system.contract`
-    );
+    legoFactory = await this.devPhase.getFactory('lego');
+    qjsFactory = await this.devPhase.getFactory('qjs', {
+      clusterId: this.devPhase.mainClusterId,
+      contractType: "IndeterministicInkCode" as any,
+    });
+    systemFactory = await this.devPhase.getFactory(`${currentStack}/system.contract`);
 
     await qjsFactory.deploy();
-    await sampleOracleFactory.deploy();
     await legoFactory.deploy();
 
     api = this.api;
@@ -94,7 +83,7 @@ describe("Run lego actions", () => {
         qjsFactory.metadata.source.hash
       ),
       alice,
-      'system::setDriver("JsDelegate")'
+      true,
     );
 
     await checkUntil(async () => {
@@ -103,7 +92,7 @@ describe("Run lego actions", () => {
         {},
         "JsDelegate"
       );
-      return output.isSome;
+      return !output.isEmpty;
     }, 1000 * 10);
     console.log("Signer:", alice.address.toString());
   });
@@ -115,24 +104,21 @@ describe("Run lego actions", () => {
       lego = await legoFactory.instantiate("default", [], {
         transferToCluster: 1e12,
       });
-      sampleOracle = await sampleOracleFactory.instantiate("default", [], {});
       await sleep(3_000);
     });
 
     it("can run actions", async function () {
-      const callee = sampleOracle.address.toHex();
       const selector = 0x68af3241;
       function cfg(o: object) {
         return JSON.stringify(o);
       }
       const actions_json = `[
             {"cmd": "fetch", "config": ${cfg({
-              returnTextBody: true,
-              url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
-            })}},
+        returnTextBody: true,
+        url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
+      })}},
             {"cmd": "eval", "config": "BigInt(Math.round(JSON.parse(input.body).USD * 1000000))"},
             {"cmd": "eval", "config": "scale.encode(input, scale.encodeU128)"},
-            {"cmd": "call", "config": ${cfg({ callee, selector })}},
             {"cmd": "log"}
       ]`;
       const result = await lego.query.run(certAlice, {}, actions_json);

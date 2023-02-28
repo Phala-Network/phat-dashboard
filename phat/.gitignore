@@ -1,5 +1,5 @@
 /.devphase
-/artifacts
+/artifacts/*
 /contracts/*/target
 /logs
 /stacks
@@ -8,3 +8,6 @@
 /contracts.json
 
 node_modules
+
+!/artifacts/lego/
+!/artifacts/qjs/

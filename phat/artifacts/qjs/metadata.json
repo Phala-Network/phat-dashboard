@@ -1,0 +1,222 @@
+{
+  "source": {
+    "hash": "0x9358876aea1384cbf4b6a42bac969e9923e9bc6632f0635182f39180f8afec23",
+    "language": "ink! 3.4.0",
+    "compiler": "rustc 1.68.0-nightly"
+  },
+  "contract": {
+    "name": "qjs",
+    "version": "0.1.0",
+    "authors": [
+      "[your_name] <[your_email]>"
+    ]
+  },
+  "V3": {
+    "spec": {
+      "constructors": [
+        {
+          "args": [],
+          "docs": [],
+          "label": "default",
+          "payable": false,
+          "selector": "0xed4b9d1b"
+        }
+      ],
+      "docs": [],
+      "events": [],
+      "messages": [
+        {
+          "args": [
+            {
+              "label": "js",
+              "type": {
+                "displayName": [
+                  "String"
+                ],
+                "type": 0
+              }
+            },
+            {
+              "label": "args",
+              "type": {
+                "displayName": [
+                  "Vec"
+                ],
+                "type": 1
+              }
+            }
+          ],
+          "docs": [],
+          "label": "eval",
+          "mutates": false,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "Result"
+            ],
+            "type": 2
+          },
+          "selector": "0x49bfcd24"
+        },
+        {
+          "args": [
+            {
+              "label": "bytecode",
+              "type": {
+                "displayName": [
+                  "Vec"
+                ],
+                "type": 4
+              }
+            },
+            {
+              "label": "args",
+              "type": {
+                "displayName": [
+                  "Vec"
+                ],
+                "type": 1
+              }
+            }
+          ],
+          "docs": [],
+          "label": "eval_bytecode",
+          "mutates": false,
+          "payable": false,
+          "returnType": {
+            "displayName": [
+              "Result"
+            ],
+            "type": 2
+          },
+          "selector": "0xbf0ec203"
+        }
+      ]
+    },
+    "storage": {
+      "struct": {
+        "fields": []
+      }
+    },
+    "types": [
+      {
+        "id": 0,
+        "type": {
+          "def": {
+            "primitive": "str"
+          }
+        }
+      },
+      {
+        "id": 1,
+        "type": {
+          "def": {
+            "sequence": {
+              "type": 0
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "type": {
+          "def": {
+            "variant": {
+              "variants": [
+                {
+                  "fields": [
+                    {
+                      "type": 3
+                    }
+                  ],
+                  "index": 0,
+                  "name": "Ok"
+                },
+                {
+                  "fields": [
+                    {
+                      "type": 0
+                    }
+                  ],
+                  "index": 1,
+                  "name": "Err"
+                }
+              ]
+            }
+          },
+          "params": [
+            {
+              "name": "T",
+              "type": 3
+            },
+            {
+              "name": "E",
+              "type": 0
+            }
+          ],
+          "path": [
+            "Result"
+          ]
+        }
+      },
+      {
+        "id": 3,
+        "type": {
+          "def": {
+            "variant": {
+              "variants": [
+                {
+                  "fields": [
+                    {
+                      "type": 0,
+                      "typeName": "String"
+                    }
+                  ],
+                  "index": 0,
+                  "name": "String"
+                },
+                {
+                  "fields": [
+                    {
+                      "type": 4,
+                      "typeName": "Vec<u8>"
+                    }
+                  ],
+                  "index": 1,
+                  "name": "Bytes"
+                },
+                {
+                  "index": 2,
+                  "name": "Undefined"
+                }
+              ]
+            }
+          },
+          "path": [
+            "qjs",
+            "qjs",
+            "Output"
+          ]
+        }
+      },
+      {
+        "id": 4,
+        "type": {
+          "def": {
+            "sequence": {
+              "type": 5
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "type": {
+          "def": {
+            "primitive": "u8"
+          }
+        }
+      }
+    ]
+  }
+}

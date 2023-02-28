@@ -1,90 +1,9 @@
 import { ProjectConfigOptions } from 'devphase';
-import { spawn } from 'child_process';
-import * as fs from 'fs';
 
-async function initChain(devphase: any): Promise<void> {
-    console.log('######################## Initializing blockchain ########################');
-    // Necessary to run; copied from devphase `defaultSetupenv()`
-    devphase.mainClusterId = devphase.options.clusterId;
-    // Run our custom init script
-    return new Promise((resolve) => {
-        const init = spawn(
-            'node',
-            ['src/setup-drivers.js'],
-            {
-                stdio: 'inherit',
-                cwd: './setup',
-                env: {
-                    ...process.env,
-                    'ENDPOINT': devphase.options.nodeUrl,
-                    'WORKERS': devphase.options.workerUrl,
-                    'GKS': devphase.options.workerUrl,
-                },
-            },
-        );
-        init.on('exit', code => {
-            console.log('initChain script exited with code', code);
-            resolve();
-        });
-    });
-}
-
-async function saveLog(devphase: any, outPath): Promise<void> {
-    console.log('######################## Saving worker logs ########################');
-    const logging = fs.createWriteStream(outPath, { flags: 'w' });
-    await new Promise((resolve: (_: void) => void) => {
-        const readLog = spawn(
-            'node', ['src/read-log.js'],
-            {
-                cwd: './setup',
-                env: {
-                    ...process.env,
-                    'ENDPOINT': devphase.options.nodeUrl,
-                    'WORKERS': devphase.options.workerUrl,
-                    'CLUSTER': devphase.options.clusterId,
-                }
-            }
-        );
-        readLog.stdout.pipe(logging);
-        readLog.stderr.pipe(logging);
-        readLog.on('exit', code => {
-            console.log('saveLog script exited with code', code);
-            resolve();
-        });
-    });
-}
-
-const config: ProjectConfigOptions = {
-    /*
- * Project directories
- */
-    directories: {
-        artifacts: 'artifacts',
-        contracts: 'contracts',
-        logs: 'logs',
-        stacks: 'stacks',
-        tests: 'tests',
-        typings: 'typings'
-    },
-    /*
-     * Stack configuration
-     * {
-     *     [componentName : string]: {
-     *          binary: string, // path to binary
-     *          workingDir: string, // working directory as above
-     *          evns: {
-     *              [name: string]: string,
-     *          },
-     *          args: {
-     *              [name: string]: string,
-     *          },
-     *          timeout: number // start up timeout
-     *     }
-     * }
-     */
+const config : ProjectConfigOptions = {
     stack: {
         blockTime: 500,
-        version: 'nightly-2022-12-27',
+        version: 'nightly-2023-02-20',
         node: {
             port: 39944,
             binary: '{{directories.stacks}}/{{stack.version}}/phala-node',
@@ -135,45 +54,51 @@ const config: ProjectConfigOptions = {
         }
     },
     /**
+     * Networks configuration
+     * Default network is local and it can be changed using CLI argument
+     */
+    networks: {
+	local: {
+	    nodeUrl: 'ws://localhost:{{stack.node.port}}',
+	    workerUrl: 'http://localhost:{{stack.pruntime.port}}',
+	    blockTime: 500,
+	}
+    },
+    /**
      * Testing configuration
      */
-    testing: {
+     testing: {
         mocha: {}, // custom mocha configuration
+        spawnStack: true, // spawn runtime stack? or assume there is running one
+        stackLogOutput: true, // if specifed pipes output of all stack component to file (by default it is ignored)
         envSetup: { // environment setup
             setup: {
                 // custom setup procedure callback; (devPhase) => Promise<void>
-                custom: initChain,
+                custom: undefined,
                 timeout: 120 * 1000,
             },
             teardown: {
                 // custom teardown procedure callback ; (devPhase) => Promise<void>
-                custom: devphase =>
-                    saveLog(devphase, `${devphase.runtimeContext.paths.currentLog}/worker.log`),
+                custom: undefined,
                 timeout: 10 * 1000,
             }
         },
-        blockTime: 500, // overrides block time specified in node (and pherry) component
-        stackLogOutput: true, // if specifed pipes output of all stack component to file (by default it is ignored)
     },
     /**
-     * Configuration options of DevPhase instance used in testing
+     * Accounts fallback configuration
+     * It is overriden by values saved in ./accounts.json
      */
-    devPhaseOptions: {
-        nodeUrl: 'ws://localhost:{{stack.node.port}}',
-        workerUrl: 'http://localhost:{{stack.pruntime.port}}',
-        accountsMnemonic: '', // default account
-        accountsPaths: {
-            alice: '//Alice',
+    accountsConfig: {
+        keyrings: {
+            alice: '//Alice', // string (in case of mnemonic) or account keyring JSON
             bob: '//Bob',
             charlie: '//Charlie',
             dave: '//Dave',
             eve: '//Eve',
-            ferdie: '//Ferdie',
+            ferdie: '//Ferdie'
         },
-        sudoAccount: 'alice',
-        ss58Prefix: 30,
-        clusterId: '0x0000000000000000000000000000000000000000000000000000000000000000',
-    },
+        suAccount: 'alice'
+    }
 };
 
 export default config;
