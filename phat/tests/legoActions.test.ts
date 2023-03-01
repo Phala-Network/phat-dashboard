@@ -2,13 +2,13 @@ import * as PhalaSdk from "@phala/sdk";
 import { ApiPromise } from "@polkadot/api";
 import type { KeyringPair } from "@polkadot/keyring/types";
 import {
-  ContractType,
   ContractFactory,
   RuntimeContext,
   TxHandler,
 } from "devphase";
-import { Lego } from "@/typings/Lego";
 import { PinkSystem } from "@/typings/PinkSystem";
+import { Lego } from "@/typings/Lego";
+import { ActionEvmTransaction } from "@/typings/ActionEvmTransaction"
 
 import "dotenv/config";
 
@@ -36,6 +36,8 @@ describe("Run lego actions", () => {
   let qjsFactory: ContractFactory;
   let legoFactory: Lego.Factory;
   let lego: Lego.Contract;
+  let evmTransactionFactory: ActionEvmTransaction.Factory;
+  let evmTransaction: ActionEvmTransaction.Contract;
 
   let api: ApiPromise;
   let alice: KeyringPair;
@@ -63,9 +65,11 @@ describe("Run lego actions", () => {
       contractType: "IndeterministicInkCode" as any,
     });
     legoFactory = await this.devPhase.getFactory('lego');
+    evmTransactionFactory = await this.devPhase.getFactory('action_evm_transaction');
 
     await qjsFactory.deploy();
     await legoFactory.deploy();
+    await evmTransactionFactory.deploy();
 
     alice = this.devPhase.accounts.alice;
     certAlice = await PhalaSdk.signCertificate({
@@ -102,14 +106,40 @@ describe("Run lego actions", () => {
       lego = await legoFactory.instantiate("default", [], {
         transferToCluster: 1e12,
       });
+      evmTransaction = await evmTransactionFactory.instantiate("default", [], {});
       await sleep(3_000);
     });
 
     it("can run actions", async function () {
-      const selector = 0x68af3241;
+      const callee = evmTransaction.address.toHex();
+      // pub fn config(&mut self, rpc: String) -> Result<()>
+      const selectorConfig = 0x70714744;
+      // pub fn build_transaction(
+      //   &self,
+      //   to: String,
+      //   abi: Vec<u8>,
+      //   func: String,
+      //   params: Vec<Vec<u8>>,
+      // ) -> Result<Vec<u8>>
+      const selectorBuildTx = 0x8a688c06;
       function cfg(o: object) {
         return JSON.stringify(o);
       }
+
+      // const actions_config_contract = `[
+      //       { "cmd": "eval", "config": "scale.encode('test.rpc', scale.encodeStr)" },
+      //       { "cmd": "call", "config": ${cfg({ callee, selectorConfig })}},
+      // ]`;
+      await TxHandler.handle(
+        evmTransaction.tx.config({ gasLimit: "10000000000000" }, "test.rpc"),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const result = await evmTransaction.query.getRpc(certAlice, {});
+        return result.result.isOk;
+      }, 1000 * 10);
+
       const actions_json = `[
             {"cmd": "fetch", "config": ${cfg({
         returnTextBody: true,

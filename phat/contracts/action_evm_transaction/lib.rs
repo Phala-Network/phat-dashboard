@@ -63,6 +63,12 @@ mod action_evm_transaction {
             self.owner
         }
 
+        #[ink(message)]
+        pub fn get_rpc(&self) -> Result<String> {
+            let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
+            Ok(config.rpc.clone())
+        }
+
         /// Configures the transaction sending target
         #[ink(message)]
         pub fn config(&mut self, rpc: String) -> Result<()> {

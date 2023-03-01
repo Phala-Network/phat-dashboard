@@ -19,6 +19,10 @@ export namespace ActionEvmTransaction {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<InkEnv_Types_AccountId>>>;
         }
 
+        export interface GetRpc extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
+        }
+
         export interface BuildTransaction extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions, to: string, abi: number[], func: string, params: number[][]): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
@@ -30,6 +34,7 @@ export namespace ActionEvmTransaction {
 
     export interface MapMessageQuery extends DPT.MapMessageQuery {
         owner: ContractQuery.Owner;
+        getRpc: ContractQuery.GetRpc;
         buildTransaction: ContractQuery.BuildTransaction;
         maybeSendTransaction: ContractQuery.MaybeSendTransaction;
     }
