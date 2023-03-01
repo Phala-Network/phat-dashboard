@@ -1,5 +1,12 @@
 # Phat Bricks Version of Oracle
 
+## Toolchain Version
+
+```bash
+cargo contract --version
+# cargo-contract-contract 2.0.1-unknown-x86_64-unknown-linux-gnu
+```
+
 ## Run with
 
 ```bash
