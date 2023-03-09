@@ -11,3 +11,4 @@ node_modules
 
 !/artifacts/lego/
 !/artifacts/qjs/
+!/artifacts/action_evm_transaction/
