@@ -1241,10 +1241,10 @@ des.js@^1.0.0:
     inherits "^2.0.1"
     minimalistic-assert "^1.0.0"
 
-devphase@^0.1.14:
-  version "0.1.14"
-  resolved "https://registry.yarnpkg.com/devphase/-/devphase-0.1.14.tgz#dc3bb671b9d89614eea28bad8d7ce5dc0a922de6"
-  integrity sha512-qZio8QUtUR6q10ioDCY4uZzdVuJ5wUT4LBXWvDu8zrF3r7h4zwG65XkoxyHo2W23XLnEVcd/tcXQ/2kSRAWoHA==
+devphase@^0.2.1:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/devphase/-/devphase-0.2.2.tgz#5411764260100aebf919ea288cb7362c0ae7be39"
+  integrity sha512-7KSKPBCOdpQDD33uJi1Q27E/jwV6HYMbQuNixmDszTkESgs6HM+x1CJUiGyrJroKAnzP86zDQsiTy79KeWNLaQ==
   dependencies:
     "@oclif/core" "^2.0.7"
     "@oclif/plugin-help" "^5.2.2"

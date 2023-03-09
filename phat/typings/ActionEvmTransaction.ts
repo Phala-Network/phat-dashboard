@@ -6,9 +6,10 @@ import type { ContractCallOutcome, ContractOptions } from "@polkadot/api-contrac
 import type { Codec } from "@polkadot/types/types";
 
 export namespace ActionEvmTransaction {
-    type InkEnv_Types_AccountId = any;
+    type InkPrimitives_Types_AccountId = any;
+    type InkPrimitives_LangError = { CouldNotReadInput: null };
+    type Result = { Ok: Result } | { Err: InkPrimitives_LangError };
     type ActionEvmTransaction_ActionEvmTransaction_Error = { BadOrigin: null } | { NotConfigured: null } | { BadAbi: null } | { BadParams: string } | { BadToAddress: null } | { BadTransaction: null } | { FailedToSendTransaction: null };
-    type Result = { Ok: PrimitiveTypes_H256 } | { Err: ActionEvmTransaction_ActionEvmTransaction_Error };
     type PrimitiveTypes_H256 = any;
 
     /** */
@@ -16,7 +17,7 @@ export namespace ActionEvmTransaction {
     /** */
     namespace ContractQuery {
         export interface Owner extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<InkEnv_Types_AccountId>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
 
         export interface GetRpc extends DPT.ContractQuery {

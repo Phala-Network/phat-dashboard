@@ -6,12 +6,15 @@ import type { ContractCallOutcome, ContractOptions } from "@polkadot/api-contrac
 import type { Codec } from "@polkadot/types/types";
 
 export namespace Lego {
+    type InkPrimitives_LangError = { CouldNotReadInput: null };
+    type Result = { Ok: boolean } | { Err: InkPrimitives_LangError };
+
     /** */
     /** Queries */
     /** */
     namespace ContractQuery {
         export interface Run extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, actions: string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<boolean>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, actions: string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
     }
 

@@ -6,16 +6,17 @@ import type { ContractCallOutcome, ContractOptions } from "@polkadot/api-contrac
 import type { Codec } from "@polkadot/types/types";
 
 export namespace SimpleCloudWallet {
-    type InkEnv_Types_AccountId = any;
+    type InkPrimitives_Types_AccountId = any;
+    type InkPrimitives_LangError = { CouldNotReadInput: null };
+    type Result = { Ok: Result } | { Err: InkPrimitives_LangError };
     type SimpleCloudWallet_SimpleCloudWallet_Error = { BadOrigin: null } | { NotConfigured: null } | { BadPrivateKey: null } | { BadUnsignedTransaction: null } | { FailedToSignTransaction: string };
-    type Result = { Ok: number[] } | { Err: SimpleCloudWallet_SimpleCloudWallet_Error };
 
     /** */
     /** Queries */
     /** */
     namespace ContractQuery {
         export interface Owner extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<InkEnv_Types_AccountId>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
 
         export interface SignEvmTransaction extends DPT.ContractQuery {

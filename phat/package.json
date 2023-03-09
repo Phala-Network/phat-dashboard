@@ -5,7 +5,7 @@
   "author": "Shelven Zhou",
   "license": "MIT",
   "dependencies": {
-    "devphase": "^0.1.14",
+    "devphase": "^0.2.1",
     "dotenv": "^16.0.3"
   },
   "devDependencies": {
