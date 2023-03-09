@@ -97,6 +97,17 @@ function actionEval (action: ActionEval, input: any, context: any): any {
   if (typeof script !== 'string') {
     throw new Error('Trying to eval non-string')
   }
+
+  // pub fn build_transaction(
+  //   &self,
+  //   to: String,
+  //   abi: Vec<u8>,
+  //   func: String,
+  //   params: Vec<Vec<u8>>,
+  // )
+  type Tuple = [string, number[], string, (number[])[]];
+  const encodeBuildTx = scaleCore.createTupleEncoder<Tuple>([scaleCore.encodeStr, scaleCore.createVecEncoder(scaleCore.encodeU8), scaleCore.encodeStr, scaleCore.createVecEncoder(scaleCore.createVecEncoder(scaleCore.encodeU8))]);
+
   const scale = {
     encode: scaleCore.WalkerImpl.encode,
     encodeU128: scaleCore.encodeU128,
@@ -105,9 +116,22 @@ function actionEval (action: ActionEval, input: any, context: any): any {
     encodeU16: scaleCore.encodeU16,
     encodeUint8Vec: scaleCore.encodeUint8Vec,
     encodeStr: scaleCore.encodeStr,
+    encodeBuildTx: encodeBuildTx,
     createStructEncoder: scaleCore.createStructEncoder,
     createEnumEncoder: scaleCore.createEnumEncoder
   }
+
+  function numToUint8Array32(num: number) {
+    let arr = new Uint8Array(32);
+
+    for (let i = 0; i < 32; i++) {
+      arr[i] = num % 256;
+      num = Math.floor(num / 256);
+    }
+
+    return arr;
+  }
+
   return eval(script)
 }
 

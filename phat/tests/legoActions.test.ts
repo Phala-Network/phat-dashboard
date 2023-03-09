@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import * as path from 'path';
 import * as PhalaSdk from "@phala/sdk";
 import { ApiPromise } from "@polkadot/api";
 import type { KeyringPair } from "@polkadot/keyring/types";
@@ -111,25 +113,10 @@ describe("Run lego actions", () => {
     });
 
     it("can run actions", async function () {
-      const callee = evmTransaction.address.toHex();
-      // pub fn config(&mut self, rpc: String) -> Result<()>
-      const selectorConfig = 0x70714744;
-      // pub fn build_transaction(
-      //   &self,
-      //   to: String,
-      //   abi: Vec<u8>,
-      //   func: String,
-      //   params: Vec<Vec<u8>>,
-      // ) -> Result<Vec<u8>>
-      const selectorBuildTx = 0x8a688c06;
       function cfg(o: object) {
         return JSON.stringify(o);
       }
 
-      // const actions_config_contract = `[
-      //       { "cmd": "eval", "config": "scale.encode('test.rpc', scale.encodeStr)" },
-      //       { "cmd": "call", "config": ${cfg({ callee, selectorConfig })}},
-      // ]`;
       await TxHandler.handle(
         evmTransaction.tx.config({ gasLimit: "10000000000000" }, "test.rpc"),
         alice,
@@ -140,14 +127,36 @@ describe("Run lego actions", () => {
         return result.result.isOk;
       }, 1000 * 10);
 
+      // call action_evm_transaction to build EVM tx
+      const callee = evmTransaction.address.toHex();
+      // pub fn build_transaction(
+      //   &self,
+      //   to: String,
+      //   abi: Vec<u8>,
+      //   func: String,
+      //   params: Vec<Vec<u8>>,
+      // ) -> Result<Vec<u8>>
+      const selector = 0x8a688c06;
+
+      // build EVM transaction to call `onPhatRollupReceived(address from, bytes calldata price)`
+      let abi_file = fs.readFileSync(path.join(__dirname, '../res/receiver.abi.json'));
+      const arg_to = '0xF8CE0975502A96e897505fd626234A9A0126C072';
+      const arg_abi = [...abi_file];
+      const arg_function = 'onPhatRollupReceived';
+      // 20-byte `address from`, in this case we don't care about this
+      const arg_param_0 = Array(20).fill(2);
+      // 32 byte `bytes calldata price`, this should be consturcted from the output of last step
+      // const arg_param_1 = Array(32).fill(0);
       const actions_json = `[
-            {"cmd": "fetch", "config": ${cfg({
-        returnTextBody: true,
-        url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
-      })}},
-            {"cmd": "eval", "config": "BigInt(Math.round(JSON.parse(input.body).USD * 1000000))"},
-            {"cmd": "eval", "config": "scale.encode(input, scale.encodeU128)"},
-            {"cmd": "log"}
+        {"cmd": "fetch", "config": ${cfg({
+          returnTextBody: true,
+          url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
+        })}},
+        {"cmd": "eval", "config": "Math.round(JSON.parse(input.body).USD)"},
+        {"cmd": "eval", "config": "numToUint8Array32(input)"},
+        {"cmd": "eval", "config": "scale.encode(['${arg_to}', [${arg_abi}], '${arg_function}', [[${arg_param_0}], input]], scale.encodeBuildTx)"},
+        {"cmd": "call", "config": ${cfg({ callee, selector })}},
+        {"cmd": "log"}
       ]`;
       const result = await lego.query.run(certAlice, {}, actions_json);
       expect(result.result.isOk).to.be.true;

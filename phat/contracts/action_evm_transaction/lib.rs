@@ -7,10 +7,10 @@ pub use action_evm_transaction::*;
 #[ink::contract(env = pink::PinkEnvironment)]
 mod action_evm_transaction {
     use alloc::{format, str::FromStr, string::String, vec::Vec};
+    use ethabi::{ParamType, Token};
     use pink_extension as pink;
     use pink_json as json;
     use pink_web3::{
-        contract::tokens::Tokenize,
         transports::pink_http::PinkHttp,
         types::{Bytes, TransactionRequest},
     };
@@ -89,7 +89,29 @@ mod action_evm_transaction {
             let abi: ethabi::Contract = json::from_slice(&abi).map_err(|_| Error::BadAbi)?;
             let data = abi
                 .function(&func)
-                .and_then(|function| function.encode_input(&params.into_tokens()))
+                .and_then(|function| {
+                    let inputs = function.inputs.clone();
+                    if inputs.len() != params.len() {
+                        return Err(ethabi::Error::InvalidData);
+                    }
+                    let param_tokens: Vec<Token> = inputs
+                        .iter()
+                        .enumerate()
+                        .map(|(i, token)| {
+                            let value = match token.kind {
+                                ParamType::Address => {
+                                    let param: [u8; 20] = params[i].clone().try_into().unwrap();
+                                    Token::Address(H160(param))
+                                }
+                                ParamType::Bytes => Token::Bytes(params[i].clone()),
+                                // TODO: handle other types
+                                _ => Token::Bytes(params[i].clone()),
+                            };
+                            value
+                        })
+                        .collect();
+                    function.encode_input(&param_tokens)
+                })
                 .map_err(|err| Error::BadParams(format!("{:?}", err)))?;
 
             let tx = TransactionRequest {
@@ -127,5 +149,32 @@ mod action_evm_transaction {
     }
 
     #[cfg(test)]
-    mod tests {}
+    mod tests {
+        use super::*;
+
+        const RECEIVER_ABI: &[u8] = include_bytes!("../../res/receiver.abi.json");
+        const RECEIVER_FUNC: &str = "onPhatRollupReceived";
+
+        #[ink::test]
+        fn build_transaction_works() {
+            let _ = env_logger::try_init();
+            pink_extension_runtime::mock_ext::mock_all_ext();
+
+            let rpc = String::from("test.rpc");
+
+            let mut sample_action = ActionEvmTransaction::default();
+            sample_action.config(rpc).unwrap();
+
+            let test_params = vec![[0u8; 20].to_vec(), [1u8; 32].to_vec()];
+            let res = sample_action
+                .build_transaction(
+                    String::from("0xF8CE0975502A96e897505fd626234A9A0126C072"),
+                    RECEIVER_ABI.to_vec(),
+                    String::from(RECEIVER_FUNC),
+                    test_params,
+                )
+                .unwrap();
+            println!("res: {:#?}", hex::encode(res));
+        }
+    }
 }
