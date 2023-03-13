@@ -16,6 +16,6 @@ npx hardhat compile
 
 # deploy contracts
 npx hardhat run --network goerli ./scripts/deploy-test.ts
-# Deployed { receiver: '0xF8CE0975502A96e897505fd626234A9A0126C072' }
+# Deployed { receiver: '0xabd257f376acab89e077650bfcb4ff89081a9ec1' }
 
 ```

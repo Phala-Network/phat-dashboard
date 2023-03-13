@@ -10,7 +10,8 @@ import {
 } from "devphase";
 import { PinkSystem } from "@/typings/PinkSystem";
 import { Lego } from "@/typings/Lego";
-import { ActionEvmTransaction } from "@/typings/ActionEvmTransaction"
+import { ActionEvmTransaction } from "@/typings/ActionEvmTransaction";
+import { SimpleCloudWallet } from '@/typings/SimpleCloudWallet';
 
 import "dotenv/config";
 
@@ -40,6 +41,8 @@ describe("Run lego actions", () => {
   let lego: Lego.Contract;
   let evmTransactionFactory: ActionEvmTransaction.Factory;
   let evmTransaction: ActionEvmTransaction.Contract;
+  let cloudWalletFactory: SimpleCloudWallet.Factory;
+  let cloudWallet: SimpleCloudWallet.Contract;
 
   let api: ApiPromise;
   let alice: KeyringPair;
@@ -68,10 +71,12 @@ describe("Run lego actions", () => {
     });
     legoFactory = await this.devPhase.getFactory('lego');
     evmTransactionFactory = await this.devPhase.getFactory('action_evm_transaction');
+    cloudWalletFactory = await this.devPhase.getFactory('simple_cloud_wallet');
 
     await qjsFactory.deploy();
     await legoFactory.deploy();
     await evmTransactionFactory.deploy();
+    await cloudWalletFactory.deploy();
 
     alice = this.devPhase.accounts.alice;
     certAlice = await PhalaSdk.signCertificate({
@@ -109,6 +114,7 @@ describe("Run lego actions", () => {
         transferToCluster: 1e12,
       });
       evmTransaction = await evmTransactionFactory.instantiate("default", [], {});
+      cloudWallet = await cloudWalletFactory.instantiate("default", [], {});
       await sleep(3_000);
     });
 
@@ -117,18 +123,33 @@ describe("Run lego actions", () => {
         return JSON.stringify(o);
       }
 
+      const rpc = process.env.RPC;
+      const ethSecretKey = process.env.PRIVKEY;
+
+      // config simple_cloud_wallet
       await TxHandler.handle(
-        evmTransaction.tx.config({ gasLimit: "10000000000000" }, "test.rpc"),
+        cloudWallet.tx.config({ gasLimit: "10000000000000" }, rpc, [...Uint8Array.from(Buffer.from(ethSecretKey, 'hex'))]),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const result = await cloudWallet.query.getRpc(certAlice, {});
+        return !result.output.toJSON().ok.err;
+      }, 1000 * 10);
+
+      // config action_evm_transaction
+      await TxHandler.handle(
+        evmTransaction.tx.config({ gasLimit: "10000000000000" }, rpc),
         alice,
         true,
       );
       await checkUntil(async () => {
         const result = await evmTransaction.query.getRpc(certAlice, {});
-        return result.result.isOk;
+        return !result.output.toJSON().ok.err;
       }, 1000 * 10);
 
       // call action_evm_transaction to build EVM tx
-      const callee = evmTransaction.address.toHex();
+      const calleeEvmTransaction = evmTransaction.address.toHex();
       // pub fn build_transaction(
       //   &self,
       //   to: String,
@@ -136,17 +157,23 @@ describe("Run lego actions", () => {
       //   func: String,
       //   params: Vec<Vec<u8>>,
       // ) -> Result<Vec<u8>>
-      const selector = 0x8a688c06;
+      const selectorBuildTransaction = 0x8a688c06;
+      // pub fn maybe_send_transaction(&self, rlp: Vec<u8>) -> Result<H256>
+      const selectorMaybeSendTransaction = 0x072cd15a;
+      // then call simple_cloud_wallet to sign it
+      const calleeWallet = cloudWallet.address.toHex();
+      // pub fn sign_evm_transaction(&self, tx: Vec<u8>) -> Result<Vec<u8>>
+      const selectorSignEvmTransaction = 0xad848771;
 
       // build EVM transaction to call `onPhatRollupReceived(address from, bytes calldata price)`
       let abi_file = fs.readFileSync(path.join(__dirname, '../res/receiver.abi.json'));
-      const arg_to = '0xF8CE0975502A96e897505fd626234A9A0126C072';
+      const arg_to = '0xabd257f376acab89e077650bfcb4ff89081a9ec1';
       const arg_abi = [...abi_file];
       const arg_function = 'onPhatRollupReceived';
       // 20-byte `address from`, in this case we don't care about this
-      const arg_param_0 = Array(20).fill(2);
+      const arg_param_0 = Array(20).fill(0);
       // 32 byte `bytes calldata price`, this should be consturcted from the output of last step
-      // const arg_param_1 = Array(32).fill(0);
+
       const actions_json = `[
         {"cmd": "fetch", "config": ${cfg({
           returnTextBody: true,
@@ -155,12 +182,17 @@ describe("Run lego actions", () => {
         {"cmd": "eval", "config": "Math.round(JSON.parse(input.body).USD)"},
         {"cmd": "eval", "config": "numToUint8Array32(input)"},
         {"cmd": "eval", "config": "scale.encode(['${arg_to}', [${arg_abi}], '${arg_function}', [[${arg_param_0}], input]], scale.encodeBuildTx)"},
-        {"cmd": "call", "config": ${cfg({ callee, selector })}},
+        {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorBuildTransaction })}},
+        {"cmd": "eval", "config": "scale.decode(input, scale.decodeResultVecU8)"},
+        {"cmd": "eval", "config": "scale.encode(input.content.content, scale.encodeVecU8)"},
+        {"cmd": "call", "config": ${cfg({ "callee": calleeWallet, "selector": selectorSignEvmTransaction })}},
+        {"cmd": "eval", "config": "scale.decode(input, scale.decodeResultVecU8)"},
+        {"cmd": "eval", "config": "scale.encode(input.content.content, scale.encodeVecU8)"},
+        {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorMaybeSendTransaction })}},
         {"cmd": "log"}
       ]`;
       const result = await lego.query.run(certAlice, {}, actions_json);
-      expect(result.result.isOk).to.be.true;
-      expect(!result.output?.valueOf().isEmpty).to.be.true;
+      expect(!result.output.toJSON().ok.err).to.be.true;
     });
   });
 });

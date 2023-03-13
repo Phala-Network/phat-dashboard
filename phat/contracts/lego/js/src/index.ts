@@ -43,7 +43,7 @@ interface FetchConfig {
 
 type Action = ActionLog | ActionEval | ActionFetch | ActionCall
 
-function actionFetch (action: ActionFetch, input: any): any {
+function actionFetch(action: ActionFetch, input: any): any {
   let base: FetchConfig
   if (typeof action.config === 'string') {
     base = { url: action.config }
@@ -71,16 +71,16 @@ function actionFetch (action: ActionFetch, input: any): any {
   const response = pink.httpRequest({ url, method, headers, body, returnTextBody })
   if (
     !req.allowNon2xx &&
-      (response.statusCode < 200 || response.statusCode >= 300)
+    (response.statusCode < 200 || response.statusCode >= 300)
   ) {
     throw new Error(
-        `http request failed with status code ${response.statusCode}`
+      `http request failed with status code ${response.statusCode}`
     )
   }
   return response
 }
 
-function actionCall (action: ActionCall, input: any): Uint8Array {
+function actionCall(action: ActionCall, input: any): Uint8Array {
   const args = action.config
   if (!(input instanceof Uint8Array)) {
     throw new Error('call contract input must be a Uint8Array')
@@ -92,7 +92,7 @@ function actionCall (action: ActionCall, input: any): Uint8Array {
   return output
 }
 
-function actionEval (action: ActionEval, input: any, context: any): any {
+function actionEval(action: ActionEval, input: any, context: any): any {
   const script = action.config
   if (typeof script !== 'string') {
     throw new Error('Trying to eval non-string')
@@ -108,8 +108,21 @@ function actionEval (action: ActionEval, input: any, context: any): any {
   type Tuple = [string, number[], string, (number[])[]];
   const encodeBuildTx = scaleCore.createTupleEncoder<Tuple>([scaleCore.encodeStr, scaleCore.createVecEncoder(scaleCore.encodeU8), scaleCore.encodeStr, scaleCore.createVecEncoder(scaleCore.createVecEncoder(scaleCore.encodeU8))]);
 
+  // ink! 4 will automatically add a wrapper to the result, so Result<Result<Vec<u8>>>
+  const decodeResultVecU8 = scaleCore.createResultDecoder(
+    scaleCore.createResultDecoder<number[], any>(scaleCore.createVecDecoder(scaleCore.decodeU8), scaleCore.createEnumDecoder({
+      0: 'BadOrigin',
+      1: 'NotConfigured',
+      2: 'BadAbi',
+      3: 'BadParams',
+      4: 'BadToAddress',
+      5: 'BadTransaction',
+      6: 'FailedToSendTransaction'
+    })), scaleCore.decodeStr);
+
   const scale = {
     encode: scaleCore.WalkerImpl.encode,
+    decode: scaleCore.WalkerImpl.decode,
     encodeU128: scaleCore.encodeU128,
     encodeU64: scaleCore.encodeU64,
     encodeU32: scaleCore.encodeU32,
@@ -117,6 +130,8 @@ function actionEval (action: ActionEval, input: any, context: any): any {
     encodeUint8Vec: scaleCore.encodeUint8Vec,
     encodeStr: scaleCore.encodeStr,
     encodeBuildTx: encodeBuildTx,
+    encodeVecU8: scaleCore.createVecEncoder(scaleCore.encodeU8),
+    decodeResultVecU8: decodeResultVecU8,
     createStructEncoder: scaleCore.createStructEncoder,
     createEnumEncoder: scaleCore.createEnumEncoder
   }
@@ -135,7 +150,7 @@ function actionEval (action: ActionEval, input: any, context: any): any {
   return eval(script)
 }
 
-function runAction (context: any, action: Action, input: any): any {
+function runAction(context: any, action: Action, input: any): any {
   switch (action.cmd) {
     case 'call':
       return actionCall(action, input)
@@ -150,7 +165,7 @@ function runAction (context: any, action: Action, input: any): any {
   }
 }
 
-function pipeline (actions: Action[], initInput: string): void {
+function pipeline(actions: Action[], initInput: string): void {
   let input: any = initInput
   let context: any = {}
   for (let i = 0; i < actions.length; i++) {
