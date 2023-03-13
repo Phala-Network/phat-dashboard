@@ -32,7 +32,7 @@ mod simple_cloud_wallet {
     )]
     struct Config {
         rpc: String,
-        eth_pk: [u8; 32],
+        eth_sk: [u8; 32],
     }
 
     #[derive(Encode, Decode, Debug)]
@@ -61,13 +61,19 @@ mod simple_cloud_wallet {
             self.owner
         }
 
+        #[ink(message)]
+        pub fn get_rpc(&self) -> Result<String> {
+            let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
+            Ok(config.rpc.clone())
+        }
+
         /// Configures the transaction sending target
         #[ink(message)]
-        pub fn config(&mut self, rpc: String, eth_pk: Vec<u8>) -> Result<()> {
+        pub fn config(&mut self, rpc: String, eth_sk: Vec<u8>) -> Result<()> {
             self.ensure_owner()?;
             self.config = Some(Config {
                 rpc,
-                eth_pk: eth_pk.try_into().or(Err(Error::BadPrivateKey))?,
+                eth_sk: eth_sk.try_into().or(Err(Error::BadPrivateKey))?,
             });
             Ok(())
         }
@@ -79,7 +85,7 @@ mod simple_cloud_wallet {
             let phttp = PinkHttp::new(config.rpc.clone());
             let web3 = pink_web3::Web3::new(phttp);
 
-            let pk = pink_web3::keys::pink::KeyPair::from(config.eth_pk);
+            let sk = pink_web3::keys::pink::KeyPair::from(config.eth_sk);
 
             let tx: TransactionRequest =
                 json::from_slice(&tx).or(Err(Error::BadUnsignedTransaction))?;
@@ -89,7 +95,7 @@ mod simple_cloud_wallet {
                 ..Default::default()
             };
 
-            let signed_tx = resolve_ready(web3.accounts().sign_transaction(tx, &pk))
+            let signed_tx = resolve_ready(web3.accounts().sign_transaction(tx, &sk))
                 .map_err(|err| Error::FailedToSignTransaction(format!("{:?}", err)))?;
 
             Ok(signed_tx.raw_transaction.0)
@@ -106,5 +112,41 @@ mod simple_cloud_wallet {
     }
 
     #[cfg(test)]
-    mod tests {}
+    mod tests {
+        use super::*;
+        use pink_web3::types::TransactionRequest;
+
+        struct EnvVars {
+            rpc: String,
+            key: Vec<u8>,
+        }
+
+        fn get_env(key: &str) -> String {
+            std::env::var(key).expect("env not found")
+        }
+        fn config() -> EnvVars {
+            dotenvy::dotenv().ok();
+            let rpc = get_env("RPC");
+            let key = hex::decode(get_env("PRIVKEY")).expect("hex decode failed");
+            EnvVars { rpc, key }
+        }
+
+        #[ink::test]
+        fn sign_transaction_works() {
+            let _ = env_logger::try_init();
+            pink_extension_runtime::mock_ext::mock_all_ext();
+
+            let EnvVars { rpc, key } = config();
+
+            let mut wallet = SimpleCloudWallet::default();
+            wallet.config(rpc, key).unwrap();
+
+            let tx: TransactionRequest = Default::default();
+            let tx = json::to_vec(&tx).expect("Transaction encoding error");
+            let signed_tx = wallet
+                .sign_evm_transaction(tx)
+                .expect("Transaction signing failed");
+            println!("res: {:#?}", hex::encode(signed_tx));
+        }
+    }
 }

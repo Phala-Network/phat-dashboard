@@ -12,3 +12,4 @@ node_modules
 !/artifacts/lego/
 !/artifacts/qjs/
 !/artifacts/action_evm_transaction/
+!/artifacts/simple_cloud_wallet/

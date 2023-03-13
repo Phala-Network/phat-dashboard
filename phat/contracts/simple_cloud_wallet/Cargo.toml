@@ -16,6 +16,12 @@ pink-extension = { version = "0.4", default-features = false }
 pink-json = { git = "https://github.com/Phala-Network/pink-json.git", branch = "pink", default-features = false, features = ["de-number-as-str"] }
 pink-web3 = { version = "0.20", default-features = false, features = ["pink", "signing"] }
 
+[dev-dependencies]
+dotenvy = "0.15"
+pink-extension-runtime = { version = "0.4", default-features = false }
+env_logger = "0.9"
+hex = "0.4"
+
 [lib]
 name = "simple_cloud_wallet"
 path = "lib.rs"

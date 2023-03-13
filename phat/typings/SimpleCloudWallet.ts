@@ -19,6 +19,10 @@ export namespace SimpleCloudWallet {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
 
+        export interface GetRpc extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
+        }
+
         export interface SignEvmTransaction extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions, tx: number[]): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
@@ -26,6 +30,7 @@ export namespace SimpleCloudWallet {
 
     export interface MapMessageQuery extends DPT.MapMessageQuery {
         owner: ContractQuery.Owner;
+        getRpc: ContractQuery.GetRpc;
         signEvmTransaction: ContractQuery.SignEvmTransaction;
     }
 
@@ -34,7 +39,7 @@ export namespace SimpleCloudWallet {
     /** */
     namespace ContractTx {
         export interface Config extends DPT.ContractTx {
-            (options: ContractOptions, rpc: string, eth_pk: number[]): DPT.SubmittableExtrinsic;
+            (options: ContractOptions, rpc: string, eth_sk: number[]): DPT.SubmittableExtrinsic;
         }
     }
 
