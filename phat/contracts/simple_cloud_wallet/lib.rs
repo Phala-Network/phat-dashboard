@@ -8,7 +8,9 @@ pub use simple_cloud_wallet::*;
 mod simple_cloud_wallet {
     use alloc::{format, string::String, vec::Vec};
     use core::convert::TryInto;
+    use ink::storage::{traits::StorageLayout, Mapping};
     use pink_extension as pink;
+    use pink_extension::chain_extension::signing;
     use pink_json as json;
     use pink_web3::{
         transports::{pink_http::PinkHttp, resolve_ready},
@@ -16,32 +18,60 @@ mod simple_cloud_wallet {
     };
     use scale::{Decode, Encode};
 
+    pub type ExternalAccountId = u64;
+    pub type WorkflowId = u64;
+
+    #[derive(Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
+    pub enum EvmAccountType {
+        Imported,
+        Generated,
+    }
+
     /// Defines the storage of your contract.
     /// Add new fields to the below struct in order
     /// to add new static storage fields to your contract.
     #[ink(storage)]
     pub struct SimpleCloudWallet {
         owner: AccountId,
-        config: Option<Config>,
+        next_workflow_id: WorkflowId,
+        workflows: Mapping<WorkflowId, Workflow>,
+        next_external_account_id: ExternalAccountId,
+        external_accounts: Mapping<ExternalAccountId, EvmAccount>,
+        authorize: Mapping<ExternalAccountId, WorkflowId>,
+        authorized: Mapping<WorkflowId, ExternalAccountId>,
     }
 
     #[derive(Encode, Decode, Debug)]
-    #[cfg_attr(
-        feature = "std",
-        derive(scale_info::TypeInfo, ink::storage::traits::StorageLayout)
-    )]
-    struct Config {
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
+    struct EvmAccount {
+        id: ExternalAccountId,
+        /// An EvmAccount is disabled once it is dumped
+        enabled: bool,
+        account_type: EvmAccountType,
+        // This determines on which chain you can use this account
+        // The same sk can be used to create multiple EvmAccounts on different chains
         rpc: String,
-        eth_sk: [u8; 32],
+        sk: [u8; 32],
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
+    struct Workflow {
+        id: WorkflowId,
+        enabled: bool,
+        commandline: String,
     }
 
     #[derive(Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         BadOrigin,
-        NotConfigured,
-        BadPrivateKey,
+        BadEvmSecretKey,
         BadUnsignedTransaction,
+        WorkflowNotFound,
+        ExternalAccountNotFound,
+        ExternalAccountDumped,
         FailedToSignTransaction(String),
     }
     pub type Result<T> = core::result::Result<T, Error>;
@@ -51,7 +81,12 @@ mod simple_cloud_wallet {
         pub fn default() -> Self {
             Self {
                 owner: Self::env().caller(),
-                config: None,
+                next_workflow_id: 0,
+                workflows: Mapping::default(),
+                next_external_account_id: 0,
+                external_accounts: Mapping::default(),
+                authorize: Mapping::default(),
+                authorized: Mapping::default(),
             }
         }
 
@@ -61,20 +96,143 @@ mod simple_cloud_wallet {
             self.owner
         }
 
+        /// Gets the total number of workerflows
         #[ink(message)]
-        pub fn get_rpc(&self) -> Result<String> {
-            let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
-            Ok(config.rpc.clone())
+        pub fn workflow_count(&self) -> u64 {
+            self.next_workflow_id
         }
 
-        /// Configures the transaction sending target
+        /// Adds a new workflow, only owner is allowed
         #[ink(message)]
-        pub fn config(&mut self, rpc: String, eth_sk: Vec<u8>) -> Result<()> {
+        pub fn add_workflow(&mut self, commandline: String) -> Result<WorkflowId> {
             self.ensure_owner()?;
-            self.config = Some(Config {
+
+            let id = self.next_workflow_id;
+            // TODO: validate commandline?
+            let workflow = Workflow {
+                id,
+                enabled: true,
+                commandline,
+            };
+            self.workflows.insert(id, &workflow);
+            self.next_workflow_id += 1;
+
+            Ok(id)
+        }
+
+        // Enable a workflow details
+        #[ink(message)]
+        pub fn enable_workflow(&mut self, id: WorkflowId) -> Result<()> {
+            self.ensure_owner()?;
+            let workflow = self.workflows.get(id).ok_or(Error::WorkflowNotFound)?;
+            if !workflow.enabled {
+                workflow.enabled = true;
+                self.workflows.insert(id, &workflow);
+            }
+            Ok(())
+        }
+
+        /// Disable a workflow
+        #[ink(message)]
+        pub fn disable_workflow(&mut self, id: WorkflowId) -> Result<()> {
+            self.ensure_owner()?;
+            let workflow = self.workflows.get(id).ok_or(Error::WorkflowNotFound)?;
+            if workflow.enabled {
+                workflow.enabled = false;
+                self.workflows.insert(id, &workflow);
+            }
+            Ok(())
+        }
+
+        /// Gets workflow details
+        #[ink(message)]
+        pub fn get_workflow(&self, id: WorkflowId) -> Result<Workflow> {
+            self.ensure_owner()?;
+            self.workflows.get(id).ok_or(Error::WorkflowNotFound)
+        }
+
+        /// Gets the total number of external accounts
+        #[ink(message)]
+        pub fn external_account_count(&self) -> u64 {
+            self.next_external_account_id
+        }
+
+        /// Generates a new EVM account, only owner is allowed
+        #[ink(message)]
+        pub fn generate_evm_account(&mut self, rpc: String) -> Result<ExternalAccountId> {
+            self.ensure_owner()?;
+
+            let id = self.next_external_account_id;
+            let random = signing::derive_sr25519_key(&id.to_be_bytes());
+            let evm_account = EvmAccount {
+                id,
+                enabled: true,
+                account_type: EvmAccountType::Generated,
                 rpc,
-                eth_sk: eth_sk.try_into().or(Err(Error::BadPrivateKey))?,
-            });
+                sk: random[..32].try_into().or(Err(Error::BadEvmSecretKey))?,
+            };
+            self.external_accounts.insert(id, &evm_account);
+            self.next_external_account_id += 1;
+
+            Ok(id)
+        }
+
+        /// Adds an existing EVM account, only owner is allowed
+        #[ink(message)]
+        pub fn import_evm_account(
+            &mut self,
+            rpc: String,
+            sk: Vec<u8>,
+        ) -> Result<ExternalAccountId> {
+            self.ensure_owner()?;
+
+            let id = self.next_external_account_id;
+            let evm_account = EvmAccount {
+                id,
+                enabled: true,
+                account_type: EvmAccountType::Imported,
+                rpc,
+                sk: sk.try_into().or(Err(Error::BadEvmSecretKey))?,
+            };
+            self.external_accounts.insert(id, &evm_account);
+            self.next_external_account_id += 1;
+
+            Ok(id)
+        }
+
+        /// Dump an EVM account secret key and mark it disabled, only owner is allowed
+        #[ink(message)]
+        pub fn dump_evm_account(&mut self, id: ExternalAccountId) -> Result<[u8; 32]> {
+            self.ensure_owner()?;
+
+            let account = self
+                .external_accounts
+                .get(id)
+                .ok_or(Error::ExternalAccountNotFound)?;
+            if !account.enabled {
+                return Err(Error::ExternalAccountDumped);
+            }
+
+            let sk = account.sk;
+            account.enabled = false;
+            account.sk = [0; 32];
+            self.external_accounts.insert(id, &account);
+
+            Ok(sk)
+        }
+
+        /// Authorizes a workflow to sign tx with EVM account
+        #[ink(message)]
+        pub fn authorize_workflow(
+            &mut self,
+            external_account: ExternalAccountId,
+            workflow: WorkflowId,
+        ) -> Result<()> {
+            self.ensure_owner()?;
+
+            self.authorize.insert(external_account, &workflow);
+            self.authorized.insert(workflow, &external_account);
+
             Ok(())
         }
 
