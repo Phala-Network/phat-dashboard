@@ -120,7 +120,7 @@ mod simple_cloud_wallet {
             Ok(id)
         }
 
-        // Enable a workflow details
+        /// Enable a workflow, only owner is allowed
         #[ink(message)]
         pub fn enable_workflow(&mut self, id: WorkflowId) -> Result<()> {
             self.ensure_owner()?;
@@ -132,7 +132,7 @@ mod simple_cloud_wallet {
             Ok(())
         }
 
-        /// Disable a workflow
+        /// Disable a workflow, only owner is allowed
         #[ink(message)]
         pub fn disable_workflow(&mut self, id: WorkflowId) -> Result<()> {
             self.ensure_owner()?;
@@ -144,7 +144,7 @@ mod simple_cloud_wallet {
             Ok(())
         }
 
-        /// Gets workflow details
+        /// Gets workflow details, only owner is allowed
         #[ink(message)]
         pub fn get_workflow(&self, id: WorkflowId) -> Result<Workflow> {
             self.ensure_owner()?;
@@ -200,7 +200,7 @@ mod simple_cloud_wallet {
             Ok(id)
         }
 
-        /// Dump an EVM account secret key and mark it disabled, only owner is allowed
+        /// Dump an EVM account secret key, this will disable it and zeroize the sk, only owner is allowed
         #[ink(message)]
         pub fn dump_evm_account(&mut self, id: ExternalAccountId) -> Result<[u8; 32]> {
             self.ensure_owner()?;
@@ -221,7 +221,7 @@ mod simple_cloud_wallet {
             Ok(sk)
         }
 
-        /// Authorizes a workflow to sign tx with EVM account
+        /// Authorizes a workflow to sign tx with EVM account, only owner is allowed
         #[ink(message)]
         pub fn authorize_workflow(
             &mut self,
