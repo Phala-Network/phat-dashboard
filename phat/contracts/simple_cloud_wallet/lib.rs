@@ -28,9 +28,6 @@ mod simple_cloud_wallet {
         Generated,
     }
 
-    /// Defines the storage of your contract.
-    /// Add new fields to the below struct in order
-    /// to add new static storage fields to your contract.
     #[ink(storage)]
     pub struct SimpleCloudWallet {
         owner: AccountId,
@@ -38,8 +35,7 @@ mod simple_cloud_wallet {
         workflows: Mapping<WorkflowId, Workflow>,
         next_external_account_id: ExternalAccountId,
         external_accounts: Mapping<ExternalAccountId, EvmAccount>,
-        authorize: Mapping<ExternalAccountId, WorkflowId>,
-        authorized: Mapping<WorkflowId, ExternalAccountId>,
+        session_token: u64,
     }
 
     #[derive(Encode, Decode, Debug)]
@@ -85,8 +81,7 @@ mod simple_cloud_wallet {
                 workflows: Mapping::default(),
                 next_external_account_id: 0,
                 external_accounts: Mapping::default(),
-                authorize: Mapping::default(),
-                authorized: Mapping::default(),
+                session_token: 0,
             }
         }
 
@@ -219,21 +214,6 @@ mod simple_cloud_wallet {
             self.external_accounts.insert(id, &account);
 
             Ok(sk)
-        }
-
-        /// Authorizes a workflow to sign tx with EVM account, only owner is allowed
-        #[ink(message)]
-        pub fn authorize_workflow(
-            &mut self,
-            external_account: ExternalAccountId,
-            workflow: WorkflowId,
-        ) -> Result<()> {
-            self.ensure_owner()?;
-
-            self.authorize.insert(external_account, &workflow);
-            self.authorized.insert(workflow, &external_account);
-
-            Ok(())
         }
 
         #[ink(message)]
