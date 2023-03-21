@@ -31,16 +31,27 @@ mod simple_cloud_wallet {
     #[ink(storage)]
     pub struct SimpleCloudWallet {
         owner: AccountId,
+        config: Option<Config>,
         next_workflow_id: WorkflowId,
         workflows: Mapping<WorkflowId, Workflow>,
         next_external_account_id: ExternalAccountId,
         external_accounts: Mapping<ExternalAccountId, EvmAccount>,
-        session_token: u64,
+        authorized_account: Mapping<WorkflowId, ExternalAccountId>,
+        workflow_session: Option<WorkflowId>,
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    #[cfg_attr(
+        feature = "std",
+        derive(scale_info::TypeInfo, StorageLayout)
+    )]
+    struct Config {
+        js_runner: AccountId,
     }
 
     #[derive(Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
-    struct EvmAccount {
+    pub struct EvmAccount {
         id: ExternalAccountId,
         /// An EvmAccount is disabled once it is dumped
         enabled: bool,
@@ -53,7 +64,7 @@ mod simple_cloud_wallet {
 
     #[derive(Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
-    struct Workflow {
+    pub struct Workflow {
         id: WorkflowId,
         enabled: bool,
         commandline: String,
@@ -63,11 +74,17 @@ mod simple_cloud_wallet {
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         BadOrigin,
+        NotConfigured,
+        Deprecated,
+        NoPollForTransaction,
+        BadWorkflowSession,
         BadEvmSecretKey,
         BadUnsignedTransaction,
         WorkflowNotFound,
+        WorkflowDisabled,
+        NoAuthorizedExternalAccount,
         ExternalAccountNotFound,
-        ExternalAccountDumped,
+        ExternalAccountDisabled,
         FailedToSignTransaction(String),
     }
     pub type Result<T> = core::result::Result<T, Error>;
@@ -77,11 +94,13 @@ mod simple_cloud_wallet {
         pub fn default() -> Self {
             Self {
                 owner: Self::env().caller(),
+                config: None,
                 next_workflow_id: 0,
                 workflows: Mapping::default(),
                 next_external_account_id: 0,
                 external_accounts: Mapping::default(),
-                session_token: 0,
+                authorized_account: Mapping::default(),
+                workflow_session: None,
             }
         }
 
@@ -89,6 +108,20 @@ mod simple_cloud_wallet {
         #[ink(message)]
         pub fn owner(&self) -> AccountId {
             self.owner
+        }
+
+        #[ink(message)]
+        pub fn get_js_runner(&self) -> Result<AccountId> {
+            let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
+            Ok(config.js_runner.clone())
+        }
+
+        /// Configures the workflow executor
+        #[ink(message)]
+        pub fn config(&mut self, js_runner: AccountId) -> Result<()> {
+            self.ensure_owner()?;
+            self.config = Some(Config { js_runner });
+            Ok(())
         }
 
         /// Gets the total number of workerflows
@@ -115,11 +148,18 @@ mod simple_cloud_wallet {
             Ok(id)
         }
 
+        /// Gets workflow details, only owner is allowed
+        #[ink(message)]
+        pub fn get_workflow(&self, id: WorkflowId) -> Result<Workflow> {
+            self.ensure_owner()?;
+            self.ensure_workflow(id)
+        }
+
         /// Enable a workflow, only owner is allowed
         #[ink(message)]
         pub fn enable_workflow(&mut self, id: WorkflowId) -> Result<()> {
             self.ensure_owner()?;
-            let workflow = self.workflows.get(id).ok_or(Error::WorkflowNotFound)?;
+            let mut workflow = self.ensure_workflow(id)?;
             if !workflow.enabled {
                 workflow.enabled = true;
                 self.workflows.insert(id, &workflow);
@@ -131,19 +171,12 @@ mod simple_cloud_wallet {
         #[ink(message)]
         pub fn disable_workflow(&mut self, id: WorkflowId) -> Result<()> {
             self.ensure_owner()?;
-            let workflow = self.workflows.get(id).ok_or(Error::WorkflowNotFound)?;
+            let mut workflow = self.ensure_workflow(id)?;
             if workflow.enabled {
                 workflow.enabled = false;
                 self.workflows.insert(id, &workflow);
             }
             Ok(())
-        }
-
-        /// Gets workflow details, only owner is allowed
-        #[ink(message)]
-        pub fn get_workflow(&self, id: WorkflowId) -> Result<Workflow> {
-            self.ensure_owner()?;
-            self.workflows.get(id).ok_or(Error::WorkflowNotFound)
         }
 
         /// Gets the total number of external accounts
@@ -179,6 +212,9 @@ mod simple_cloud_wallet {
             rpc: String,
             sk: Vec<u8>,
         ) -> Result<ExternalAccountId> {
+            // Deprecated in first release
+            return Err(Error::Deprecated);
+
             self.ensure_owner()?;
 
             let id = self.next_external_account_id;
@@ -198,16 +234,12 @@ mod simple_cloud_wallet {
         /// Dump an EVM account secret key, this will disable it and zeroize the sk, only owner is allowed
         #[ink(message)]
         pub fn dump_evm_account(&mut self, id: ExternalAccountId) -> Result<[u8; 32]> {
+            // Deprecated in first release
+            return Err(Error::Deprecated);
+
             self.ensure_owner()?;
 
-            let account = self
-                .external_accounts
-                .get(id)
-                .ok_or(Error::ExternalAccountNotFound)?;
-            if !account.enabled {
-                return Err(Error::ExternalAccountDumped);
-            }
-
+            let mut account = self.ensure_enabled_external_account(id)?;
             let sk = account.sk;
             account.enabled = false;
             account.sk = [0; 32];
@@ -216,14 +248,72 @@ mod simple_cloud_wallet {
             Ok(sk)
         }
 
+        /// Authorize workflow to use account, only owner is allowed
+        #[ink(message)]
+        pub fn authorize_workflow(
+            &mut self,
+            workflow: WorkflowId,
+            account: ExternalAccountId,
+        ) -> Result<()> {
+            self.ensure_owner()?;
+
+            self.ensure_workflow(workflow)?;
+            self.ensure_external_account(account)?;
+            self.authorized_account.insert(workflow, &account);
+            Ok(())
+        }
+
+        #[ink(message)]
+        pub fn get_authorized_account(&self, workflow: WorkflowId) -> Option<ExternalAccountId> {
+            self.authorized_account.get(workflow)
+        }
+
+        /// Called by a scheduler periodically
+        #[ink(message)]
+        pub fn poll(&mut self) -> Result<()> {
+            use ink::env::call::{build_call, ExecutionInput, Selector};
+
+            // Trick here: We only allow Query the `poll()` function, so the following `workflow_session` change only
+            // lives in this call and is never written back to chain.
+            if pink::ext().is_in_transaction() {
+                return Err(Error::NoPollForTransaction);
+            }
+
+            // TODO: support workflow interval
+            for workflow_id in 0..self.next_workflow_id {
+                let job = self.ensure_enabled_workflow(workflow_id)?;
+                let callee = self.get_js_runner()?;
+                // pub fn run(&self, actions: String) -> bool, 0xb95b5eb3
+                const SELECTOR_RUN: [u8; 4] = [0xb9, 0x5b, 0x5e, 0xb3];
+                // this only lives in this call
+                self.workflow_session = Some(workflow_id);
+                let _call_result = build_call::<pink::PinkEnvironment>()
+                    .call(callee)
+                    // .gas_limit(5000)
+                    .transferred_value(0)
+                    .exec_input(
+                        ExecutionInput::new(Selector::new(SELECTOR_RUN)).push_arg(job.commandline),
+                    )
+                    .returns::<bool>()
+                    .invoke();
+            }
+            Ok(())
+        }
+
+        /// Only self-initiated call is allowed
         #[ink(message)]
         pub fn sign_evm_transaction(&self, tx: Vec<u8>) -> Result<Vec<u8>> {
-            // TODO: access control
-            let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
-            let phttp = PinkHttp::new(config.rpc.clone());
+            let workflow_id = self.ensure_workflow_session()?;
+
+            let account_id = self
+                .authorized_account
+                .get(workflow_id)
+                .ok_or(Error::NoAuthorizedExternalAccount)?;
+            let account = self.ensure_enabled_external_account(account_id)?;
+            let phttp = PinkHttp::new(account.rpc.clone());
             let web3 = pink_web3::Web3::new(phttp);
 
-            let sk = pink_web3::keys::pink::KeyPair::from(config.eth_sk);
+            let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
 
             let tx: TransactionRequest =
                 json::from_slice(&tx).or(Err(Error::BadUnsignedTransaction))?;
@@ -245,6 +335,42 @@ mod simple_cloud_wallet {
                 Ok(())
             } else {
                 Err(Error::BadOrigin)
+            }
+        }
+
+        fn ensure_workflow_session(&self) -> Result<WorkflowId> {
+            if self.workflow_session.is_some() {
+                Ok(self.workflow_session.unwrap())
+            } else {
+                Err(Error::BadWorkflowSession)
+            }
+        }
+
+        fn ensure_workflow(&self, id: WorkflowId) -> Result<Workflow> {
+            self.workflows.get(id).ok_or(Error::WorkflowNotFound)
+        }
+
+        fn ensure_enabled_workflow(&self, id: WorkflowId) -> Result<Workflow> {
+            let workflow = self.ensure_workflow(id)?;
+            if !workflow.enabled {
+                Err(Error::WorkflowDisabled)
+            } else {
+                Ok(workflow)
+            }
+        }
+
+        fn ensure_external_account(&self, id: ExternalAccountId) -> Result<EvmAccount> {
+            self.external_accounts
+                .get(id)
+                .ok_or(Error::ExternalAccountNotFound)
+        }
+
+        fn ensure_enabled_external_account(&self, id: ExternalAccountId) -> Result<EvmAccount> {
+            let account = self.ensure_external_account(id)?;
+            if !account.enabled {
+                Err(Error::ExternalAccountDisabled)
+            } else {
+                Ok(account)
             }
         }
     }
@@ -269,22 +395,22 @@ mod simple_cloud_wallet {
             EnvVars { rpc, key }
         }
 
-        #[ink::test]
-        fn sign_transaction_works() {
-            let _ = env_logger::try_init();
-            pink_extension_runtime::mock_ext::mock_all_ext();
+        // #[ink::test]
+        // fn sign_transaction_works() {
+        //     let _ = env_logger::try_init();
+        //     pink_extension_runtime::mock_ext::mock_all_ext();
 
-            let EnvVars { rpc, key } = config();
+        //     let EnvVars { rpc, key } = config();
 
-            let mut wallet = SimpleCloudWallet::default();
-            wallet.config(rpc, key).unwrap();
+        //     let mut wallet = SimpleCloudWallet::default();
+        //     wallet.config(rpc, key).unwrap();
 
-            let tx: TransactionRequest = Default::default();
-            let tx = json::to_vec(&tx).expect("Transaction encoding error");
-            let signed_tx = wallet
-                .sign_evm_transaction(tx)
-                .expect("Transaction signing failed");
-            println!("res: {:#?}", hex::encode(signed_tx));
-        }
+        //     let tx: TransactionRequest = Default::default();
+        //     let tx = json::to_vec(&tx).expect("Transaction encoding error");
+        //     let signed_tx = wallet
+        //         .sign_evm_transaction(tx)
+        //         .expect("Transaction signing failed");
+        //     println!("res: {:#?}", hex::encode(signed_tx));
+        // }
     }
 }
