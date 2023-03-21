@@ -13,8 +13,9 @@ mod simple_cloud_wallet {
     use pink_extension::chain_extension::signing;
     use pink_json as json;
     use pink_web3::{
+        signing::Key,
         transports::{pink_http::PinkHttp, resolve_ready},
-        types::{TransactionParameters, TransactionRequest},
+        types::{TransactionParameters, TransactionRequest, H160},
     };
     use scale::{Decode, Encode};
 
@@ -82,6 +83,7 @@ mod simple_cloud_wallet {
         NoAuthorizedExternalAccount,
         ExternalAccountNotFound,
         ExternalAccountDisabled,
+        FailedToGetEthAccounts(String),
         FailedToSignTransaction(String),
     }
     pub type Result<T> = core::result::Result<T, Error>;
@@ -174,6 +176,15 @@ mod simple_cloud_wallet {
                 self.workflows.insert(id, &workflow);
             }
             Ok(())
+        }
+
+        #[ink(message)]
+        pub fn get_evm_account_address(&mut self, id: ExternalAccountId) -> Result<H160> {
+            self.ensure_owner()?;
+
+            let account = self.ensure_enabled_external_account(id)?;
+            let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
+            Ok(sk.address())
         }
 
         /// Gets the total number of external accounts
@@ -443,6 +454,46 @@ mod simple_cloud_wallet {
             ));
             assert!(matches!(
                 wallet.disable_workflow(wf1_id),
+                Err(Error::BadOrigin)
+            ));
+        }
+
+        #[ink::test]
+        fn external_account_management_works() {
+            let _ = env_logger::try_init();
+            pink_extension_runtime::mock_ext::mock_all_ext();
+
+            let EnvVars { rpc, key } = config();
+
+            let mut wallet = SimpleCloudWallet::default();
+
+            // Account generation
+            let ea1_id = wallet.generate_evm_account(rpc.clone()).unwrap();
+            let _ = wallet.generate_evm_account(rpc.clone()).unwrap();
+            assert_eq!(wallet.external_account_count(), 2);
+            let _address = wallet.get_evm_account_address(ea1_id).unwrap();
+
+            // Deprecated for first release
+            assert!(matches!(
+                wallet.import_evm_account(rpc.clone(), key.clone()),
+                Err(Error::Deprecated)
+            ));
+            assert!(matches!(
+                wallet.dump_evm_account(ea1_id),
+                Err(Error::Deprecated)
+            ));
+
+            // Access control
+            let accounts = ink::env::test::default_accounts::<pink::PinkEnvironment>();
+            let contract = ink::env::account_id::<pink::PinkEnvironment>();
+            ink::env::test::set_callee::<pink::PinkEnvironment>(contract);
+            ink::env::test::set_caller::<pink::PinkEnvironment>(accounts.bob);
+            assert!(matches!(
+                wallet.generate_evm_account(rpc.clone()),
+                Err(Error::BadOrigin)
+            ));
+            assert!(matches!(
+                wallet.get_evm_account_address(ea1_id),
                 Err(Error::BadOrigin)
             ));
         }
