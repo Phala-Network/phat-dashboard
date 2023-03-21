@@ -386,7 +386,6 @@ mod simple_cloud_wallet {
     #[cfg(test)]
     mod tests {
         use super::*;
-        use pink_web3::types::TransactionRequest;
 
         struct EnvVars {
             rpc: String,
@@ -498,22 +497,25 @@ mod simple_cloud_wallet {
             ));
         }
 
-        // #[ink::test]
-        // fn sign_transaction_works() {
-        //     let _ = env_logger::try_init();
-        //     pink_extension_runtime::mock_ext::mock_all_ext();
+        #[ink::test]
+        fn workflow_auth_works() {
+            let _ = env_logger::try_init();
+            pink_extension_runtime::mock_ext::mock_all_ext();
 
-        //     let EnvVars { rpc, key } = config();
+            let EnvVars { rpc, key: _ } = config();
 
-        //     let mut wallet = SimpleCloudWallet::default();
-        //     wallet.config(rpc, key).unwrap();
+            let mut wallet = SimpleCloudWallet::default();
 
-        //     let tx: TransactionRequest = Default::default();
-        //     let tx = json::to_vec(&tx).expect("Transaction encoding error");
-        //     let signed_tx = wallet
-        //         .sign_evm_transaction(tx)
-        //         .expect("Transaction signing failed");
-        //     println!("res: {:#?}", hex::encode(signed_tx));
-        // }
+            let cmd = String::from("[
+                {\"cmd\": \"fetch\", \"config\": {\"returnTextBody\":true,\"url\":\"https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR\"}},
+                {\"cmd\": \"eval\", \"config\": \"Math.round(JSON.parse(input.body).USD)\"},
+                {\"cmd\": \"eval\", \"config\": \"numToUint8Array32(input)\"},
+            ]");
+            let wf1_id = wallet.add_workflow(cmd.clone()).unwrap();
+            let ea1_id = wallet.generate_evm_account(rpc.clone()).unwrap();
+
+            wallet.authorize_workflow(wf1_id, ea1_id).unwrap();
+            assert_eq!(wallet.get_authorized_account(wf1_id), Some(ea1_id));
+        }
     }
 }
