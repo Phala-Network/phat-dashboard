@@ -27,6 +27,7 @@ mod simple_cloud_wallet {
     pub enum EvmAccountType {
         Imported,
         Generated,
+        Dumped,
     }
 
     #[ink(storage)]
@@ -179,7 +180,7 @@ mod simple_cloud_wallet {
         }
 
         #[ink(message)]
-        pub fn get_evm_account_address(&mut self, id: ExternalAccountId) -> Result<H160> {
+        pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
             self.ensure_owner()?;
 
             let account = self.ensure_enabled_external_account(id)?;
@@ -220,9 +221,6 @@ mod simple_cloud_wallet {
             rpc: String,
             sk: Vec<u8>,
         ) -> Result<ExternalAccountId> {
-            // Deprecated in first release
-            return Err(Error::Deprecated);
-
             self.ensure_owner()?;
 
             let id = self.next_external_account_id;
@@ -241,19 +239,18 @@ mod simple_cloud_wallet {
 
         /// Dump an EVM account secret key, this will disable it and zeroize the sk, only owner is allowed
         #[ink(message)]
-        pub fn dump_evm_account(&mut self, id: ExternalAccountId) -> Result<[u8; 32]> {
+        pub fn dump_evm_account(&mut self, id: ExternalAccountId) -> Result<()> {
             // Deprecated in first release
             return Err(Error::Deprecated);
 
             self.ensure_owner()?;
 
             let mut account = self.ensure_enabled_external_account(id)?;
-            let sk = account.sk;
             account.enabled = false;
-            account.sk = [0; 32];
+            account.account_type = EvmAccountType::Dumped;
             self.external_accounts.insert(id, &account);
 
-            Ok(sk)
+            Ok(())
         }
 
         /// Authorize workflow to use account, only owner is allowed
