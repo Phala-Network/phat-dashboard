@@ -41,10 +41,7 @@ mod simple_cloud_wallet {
     }
 
     #[derive(Encode, Decode, Debug)]
-    #[cfg_attr(
-        feature = "std",
-        derive(scale_info::TypeInfo, StorageLayout)
-    )]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     struct Config {
         js_runner: AccountId,
     }
@@ -393,6 +390,61 @@ mod simple_cloud_wallet {
             let rpc = get_env("RPC");
             let key = hex::decode(get_env("PRIVKEY")).expect("hex decode failed");
             EnvVars { rpc, key }
+        }
+
+        #[ink::test]
+        fn workflow_management_works() {
+            let _ = env_logger::try_init();
+            pink_extension_runtime::mock_ext::mock_all_ext();
+
+            let mut wallet = SimpleCloudWallet::default();
+
+            // Basic add and get
+            let cmd = String::from("[
+                {\"cmd\": \"fetch\", \"config\": {\"returnTextBody\":true,\"url\":\"https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR\"}},
+                {\"cmd\": \"eval\", \"config\": \"Math.round(JSON.parse(input.body).USD)\"},
+                {\"cmd\": \"eval\", \"config\": \"numToUint8Array32(input)\"},
+            ]");
+            let wf1_id = wallet.add_workflow(cmd.clone()).unwrap();
+            let _ = wallet.add_workflow(cmd.clone()).unwrap();
+            assert_eq!(wallet.workflow_count(), 2);
+
+            let wf1_details = wallet.get_workflow(wf1_id).unwrap();
+            assert_eq!(wf1_details.commandline, cmd);
+            assert!(wf1_details.enabled);
+            assert!(matches!(
+                wallet.get_workflow(3),
+                Err(Error::WorkflowNotFound)
+            ));
+
+            // Account enable and disable
+            let _ = wallet.disable_workflow(wf1_id);
+            let wf1_details = wallet.get_workflow(wf1_id).unwrap();
+            assert!(!wf1_details.enabled);
+
+            let _ = wallet.enable_workflow(wf1_id);
+            let wf1_details = wallet.get_workflow(wf1_id).unwrap();
+            assert!(wf1_details.enabled);
+
+            // Access control
+            let accounts = ink::env::test::default_accounts::<pink::PinkEnvironment>();
+            let contract = ink::env::account_id::<pink::PinkEnvironment>();
+            ink::env::test::set_callee::<pink::PinkEnvironment>(contract);
+            ink::env::test::set_caller::<pink::PinkEnvironment>(accounts.bob);
+
+            assert!(matches!(
+                wallet.add_workflow(cmd.clone()),
+                Err(Error::BadOrigin)
+            ));
+            assert!(matches!(wallet.get_workflow(wf1_id), Err(Error::BadOrigin)));
+            assert!(matches!(
+                wallet.enable_workflow(wf1_id),
+                Err(Error::BadOrigin)
+            ));
+            assert!(matches!(
+                wallet.disable_workflow(wf1_id),
+                Err(Error::BadOrigin)
+            ));
         }
 
         // #[ink::test]
