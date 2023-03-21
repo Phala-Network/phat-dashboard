@@ -110,32 +110,16 @@ describe("Run lego actions", () => {
     before(async function () {
       this.timeout(30_000);
       // Deploy contract
-      lego = await legoFactory.instantiate("default", [], {
-        transferToCluster: 1e12,
-      });
+      lego = await legoFactory.instantiate("default", [], {});
       evmTransaction = await evmTransactionFactory.instantiate("default", [], {});
-      cloudWallet = await cloudWalletFactory.instantiate("default", [], {});
+      // STEP 0: now the stake goes to simple_cloud_wallet since it initiates all the call
+      cloudWallet = await cloudWalletFactory.instantiate("default", [], { transferToCluster: 1e12 });
       await sleep(3_000);
     });
 
-    it("can run actions", async function () {
-      function cfg(o: object) {
-        return JSON.stringify(o);
-      }
-
+    it("can setup contracts", async function () {
       const rpc = process.env.RPC;
       const ethSecretKey = process.env.PRIVKEY;
-
-      // config simple_cloud_wallet
-      await TxHandler.handle(
-        cloudWallet.tx.config({ gasLimit: "10000000000000" }, rpc, [...Uint8Array.from(Buffer.from(ethSecretKey, 'hex'))]),
-        alice,
-        true,
-      );
-      await checkUntil(async () => {
-        const result = await cloudWallet.query.getRpc(certAlice, {});
-        return !result.output.toJSON().ok.err;
-      }, 1000 * 10);
 
       // config action_evm_transaction
       await TxHandler.handle(
@@ -147,6 +131,42 @@ describe("Run lego actions", () => {
         const result = await evmTransaction.query.getRpc(certAlice, {});
         return !result.output.toJSON().ok.err;
       }, 1000 * 10);
+
+      // STEP 1: config simple_cloud_wallet to the lego contract address
+      await TxHandler.handle(
+        cloudWallet.tx.config({ gasLimit: "10000000000000" }, lego.address),
+        alice,
+        true,
+      );
+
+      // STEP 2: generate the external ETH account, the ExternalAccountId increases from 0
+      // importEvmAccount is only available for debug, will be disabled in first release
+      await TxHandler.handle(
+        cloudWallet.tx.importEvmAccount({ gasLimit: "10000000000000" }, rpc, [...Uint8Array.from(Buffer.from(ethSecretKey, 'hex'))]),
+        alice,
+        true,
+      );
+      // await TxHandler.handle(
+      //   cloudWallet.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
+      //   alice,
+      //   true,
+      // );
+
+      await checkUntil(async () => {
+        const resultJsRunner = await cloudWallet.query.getJsRunner(certAlice, {});
+        // console.log(`cloudWallet js_runner: ${JSON.stringify(resultJsRunner)}`);
+        const resultAccountCount = await cloudWallet.query.externalAccountCount(certAlice, {});
+        const resultAccount = await cloudWallet.query.getEvmAccountAddress(certAlice, {}, 0); // 0 for ExternalAccountId
+        // console.log(`cloudWallet account_0: ${JSON.stringify(resultAccount)}`);
+        return !resultJsRunner.output.toJSON().ok.err
+          && !resultAccount.output.toJSON().ok.err && resultAccountCount.output.toJSON().ok === 1;
+      }, 1000 * 10);
+    });
+
+    it("can run actions", async function () {
+      function cfg(o: object) {
+        return JSON.stringify(o);
+      }
 
       // call action_evm_transaction to build EVM tx
       const calleeEvmTransaction = evmTransaction.address.toHex();
@@ -176,9 +196,9 @@ describe("Run lego actions", () => {
 
       const actions_json = `[
         {"cmd": "fetch", "config": ${cfg({
-          returnTextBody: true,
-          url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
-        })}},
+        returnTextBody: true,
+        url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
+      })}},
         {"cmd": "eval", "config": "Math.round(JSON.parse(input.body).USD)"},
         {"cmd": "eval", "config": "numToUint8Array32(input)"},
         {"cmd": "eval", "config": "scale.encode(['${arg_to}', [${arg_abi}], '${arg_function}', [[${arg_param_0}], input]], scale.encodeBuildTx)"},
@@ -191,7 +211,32 @@ describe("Run lego actions", () => {
         {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorMaybeSendTransaction })}},
         {"cmd": "log"}
       ]`;
-      const result = await lego.query.run(certAlice, {}, actions_json);
+
+      // STEP 3: add the workflow, the WorkflowId increases from 0
+      await TxHandler.handle(
+        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, actions_json),
+        alice,
+        true,
+      );
+      // STEP 4: authorize the workflow to ask for the ETH account signing
+      await TxHandler.handle(
+        cloudWallet.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 0, 0),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const resultWorkflow = await cloudWallet.query.getWorkflow(certAlice, {}, 0); // 0 for WorkflowId
+        // console.log(`cloudWallet workflow: ${JSON.stringify(resultWorkflow)}`);
+        const resultWorkflowCount = await cloudWallet.query.workflowCount(certAlice, {});
+        const resultAuthorized = await cloudWallet.query.getAuthorizedAccount(certAlice, {}, 0); // 0 for WorkflowId
+        // console.log(`cloudWallet authorize: ${JSON.stringify(resultAuthorized)}`);
+        return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === 1
+          && resultAuthorized.output.toJSON().ok === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
+      }, 1000 * 10);
+
+      // Trigger the workflow execution, this will be done by our daemon server instead of frontend
+      const result = await cloudWallet.query.poll(certAlice, {});
+      console.log(`cloudWallet poll: ${JSON.stringify(result)}`);
       expect(!result.output.toJSON().ok.err).to.be.true;
     });
   });
