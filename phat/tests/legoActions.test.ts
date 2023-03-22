@@ -114,6 +114,9 @@ describe("Run lego actions", () => {
       evmTransaction = await evmTransactionFactory.instantiate("default", [], {});
       // STEP 0: now the stake goes to simple_cloud_wallet since it initiates all the call
       cloudWallet = await cloudWalletFactory.instantiate("default", [], { transferToCluster: 1e12 });
+      console.log(`Lego deployed to ${lego.address.toHex()}`);
+      console.log(`ActionEvm deployed to ${evmTransaction.address.toHex()}`);
+      console.log(`CloudWallet deployed to ${cloudWallet.address.toHex()}`);
       await sleep(3_000);
     });
 
@@ -131,13 +134,15 @@ describe("Run lego actions", () => {
         const result = await evmTransaction.query.getRpc(certAlice, {});
         return !result.output.toJSON().ok.err;
       }, 1000 * 10);
+      console.log("ActionEvm configured");
 
       // STEP 1: config simple_cloud_wallet to the lego contract address
       await TxHandler.handle(
-        cloudWallet.tx.config({ gasLimit: "10000000000000" }, lego.address),
+        cloudWallet.tx.config({ gasLimit: "10000000000000" }, lego.address.toHex()),
         alice,
         true,
       );
+      console.log("CloudWallet configured");
 
       // STEP 2: generate the external ETH account, the ExternalAccountId increases from 0
       // importEvmAccount is only available for debug, will be disabled in first release
@@ -151,6 +156,7 @@ describe("Run lego actions", () => {
       //   alice,
       //   true,
       // );
+      console.log("CloudWallet account imported");
 
       await checkUntil(async () => {
         const resultJsRunner = await cloudWallet.query.getJsRunner(certAlice, {});

@@ -308,13 +308,17 @@ mod simple_cloud_wallet {
         /// Only self-initiated call is allowed
         #[ink(message)]
         pub fn sign_evm_transaction(&self, tx: Vec<u8>) -> Result<Vec<u8>> {
+            pink::info!("[TEST]: entering sign_evm_transaction()");
             let workflow_id = self.ensure_workflow_session()?;
+            pink::info!("[TEST]: workflow_id {}", workflow_id);
 
             let account_id = self
                 .authorized_account
                 .get(workflow_id)
                 .ok_or(Error::NoAuthorizedExternalAccount)?;
+            pink::info!("[TEST]: account_id {}", account_id);
             let account = self.ensure_enabled_external_account(account_id)?;
+            pink::info!("[TEST]: account {:?}", &account);
             let phttp = PinkHttp::new(account.rpc.clone());
             let web3 = pink_web3::Web3::new(phttp);
 
