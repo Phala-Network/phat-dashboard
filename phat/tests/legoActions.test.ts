@@ -210,10 +210,10 @@ describe("Run lego actions", () => {
         {"cmd": "eval", "config": "scale.encode(['${arg_to}', [${arg_abi}], '${arg_function}', [[${arg_param_0}], input]], scale.encodeBuildTx)"},
         {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorBuildTransaction })}},
         {"cmd": "eval", "config": "scale.decode(input, scale.decodeResultVecU8)"},
-        {"cmd": "eval", "config": "scale.encode(input.content.content, scale.encodeVecU8)"},
+        {"cmd": "eval", "config": "scale.encode(input.content, scale.encodeVecU8)"},
         {"cmd": "call", "config": ${cfg({ "callee": calleeWallet, "selector": selectorSignEvmTransaction })}},
         {"cmd": "eval", "config": "scale.decode(input, scale.decodeResultVecU8)"},
-        {"cmd": "eval", "config": "scale.encode(input.content.content, scale.encodeVecU8)"},
+        {"cmd": "eval", "config": "scale.encode(input.content, scale.encodeVecU8)"},
         {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorMaybeSendTransaction })}},
         {"cmd": "log"}
       ]`;
