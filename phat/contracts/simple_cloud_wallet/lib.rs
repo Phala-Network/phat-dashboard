@@ -296,6 +296,7 @@ mod simple_cloud_wallet {
                     .call(callee)
                     // .gas_limit(5000)
                     .transferred_value(0)
+                    .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
                     .exec_input(
                         ExecutionInput::new(Selector::new(SELECTOR_RUN)).push_arg(job.commandline),
                     )
