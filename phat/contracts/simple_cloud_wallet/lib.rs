@@ -275,6 +275,16 @@ mod simple_cloud_wallet {
             self.authorized_account.get(workflow)
         }
 
+        /// This is an internal function which should only called by `poll()` in a cross-contract manner
+        #[ink(message)]
+        pub fn set_workflow_session(&mut self, workflow: WorkflowId) -> Result<()> {
+            if self.env().caller() != self.env().account_id() {
+                return Err(Error::BadOrigin);
+            }
+            self.workflow_session = Some(workflow);
+            Ok(())
+        }
+
         /// Called by a scheduler periodically
         #[ink(message)]
         pub fn poll(&mut self) -> Result<()> {
@@ -289,18 +299,32 @@ mod simple_cloud_wallet {
             // TODO: support workflow interval
             for workflow_id in 0..self.next_workflow_id {
                 let job = self.ensure_enabled_workflow(workflow_id)?;
-                let callee = self.get_js_runner()?;
-                // pub fn run(&self, actions: String) -> bool, 0xb95b5eb3
-                const SELECTOR_RUN: [u8; 4] = [0xb9, 0x5b, 0x5e, 0xb3];
-                // this only lives in this call
-                self.workflow_session = Some(workflow_id);
+                // call `this.set_workflow_session()` in a cross-contract manner to let the `self.workflow_session` value
+                // change take effect
+                // this value change only lives in this execution since `poll()` is called with query
+                let _ = build_call::<pink::PinkEnvironment>()
+                    .call(self.env().account_id())
+                    .transferred_value(0)
+                    .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
+                    .exec_input(
+                        ExecutionInput::new(Selector::new(ink::selector_bytes!(
+                            "set_workflow_session"
+                        )))
+                        .push_arg(job.id),
+                    )
+                    .returns::<Result<()>>()
+                    .invoke();
+
+                let js_runner = self.get_js_runner()?;
                 let _call_result = build_call::<pink::PinkEnvironment>()
-                    .call(callee)
+                    .call(js_runner)
                     // .gas_limit(5000)
                     .transferred_value(0)
                     .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
                     .exec_input(
-                        ExecutionInput::new(Selector::new(SELECTOR_RUN)).push_arg(job.commandline),
+                        // pub fn run(&self, actions: String) -> bool, 0xb95b5eb3
+                        ExecutionInput::new(Selector::new(ink::selector_bytes!("run")))
+                            .push_arg(job.commandline),
                     )
                     .returns::<bool>()
                     .invoke();

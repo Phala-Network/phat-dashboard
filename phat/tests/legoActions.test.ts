@@ -202,9 +202,9 @@ describe("Run lego actions", () => {
 
       const actions_json = `[
         {"cmd": "fetch", "config": ${cfg({
-        returnTextBody: true,
-        url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
-      })}},
+          returnTextBody: true,
+          url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
+        })}},
         {"cmd": "eval", "config": "Math.round(JSON.parse(input.body).USD)"},
         {"cmd": "eval", "config": "numToUint8Array32(input)"},
         {"cmd": "eval", "config": "scale.encode(['${arg_to}', [${arg_abi}], '${arg_function}', [[${arg_param_0}], input]], scale.encodeBuildTx)"},
@@ -220,7 +220,7 @@ describe("Run lego actions", () => {
 
       // STEP 3: add the workflow, the WorkflowId increases from 0
       await TxHandler.handle(
-        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, actions_json),
+        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestWorkflow", actions_json),
         alice,
         true,
       );

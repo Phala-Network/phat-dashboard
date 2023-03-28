@@ -10,7 +10,7 @@ export namespace SimpleCloudWallet {
     type InkPrimitives_LangError = { CouldNotReadInput: null };
     type Result = { Ok: Result } | { Err: InkPrimitives_LangError };
     type SimpleCloudWallet_SimpleCloudWallet_Error = { BadOrigin: null } | { NotConfigured: null } | { Deprecated: null } | { NoPollForTransaction: null } | { BadWorkflowSession: null } | { BadEvmSecretKey: null } | { BadUnsignedTransaction: null } | { WorkflowNotFound: null } | { WorkflowDisabled: null } | { NoAuthorizedExternalAccount: null } | { ExternalAccountNotFound: null } | { ExternalAccountDisabled: null } | { FailedToGetEthAccounts: string } | { FailedToSignTransaction: string };
-    type SimpleCloudWallet_SimpleCloudWallet_Workflow = { id: number, enabled: boolean, commandline: string };
+    type SimpleCloudWallet_SimpleCloudWallet_Workflow = { id: number, name: string, enabled: boolean, commandline: string };
     type PrimitiveTypes_H160 = any;
     type Option = { None: null } | { Some: number };
 
@@ -76,7 +76,7 @@ export namespace SimpleCloudWallet {
         }
 
         export interface AddWorkflow extends DPT.ContractTx {
-            (options: ContractOptions, commandline: string): DPT.SubmittableExtrinsic;
+            (options: ContractOptions, name: string, commandline: string): DPT.SubmittableExtrinsic;
         }
 
         export interface EnableWorkflow extends DPT.ContractTx {
@@ -102,6 +102,10 @@ export namespace SimpleCloudWallet {
         export interface AuthorizeWorkflow extends DPT.ContractTx {
             (options: ContractOptions, workflow: number, account: number): DPT.SubmittableExtrinsic;
         }
+
+        export interface SetWorkflowSession extends DPT.ContractTx {
+            (options: ContractOptions, workflow: number): DPT.SubmittableExtrinsic;
+        }
     }
 
     export interface MapMessageTx extends DPT.MapMessageTx {
@@ -113,6 +117,7 @@ export namespace SimpleCloudWallet {
         importEvmAccount: ContractTx.ImportEvmAccount;
         dumpEvmAccount: ContractTx.DumpEvmAccount;
         authorizeWorkflow: ContractTx.AuthorizeWorkflow;
+        setWorkflowSession: ContractTx.SetWorkflowSession;
     }
 
     /** */
