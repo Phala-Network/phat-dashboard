@@ -65,6 +65,7 @@ mod simple_cloud_wallet {
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub struct Workflow {
         id: WorkflowId,
+        name: String,
         enabled: bool,
         commandline: String,
     }
@@ -132,13 +133,14 @@ mod simple_cloud_wallet {
 
         /// Adds a new workflow, only owner is allowed
         #[ink(message)]
-        pub fn add_workflow(&mut self, commandline: String) -> Result<WorkflowId> {
+        pub fn add_workflow(&mut self, name: String, commandline: String) -> Result<WorkflowId> {
             self.ensure_owner()?;
 
             let id = self.next_workflow_id;
             // TODO: validate commandline?
             let workflow = Workflow {
                 id,
+                name,
                 enabled: true,
                 commandline,
             };
@@ -375,7 +377,10 @@ mod simple_cloud_wallet {
                 .ok_or(Error::ExternalAccountNotFound)
         }
 
-        fn ensure_enabled_external_account(&self, id: ExternalAccountId) -> Result<ExternalAccount> {
+        fn ensure_enabled_external_account(
+            &self,
+            id: ExternalAccountId,
+        ) -> Result<ExternalAccount> {
             let account = self.ensure_external_account(id)?;
             if !account.enabled {
                 Err(Error::ExternalAccountDisabled)
@@ -417,8 +422,9 @@ mod simple_cloud_wallet {
                 {\"cmd\": \"eval\", \"config\": \"Math.round(JSON.parse(input.body).USD)\"},
                 {\"cmd\": \"eval\", \"config\": \"numToUint8Array32(input)\"},
             ]");
-            let wf1_id = wallet.add_workflow(cmd.clone()).unwrap();
-            let _ = wallet.add_workflow(cmd.clone()).unwrap();
+            let name = String::from("TestWorkflow");
+            let wf1_id = wallet.add_workflow(name.clone(), cmd.clone()).unwrap();
+            let _ = wallet.add_workflow(name.clone(), cmd.clone()).unwrap();
             assert_eq!(wallet.workflow_count(), 2);
 
             let wf1_details = wallet.get_workflow(wf1_id).unwrap();
@@ -445,7 +451,7 @@ mod simple_cloud_wallet {
             ink::env::test::set_caller::<pink::PinkEnvironment>(accounts.bob);
 
             assert!(matches!(
-                wallet.add_workflow(cmd.clone()),
+                wallet.add_workflow(name.clone(), cmd.clone()),
                 Err(Error::BadOrigin)
             ));
             assert!(matches!(wallet.get_workflow(wf1_id), Err(Error::BadOrigin)));
@@ -513,7 +519,8 @@ mod simple_cloud_wallet {
                 {\"cmd\": \"eval\", \"config\": \"Math.round(JSON.parse(input.body).USD)\"},
                 {\"cmd\": \"eval\", \"config\": \"numToUint8Array32(input)\"},
             ]");
-            let wf1_id = wallet.add_workflow(cmd.clone()).unwrap();
+            let name = String::from("TestWorkflow");
+            let wf1_id = wallet.add_workflow(name.clone(), cmd.clone()).unwrap();
             let ea1_id = wallet.generate_evm_account(rpc.clone()).unwrap();
 
             wallet.authorize_workflow(wf1_id, ea1_id).unwrap();
