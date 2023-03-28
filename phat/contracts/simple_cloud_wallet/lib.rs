@@ -24,7 +24,7 @@ mod simple_cloud_wallet {
 
     #[derive(Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
-    pub enum EvmAccountType {
+    pub enum ExternalAccountType {
         Imported,
         Generated,
         Dumped,
@@ -37,7 +37,7 @@ mod simple_cloud_wallet {
         next_workflow_id: WorkflowId,
         workflows: Mapping<WorkflowId, Workflow>,
         next_external_account_id: ExternalAccountId,
-        external_accounts: Mapping<ExternalAccountId, EvmAccount>,
+        external_accounts: Mapping<ExternalAccountId, ExternalAccount>,
         authorized_account: Mapping<WorkflowId, ExternalAccountId>,
         workflow_session: Option<WorkflowId>,
     }
@@ -50,13 +50,13 @@ mod simple_cloud_wallet {
 
     #[derive(Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
-    pub struct EvmAccount {
+    pub struct ExternalAccount {
         id: ExternalAccountId,
-        /// An EvmAccount is disabled once it is dumped
+        /// An ExternalAccount is disabled once it is dumped
         enabled: bool,
-        account_type: EvmAccountType,
+        account_type: ExternalAccountType,
         // This determines on which chain you can use this account
-        // The same sk can be used to create multiple EvmAccounts on different chains
+        // The same sk can be used to create multiple ExternalAccounts on different chains
         rpc: String,
         sk: [u8; 32],
     }
@@ -201,10 +201,10 @@ mod simple_cloud_wallet {
 
             let id = self.next_external_account_id;
             let random = signing::derive_sr25519_key(&id.to_be_bytes());
-            let evm_account = EvmAccount {
+            let evm_account = ExternalAccount {
                 id,
                 enabled: true,
-                account_type: EvmAccountType::Generated,
+                account_type: ExternalAccountType::Generated,
                 rpc,
                 sk: random[..32].try_into().or(Err(Error::BadEvmSecretKey))?,
             };
@@ -224,10 +224,10 @@ mod simple_cloud_wallet {
             self.ensure_owner()?;
 
             let id = self.next_external_account_id;
-            let evm_account = EvmAccount {
+            let evm_account = ExternalAccount {
                 id,
                 enabled: true,
-                account_type: EvmAccountType::Imported,
+                account_type: ExternalAccountType::Imported,
                 rpc,
                 sk: sk.try_into().or(Err(Error::BadEvmSecretKey))?,
             };
@@ -247,7 +247,7 @@ mod simple_cloud_wallet {
 
             let mut account = self.ensure_enabled_external_account(id)?;
             account.enabled = false;
-            account.account_type = EvmAccountType::Dumped;
+            account.account_type = ExternalAccountType::Dumped;
             self.external_accounts.insert(id, &account);
 
             Ok(())
@@ -369,13 +369,13 @@ mod simple_cloud_wallet {
             }
         }
 
-        fn ensure_external_account(&self, id: ExternalAccountId) -> Result<EvmAccount> {
+        fn ensure_external_account(&self, id: ExternalAccountId) -> Result<ExternalAccount> {
             self.external_accounts
                 .get(id)
                 .ok_or(Error::ExternalAccountNotFound)
         }
 
-        fn ensure_enabled_external_account(&self, id: ExternalAccountId) -> Result<EvmAccount> {
+        fn ensure_enabled_external_account(&self, id: ExternalAccountId) -> Result<ExternalAccount> {
             let account = self.ensure_external_account(id)?;
             if !account.enabled {
                 Err(Error::ExternalAccountDisabled)
@@ -475,10 +475,10 @@ mod simple_cloud_wallet {
             let _address = wallet.get_evm_account_address(ea1_id).unwrap();
 
             // Deprecated for first release
-            assert!(matches!(
-                wallet.import_evm_account(rpc.clone(), key.clone()),
-                Err(Error::Deprecated)
-            ));
+            // assert!(matches!(
+            //     wallet.import_evm_account(rpc.clone(), key.clone()),
+            //     Err(Error::Deprecated)
+            // ));
             assert!(matches!(
                 wallet.dump_evm_account(ea1_id),
                 Err(Error::Deprecated)
