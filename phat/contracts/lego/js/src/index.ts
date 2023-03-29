@@ -108,9 +108,9 @@ function actionEval(action: ActionEval, input: any, context: any): any {
   type Tuple = [string, number[], string, (number[])[]];
   const encodeBuildTx = scaleCore.createTupleEncoder<Tuple>([scaleCore.encodeStr, scaleCore.createVecEncoder(scaleCore.encodeU8), scaleCore.encodeStr, scaleCore.createVecEncoder(scaleCore.createVecEncoder(scaleCore.encodeU8))]);
 
-  // ink! 4 will automatically add a wrapper to the result, so Result<Result<Vec<u8>>>
-  const decodeResultVecU8 = scaleCore.createResultDecoder(
-    scaleCore.createResultDecoder<number[], any>(scaleCore.createVecDecoder(scaleCore.decodeU8), scaleCore.createEnumDecoder({
+  const decodeResultVecU8 = scaleCore.createResultDecoder<number[], any>(
+    scaleCore.createVecDecoder(scaleCore.decodeU8),
+    scaleCore.createEnumDecoder({
       0: 'BadOrigin',
       1: 'NotConfigured',
       2: 'BadAbi',
@@ -118,7 +118,8 @@ function actionEval(action: ActionEval, input: any, context: any): any {
       4: 'BadToAddress',
       5: 'BadTransaction',
       6: 'FailedToSendTransaction'
-    })), scaleCore.decodeStr);
+    })
+  );
 
   const scale = {
     encode: scaleCore.WalkerImpl.encode,

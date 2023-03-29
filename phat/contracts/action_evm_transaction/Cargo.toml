@@ -12,12 +12,12 @@ ink = { version = "4", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
-primitive-types = { version = "0.11", default-features = false, features = ["codec", "scale-info"] }
+primitive-types = { version = "0.12", default-features = false, features = ["codec", "scale-info"] }
 
 pink-extension = { version = "0.4", default-features = false }
 pink-json = { git = "https://github.com/Phala-Network/pink-json.git", branch = "pink", default-features = false, features = ["de-number-as-str"] }
 pink-web3 = { version = "0.20", default-features = false, features = ["pink", "signing"] }
-ethabi = { version = "17.2.0", package = "pink-ethabi", default-features = false, features = [
+ethabi = { version = "18", default-features = false, features = [
     "serde",
     "rlp",
 ]}
@@ -33,7 +33,7 @@ path = "lib.rs"
 crate-type = [
 	# Used for normal contract Wasm blobs.
 	"cdylib",
-    "lib",
+    "rlib",
 ]
 
 [features]

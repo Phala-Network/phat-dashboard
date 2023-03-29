@@ -55,8 +55,9 @@ mod js {
                     .push_arg(script)
                     .push_arg(args),
             )
-            .returns::<Result<Output, String>>()
-            .invoke();
+            .returns::<Result<Result<Output, String>, ink::LangError>>()
+            .invoke()
+            .expect("Failed to invoke delegate call");
         pink::info!("eval result: {result:?}");
         result
     }
