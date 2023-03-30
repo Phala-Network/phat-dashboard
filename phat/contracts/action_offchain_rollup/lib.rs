@@ -2,10 +2,10 @@
 
 extern crate alloc;
 
-pub use crate::evm_price_feed::*;
+pub use crate::action_offchain_rollup::*;
 
 #[ink::contract(env = pink_extension::PinkEnvironment)]
-mod evm_price_feed {
+mod action_offchain_rollup {
     use alloc::{format, string::String, vec, vec::Vec};
     use ink::storage::traits::StorageLayout;
     use pink_extension as pink;
@@ -24,7 +24,7 @@ mod evm_price_feed {
     const TYPE_ERROR: u32 = 3;
 
     #[ink(storage)]
-    pub struct EvmPriceFeed {
+    pub struct ActionOffchainRollup {
         owner: AccountId,
         config: Option<Config>,
     }
@@ -75,7 +75,7 @@ mod evm_price_feed {
 
     type Result<T> = core::result::Result<T, Error>;
 
-    impl EvmPriceFeed {
+    impl ActionOffchainRollup {
         #[ink(constructor)]
         pub fn default() -> Self {
             Self {
@@ -371,7 +371,7 @@ mod evm_price_feed {
         fn fixed_parse() {
             let _ = env_logger::try_init();
             pink_extension_runtime::mock_ext::mock_all_ext();
-            let p = EvmPriceFeed::fetch_coingecko_price("polkadot", "usd").unwrap();
+            let p = ActionOffchainRollup::fetch_coingecko_price("polkadot", "usd").unwrap();
             pink::warn!("Price: {p:?}");
         }
 
@@ -382,7 +382,7 @@ mod evm_price_feed {
             pink_extension_runtime::mock_ext::mock_all_ext();
             let EnvVars { rpc, key, anchor } = config();
 
-            let mut price_feed = EvmPriceFeed::default();
+            let mut price_feed = ActionOffchainRollup::default();
             price_feed
                 .config(
                     rpc,
@@ -405,7 +405,7 @@ mod evm_price_feed {
             pink_extension_runtime::mock_ext::mock_all_ext();
             let EnvVars { rpc, key, anchor } = config();
 
-            let mut price_feed = EvmPriceFeed::default();
+            let mut price_feed = ActionOffchainRollup::default();
             price_feed
                 .config(
                     rpc,

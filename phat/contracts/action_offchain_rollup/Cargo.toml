@@ -1,5 +1,5 @@
 [package]
-name = "evm_price_feed"
+name = "action_offchain_rollup"
 version = "0.1.0"
 authors = ["[your_name] <[your_email]>"]
 edition = "2021"
@@ -38,12 +38,12 @@ phat_offchain_rollup = { path = "../../crates/rollup", default-features = false,
 hex-literal = "0.3"
 
 [lib]
-name = "evm_price_feed"
+name = "action_offchain_rollup"
 path = "lib.rs"
 crate-type = [
 	# Used for normal contract Wasm blobs.
 	"cdylib",
-    "lib",
+    "rlib",
 ]
 
 [features]

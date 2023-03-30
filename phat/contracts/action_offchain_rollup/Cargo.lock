@@ -13,6 +13,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "action_offchain_rollup"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "env_logger",
+ "ethabi",
+ "fixed",
+ "hex",
+ "hex-literal",
+ "ink",
+ "ink_env",
+ "parity-scale-codec",
+ "phat_offchain_rollup",
+ "pink-extension",
+ "pink-extension-runtime",
+ "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
+ "pink-kv-session",
+ "pink-web3",
+ "scale-info",
+ "serde",
+]
+
+[[package]]
 name = "ahash"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -571,29 +594,6 @@ dependencies = [
  "impl-serde",
  "primitive-types",
  "uint",
-]
-
-[[package]]
-name = "evm_price_feed"
-version = "0.1.0"
-dependencies = [
- "dotenvy",
- "env_logger",
- "ethabi",
- "fixed",
- "hex",
- "hex-literal",
- "ink",
- "ink_env",
- "parity-scale-codec",
- "phat_offchain_rollup",
- "pink-extension",
- "pink-extension-runtime",
- "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
- "pink-kv-session",
- "pink-web3",
- "scale-info",
- "serde",
 ]
 
 [[package]]
