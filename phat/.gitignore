@@ -12,4 +12,5 @@ node_modules
 !/artifacts/lego/
 !/artifacts/qjs/
 !/artifacts/action_evm_transaction/
+!/artifacts/action_offchain_rollup/
 !/artifacts/simple_cloud_wallet/

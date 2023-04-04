@@ -16,6 +16,7 @@ primitive-types = { version = "0.12.1", default-features = false, features = ["c
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
 pink-extension = { version = "0.4.1", default-features = false, optional = true }
+pink-json = { git = "https://github.com/Phala-Network/pink-json.git", branch = "pink", default-features = false, features = ["de-number-as-str"] }
 kv-session = { package = "pink-kv-session", version = "0.2" }
 
 # for EVM rollup
@@ -24,6 +25,7 @@ ethabi = { version = "18.0.0", default-features = false, features = [
     "serde",
     "rlp",
 ], optional = true }
+simple_cloud_wallet = { path = "../../contracts/simple_cloud_wallet", default-features = false, features = ["ink-as-dependency"], optional = true }
 
 # for Substrate rollup
 subrpc = { package = "pink-subrpc", version = "0.4.1", default-features = false, optional = true }
@@ -38,6 +40,7 @@ std = [
     "pink-web3/std",
     "ethabi/std",
     "subrpc/std",
+    "simple_cloud_wallet/std",
 ]
 logging = [
     "pink-extension",
@@ -50,4 +53,5 @@ evm = [
     "pink-web3",
     "ethabi",
     "pink-extension",
+    "simple_cloud_wallet",
 ]

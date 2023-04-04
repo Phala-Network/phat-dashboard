@@ -28,7 +28,13 @@ pub enum Error {
     SessionFailedToGetStorage,
 
     #[cfg(feature = "evm")]
+    BadEvmAccount,
+    #[cfg(feature = "evm")]
     BadEvmAnchorAbi,
+    #[cfg(feature = "evm")]
+    BadEvmParams,
+    #[cfg(feature = "evm")]
+    BadEvmTransaction,
     #[cfg(feature = "evm")]
     EvmFailedToSubmitTx(pink_web3::Error),
     #[cfg(feature = "evm")]

@@ -1625,11 +1625,13 @@ dependencies = [
  "ink",
  "parity-scale-codec",
  "pink-extension",
+ "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
  "pink-kv-session",
  "pink-subrpc",
  "pink-web3",
  "primitive-types",
  "scale-info",
+ "simple_cloud_wallet",
 ]
 
 [[package]]
@@ -2329,6 +2331,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "900fba806f70c630b0a382d0d825e17a0f19fcd059a2ade1ff237bcddf446b31"
 dependencies = [
  "lazy_static",
+]
+
+[[package]]
+name = "simple_cloud_wallet"
+version = "0.1.0"
+dependencies = [
+ "ink",
+ "parity-scale-codec",
+ "pink-extension",
+ "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
+ "pink-web3",
+ "primitive-types",
+ "scale-info",
+ "secp256k1 0.24.3",
 ]
 
 [[package]]
