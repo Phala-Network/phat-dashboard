@@ -181,6 +181,7 @@ mod simple_cloud_wallet {
             Ok(())
         }
 
+        /// Get the EVM account address of give id, only owner is allowed
         #[ink(message)]
         pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
             self.ensure_owner()?;
@@ -298,7 +299,7 @@ mod simple_cloud_wallet {
 
             // TODO: support workflow interval
             for workflow_id in 0..self.next_workflow_id {
-                let job = self.ensure_enabled_workflow(workflow_id)?;
+                let now_workflow = self.ensure_enabled_workflow(workflow_id)?;
                 // call `this.set_workflow_session()` in a cross-contract manner to let the `self.workflow_session` value
                 // change take effect
                 // this value change only lives in this execution since `poll()` is called with query
@@ -310,7 +311,7 @@ mod simple_cloud_wallet {
                         ExecutionInput::new(Selector::new(ink::selector_bytes!(
                             "set_workflow_session"
                         )))
-                        .push_arg(job.id),
+                        .push_arg(now_workflow.id),
                     )
                     .returns::<Result<()>>()
                     .invoke();
@@ -324,7 +325,7 @@ mod simple_cloud_wallet {
                     .exec_input(
                         // pub fn run(&self, actions: String) -> bool, 0xb95b5eb3
                         ExecutionInput::new(Selector::new(ink::selector_bytes!("run")))
-                            .push_arg(job.commandline),
+                            .push_arg(now_workflow.commandline),
                     )
                     .returns::<bool>()
                     .invoke();
@@ -334,14 +335,21 @@ mod simple_cloud_wallet {
 
         /// Only self-initiated call is allowed
         #[ink(message)]
+        pub fn get_current_evm_account_address(&self) -> Result<H160> {
+            let now_workflow_id = self.ensure_workflow_session()?;
+            self.get_evm_account_address(now_workflow_id)
+        }
+
+        /// Only self-initiated call is allowed
+        #[ink(message)]
         pub fn sign_evm_transaction(&self, tx: Vec<u8>) -> Result<Vec<u8>> {
             pink::info!("[TEST]: entering sign_evm_transaction()");
-            let workflow_id = self.ensure_workflow_session()?;
-            pink::info!("[TEST]: workflow_id {}", workflow_id);
+            let now_workflow_id = self.ensure_workflow_session()?;
+            pink::info!("[TEST]: now_workflow_id {}", now_workflow_id);
 
             let account_id = self
                 .authorized_account
-                .get(workflow_id)
+                .get(now_workflow_id)
                 .ok_or(Error::NoAuthorizedExternalAccount)?;
             pink::info!("[TEST]: account_id {}", account_id);
             let account = self.ensure_enabled_external_account(account_id)?;

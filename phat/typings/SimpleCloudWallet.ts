@@ -46,6 +46,10 @@ export namespace SimpleCloudWallet {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions, workflow: number): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
 
+        export interface GetCurrentEvmAccountAddress extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
+        }
+
         export interface SignEvmTransaction extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions, tx: number[]): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
@@ -63,6 +67,7 @@ export namespace SimpleCloudWallet {
         getEvmAccountAddress: ContractQuery.GetEvmAccountAddress;
         externalAccountCount: ContractQuery.ExternalAccountCount;
         getAuthorizedAccount: ContractQuery.GetAuthorizedAccount;
+        getCurrentEvmAccountAddress: ContractQuery.GetCurrentEvmAccountAddress;
         signEvmTransaction: ContractQuery.SignEvmTransaction;
         poll: ContractQuery.Poll;
     }
