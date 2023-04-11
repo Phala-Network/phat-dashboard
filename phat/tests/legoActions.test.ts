@@ -174,6 +174,10 @@ describe("Run lego actions", () => {
         return JSON.stringify(o);
       }
 
+      function toHexString(o: object) {
+        return Buffer.from(JSON.stringify(o)).toString('hex')
+      }
+
       // call action_evm_transaction to build EVM tx
       const calleeEvmTransaction = evmTransaction.address.toHex();
       // pub fn build_transaction(
@@ -200,7 +204,7 @@ describe("Run lego actions", () => {
       const arg_param_0 = Array(20).fill(0);
       // 32 byte `bytes calldata price`, this should be consturcted from the output of last step
 
-      const actions_json = `[
+      const actions_price_feed = `[
         {"cmd": "fetch", "config": ${cfg({
           returnTextBody: true,
           url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
@@ -218,9 +222,48 @@ describe("Run lego actions", () => {
         {"cmd": "log"}
       ]`;
 
+      const lensApiRequest = {
+        url: 'https://api-mumbai.lens.dev/',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: toHexString({
+          query: `
+          query Profile {
+            profile(request: { profileId: "0x01" }) {
+              stats {
+                totalPosts
+                totalComments
+                totalMirrors
+                totalPublications
+                totalCollects
+              }
+            }
+          }
+          `,
+        }),
+        returnTextBody: true,
+      };
+
+      const actions_lens_api = `[
+        {"cmd": "fetch", "config": ${cfg(lensApiRequest)}},
+        {"cmd": "eval", "config": "JSON.parse(input.body).data.profile.stats.totalPosts"},
+        {"cmd": "eval", "config": "numToUint8Array32(input)"},
+        {"cmd": "eval", "config": "scale.encode(['${arg_to}', [${arg_abi}], '${arg_function}', [[${arg_param_0}], input]], scale.encodeBuildTx)"},
+        {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorBuildTransaction })}},
+        {"cmd": "eval", "config": "scale.decode(input, scale.decodeResultVecU8)"},
+        {"cmd": "eval", "config": "scale.encode(input.content, scale.encodeVecU8)"},
+        {"cmd": "call", "config": ${cfg({ "callee": calleeWallet, "selector": selectorSignEvmTransaction })}},
+        {"cmd": "eval", "config": "scale.decode(input, scale.decodeResultVecU8)"},
+        {"cmd": "eval", "config": "scale.encode(input.content, scale.encodeVecU8)"},
+        {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorMaybeSendTransaction })}},
+        {"cmd": "log"}
+      ]`;
+
       // STEP 3: add the workflow, the WorkflowId increases from 0
       await TxHandler.handle(
-        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestWorkflow", actions_json),
+        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestWorkflow", actions_lens_api),
         alice,
         true,
       );
