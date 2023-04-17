@@ -1,8 +1,11 @@
 [package]
-name = "lego"
+name = "phat_js"
 version = "0.1.0"
-authors = ["[your_name] <[your_email]>"]
 edition = "2021"
+
+[lib]
+name = "phat_js"
+path = "lib.rs"
 
 [dependencies]
 ink = { version = "4", default-features = false }
@@ -11,15 +14,6 @@ scale = { package = "parity-scale-codec", version = "3", default-features = fals
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
 
 pink-extension = { version = "0.4", default-features = false }
-phat_js = { path = "../../crates/js", default-features = false }
-
-[lib]
-name = "lego"
-path = "lib.rs"
-crate-type = [
-	# Used for normal contract Wasm blobs.
-	"cdylib",
-]
 
 [features]
 default = ["std"]
@@ -27,6 +21,4 @@ std = [
     "ink/std",
     "scale/std",
     "scale-info/std",
-    "phat_js/std",
 ]
-ink-as-dependency = []
