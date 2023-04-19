@@ -12,6 +12,7 @@ import { PinkSystem } from "@/typings/PinkSystem";
 import { Lego } from "@/typings/Lego";
 import { ActionEvmTransaction } from "@/typings/ActionEvmTransaction";
 import { SimpleCloudWallet } from '@/typings/SimpleCloudWallet';
+import { ActionOffchainRollup } from '@/typings/ActionOffchainRollup';
 
 import "dotenv/config";
 
@@ -41,6 +42,8 @@ describe("Run lego actions", () => {
   let lego: Lego.Contract;
   let evmTransactionFactory: ActionEvmTransaction.Factory;
   let evmTransaction: ActionEvmTransaction.Contract;
+  let offchainRollupFactory: ActionOffchainRollup.Factory;
+  let offchainRollup: ActionOffchainRollup.Contract;
   let cloudWalletFactory: SimpleCloudWallet.Factory;
   let cloudWallet: SimpleCloudWallet.Contract;
 
@@ -71,11 +74,13 @@ describe("Run lego actions", () => {
     });
     legoFactory = await this.devPhase.getFactory('lego');
     evmTransactionFactory = await this.devPhase.getFactory('action_evm_transaction');
+    offchainRollupFactory = await this.devPhase.getFactory('action_offchain_rollup');
     cloudWalletFactory = await this.devPhase.getFactory('simple_cloud_wallet');
 
     await qjsFactory.deploy();
     await legoFactory.deploy();
     await evmTransactionFactory.deploy();
+    await offchainRollupFactory.deploy();
     await cloudWalletFactory.deploy();
 
     alice = this.devPhase.accounts.alice;
@@ -112,10 +117,12 @@ describe("Run lego actions", () => {
       // Deploy contract
       lego = await legoFactory.instantiate("default", [], {});
       evmTransaction = await evmTransactionFactory.instantiate("default", [], {});
+      offchainRollup = await offchainRollupFactory.instantiate("default", [], {});
       // STEP 0: now the stake goes to simple_cloud_wallet since it initiates all the call
       cloudWallet = await cloudWalletFactory.instantiate("default", [], { transferToCluster: 1e12 });
       console.log(`Lego deployed to ${lego.address.toHex()}`);
       console.log(`ActionEvm deployed to ${evmTransaction.address.toHex()}`);
+      console.log(`ActionOffchainRollup deployed to ${offchainRollup.address.toHex()}`);
       console.log(`CloudWallet deployed to ${cloudWallet.address.toHex()}`);
       await sleep(3_000);
     });
@@ -123,6 +130,29 @@ describe("Run lego actions", () => {
     it("can setup contracts", async function () {
       const rpc = process.env.RPC;
       const ethSecretKey = process.env.PRIVKEY;
+
+
+      await TxHandler.handle(
+        offchainRollup.tx.config({ gasLimit: "10000000000000" }, rpc, [...Uint8Array.from(Buffer.from('95222290dd7278aa3ddd389cc1e1d165cc4bafe5', 'hex'))], cloudWallet.address, `
+      function transform(arg) {
+          let input = JSON.parse(arg);
+          return input.data.profile.stats.totalCollects;
+      }
+      transform(scriptArgs[0])`),
+        alice,
+        true
+      );
+      console.log("offchain rollup configuring");
+      await checkUntil(async () => {
+        const result = await offchainRollup.query.getTransformJs(certAlice, {});
+        console.log(`${JSON.stringify(result)}`);
+        return !result.output.toJSON().ok.err;
+      }, 1000 * 10);
+      console.log("offchain rollup configured");
+
+      let res = await offchainRollup.query.fetchLensApiStats(certAlice, {}, "0x30783031"); // hex string for "0x01", polkadot.js will do the transformation for you
+
+      return;
 
       // config action_evm_transaction
       await TxHandler.handle(
@@ -206,9 +236,9 @@ describe("Run lego actions", () => {
 
       const actions_price_feed = `[
         {"cmd": "fetch", "config": ${cfg({
-          returnTextBody: true,
-          url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
-        })}},
+        returnTextBody: true,
+        url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
+      })}},
         {"cmd": "eval", "config": "Math.round(JSON.parse(input.body).USD)"},
         {"cmd": "eval", "config": "numToUint8Array32(input)"},
         {"cmd": "eval", "config": "scale.encode(['${arg_to}', [${arg_abi}], '${arg_function}', [[${arg_param_0}], input]], scale.encodeBuildTx)"},
@@ -233,6 +263,8 @@ describe("Run lego actions", () => {
           query Profile {
             profile(request: { profileId: "0x01" }) {
               stats {
+                totalFollowers
+                totalFollowing
                 totalPosts
                 totalComments
                 totalMirrors
@@ -248,7 +280,7 @@ describe("Run lego actions", () => {
 
       const actions_lens_api = `[
         {"cmd": "fetch", "config": ${cfg(lensApiRequest)}},
-        {"cmd": "eval", "config": "JSON.parse(input.body).data.profile.stats.totalPosts"},
+        {"cmd": "eval", "config": "JSON.parse(input.body).data.profile.stats.totalFollowers"},
         {"cmd": "eval", "config": "numToUint8Array32(input)"},
         {"cmd": "eval", "config": "scale.encode(['${arg_to}', [${arg_abi}], '${arg_function}', [[${arg_param_0}], input]], scale.encodeBuildTx)"},
         {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorBuildTransaction })}},

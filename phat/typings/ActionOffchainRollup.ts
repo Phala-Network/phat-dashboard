@@ -9,7 +9,7 @@ export namespace ActionOffchainRollup {
     type InkPrimitives_Types_AccountId = any;
     type InkPrimitives_LangError = { CouldNotReadInput: null };
     type Result = { Ok: Result } | { Err: InkPrimitives_LangError };
-    type ActionOffchainRollup_ActionOffchainRollup_Error = { BadOrigin: null } | { NotConfigured: null } | { InvalidKeyLength: null } | { InvalidAddressLength: null } | { NoRequestInQueue: null } | { FailedToCreateClient: null } | { FailedToCommitTx: null } | { FailedToFetchPrice: null } | { FailedToGetStorage: null } | { FailedToCreateTransaction: null } | { FailedToSendTransaction: null } | { FailedToGetBlockHash: null } | { FailedToDecode: null } | { InvalidRequest: null };
+    type ActionOffchainRollup_ActionOffchainRollup_Error = { BadOrigin: null } | { NotConfigured: null } | { InvalidKeyLength: null } | { InvalidAddressLength: null } | { NoRequestInQueue: null } | { FailedToCreateClient: null } | { FailedToCommitTx: null } | { FailedToFetchLensApi: null } | { FailedToGetStorage: null } | { FailedToCreateTransaction: null } | { FailedToSendTransaction: null } | { FailedToGetBlockHash: null } | { FailedToDecode: null } | { InvalidRequest: null };
     type Option = { None: null } | { Some: number[] };
 
     /** */
@@ -20,24 +20,24 @@ export namespace ActionOffchainRollup {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
 
-        export interface FeedPrice extends DPT.ContractQuery {
+        export interface GetTransformJs extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
 
-        export interface AnswerPrice extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
+        export interface FetchLensApiStats extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, profile_id: string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
 
-        export interface FeedCustomPrice extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, rpc: string, anchor_addr: DPT.FixedArray<number, 20>, account_contract: InkPrimitives_Types_AccountId, feed_id: number, price: number): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
+        export interface AnswerRequest extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
     }
 
     export interface MapMessageQuery extends DPT.MapMessageQuery {
         owner: ContractQuery.Owner;
-        feedPrice: ContractQuery.FeedPrice;
-        answerPrice: ContractQuery.AnswerPrice;
-        feedCustomPrice: ContractQuery.FeedCustomPrice;
+        getTransformJs: ContractQuery.GetTransformJs;
+        fetchLensApiStats: ContractQuery.FetchLensApiStats;
+        answerRequest: ContractQuery.AnswerRequest;
     }
 
     /** */
@@ -45,7 +45,7 @@ export namespace ActionOffchainRollup {
     /** */
     namespace ContractTx {
         export interface Config extends DPT.ContractTx {
-            (options: ContractOptions, rpc: string, anchor_addr: number[], account_contract: InkPrimitives_Types_AccountId, token0: string, token1: string, feed_id: number): DPT.SubmittableExtrinsic;
+            (options: ContractOptions, rpc: string, anchor_addr: number[], account_contract: InkPrimitives_Types_AccountId, transform_js: string): DPT.SubmittableExtrinsic;
         }
 
         export interface TransferOwnership extends DPT.ContractTx {

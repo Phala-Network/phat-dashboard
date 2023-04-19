@@ -568,6 +568,7 @@ dependencies = [
  "ink",
  "parity-scale-codec",
  "pink-extension",
+ "scale-info",
 ]
 
 [[package]]

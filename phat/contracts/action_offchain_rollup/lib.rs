@@ -16,6 +16,7 @@ mod action_offchain_rollup {
     // To enable `(result).log_err("Reason")?`
     use pink::ResultExt;
 
+    use phat_js as js;
     use phat_offchain_rollup::{clients::evm::EvmRollupClient, Action};
 
     // Defined in TestOracle.sol
@@ -38,12 +39,8 @@ mod action_offchain_rollup {
         anchor_addr: [u8; 20],
         /// AccountContract address to ask for tx signing
         account_contract: AccountId,
-        /// The first token in the trading pair
-        token0: String,
-        /// The sedon token in the trading pair
-        token1: String,
-        /// Submit price feed as this feed id
-        feed_id: u32,
+        /// Data transform function in Javascript
+        transform_js: String,
     }
 
     #[derive(Encode, Decode, Debug)]
@@ -57,7 +54,7 @@ mod action_offchain_rollup {
         NoRequestInQueue,
         FailedToCreateClient,
         FailedToCommitTx,
-        FailedToFetchPrice,
+        FailedToFetchLensApi,
 
         FailedToGetStorage,
         FailedToCreateTransaction,
@@ -97,9 +94,7 @@ mod action_offchain_rollup {
             rpc: String,
             anchor_addr: Vec<u8>,
             account_contract: AccountId,
-            token0: String,
-            token1: String,
-            feed_id: u32,
+            transform_js: String,
         ) -> Result<()> {
             self.ensure_owner()?;
             self.config = Some(Config {
@@ -108,11 +103,15 @@ mod action_offchain_rollup {
                     .try_into()
                     .or(Err(Error::InvalidAddressLength))?,
                 account_contract,
-                token0,
-                token1,
-                feed_id,
+                transform_js,
             });
             Ok(())
+        }
+
+        #[ink(message)]
+        pub fn get_transform_js(&self) -> Result<String> {
+            let config = self.ensure_configured()?;
+            Ok(config.transform_js.clone())
         }
 
         /// Transfers the ownership of the contract (admin only)
@@ -123,88 +122,40 @@ mod action_offchain_rollup {
             Ok(())
         }
 
-        /// Fetches the price of a trading pair from CoinGecko
-        fn fetch_coingecko_price(token0: &str, token1: &str) -> Result<u128> {
-            use fixed::types::U80F48 as Fp;
+        #[ink(message)]
+        pub fn fetch_lens_api_stats(&self, profile_id: String) -> Result<u128> {
+            let config = self.ensure_configured()?;
 
-            // Fetch the price from CoinGecko.
-            //
-            // Supported tokens are listed in the detailed documentation:
-            // <https://www.coingecko.com/en/api/documentation>
-            let url = format!(
-                "https://api.coingecko.com/api/v3/simple/price?ids={token0}&vs_currencies={token1}"
-            );
-            let headers = vec![("accept".into(), "application/json".into())];
-            let resp = pink::http_get!(url, headers);
+            let url = "https://api-mumbai.lens.dev/";
+            let headers = vec![("Content-Type".into(), "application/json".into())];
+            let body = format!("{{\"query\":\"\\n          query Profile {{\\n            profile(request: {{ profileId: \\\"{profile_id}\\\" }}) {{\\n              stats {{\\n                totalFollowers\\n                totalFollowing\\n                totalPosts\\n                totalComments\\n                totalMirrors\\n                totalPublications\\n                totalCollects\\n              }}\\n            }}\\n          }}\\n          \"}}");
+            pink::info!("Query string: {}", body);
+            let resp = pink::http_post!(url, body.as_bytes(), headers);
             if resp.status_code != 200 {
-                return Err(Error::FailedToFetchPrice);
+                pink::info!(
+                    "Status code: {}, reason: {}, body: {:?}",
+                    resp.status_code,
+                    resp.reason_phrase,
+                    resp.body
+                );
+                return Err(Error::FailedToFetchLensApi);
             }
-            // The response looks like:
-            //  {"polkadot":{"usd":5.41}}
-            //
-            // serde-json-core doesn't do well with dynamic keys. Therefore we play a trick here.
-            // We replace the first token name by "token0" and the second token name by "token1".
-            // Then we can get the json with constant field names. After the replacement, the above
-            // sample json becomes:
-            //  {"token0":{"token1":5.41}}
-            let json = String::from_utf8(resp.body)
-                .or(Err(Error::FailedToDecode))?
-                .replace(token0, "token0")
-                .replace(token1, "token1");
-            let parsed: PriceResponse = pink_json::from_str(&json)
-                .log_err("failed to parse json")
-                .or(Err(Error::FailedToDecode))?;
-            // Parse to a fixed point and convert to u128 by rebasing to 1e18
-            let fp = Fp::from_str(parsed.token0.token1)
-                .log_err("failed to parse real number")
-                .or(Err(Error::FailedToDecode))?;
-            let f = fp * Fp::from_num(1_000_000_000_000_000_000u128);
-            Ok(f.to_num())
+
+            let resp_body = String::from_utf8(resp.body).or(Err(Error::FailedToDecode))?;
+            pink::info!("Lens response: {}", resp_body);
+            let res = js::eval(config.transform_js.as_str(), &[resp_body]);
+            pink::info!("Receive Lens Api: {:?}", res);
+
+            Ok(233)
         }
 
-        /// Feeds a price by a rollup transaction
+        /// Processes a Lens Api stat request by a rollup transaction
         #[ink(message)]
-        pub fn feed_price(&self) -> Result<Option<Vec<u8>>> {
-            use ethabi::Token;
-            // Initialize a rollup client. The client tracks a "rollup transaction" that allows you
-            // to read, write, and execute actions on the target chain with atomicity.
-            let config = self.ensure_configured()?;
-            let mut client = connect(&config)?;
-
-            // Get the price and respond as a rollup action.
-            let price = Self::fetch_coingecko_price(&config.token0, &config.token1)?;
-
-            let payload = ethabi::encode(&[
-                Token::Uint(TYPE_FEED.into()),
-                Token::Uint(config.feed_id.into()),
-                Token::Uint(price.into()),
-            ]);
-
-            // Attach an action to the tx by:
-            client.action(Action::Reply(payload));
-
-            // An offchain rollup contract will get a dedicated kv store on the target blockchain.
-            // The kv store and the request queue can be accessed by the Phat Contract by:
-            // - client.session.get(key)
-            // - client.session.put(key, value)
-            // - client.session.pop()
-            //
-            // Note that all of the read, write, and custom actions are grouped as a transaction,
-            // which is applied on the target blockchain atomically.
-
-            // Business logic ends here.
-
-            // Submit the transaction if it's not empty
-            maybe_submit_tx(client, &config)
-        }
-
-        /// Processes a price request by a rollup transaction
-        #[ink(message)]
-        pub fn answer_price(&self) -> Result<Option<Vec<u8>>> {
+        pub fn answer_request(&self) -> Result<Option<Vec<u8>>> {
             use ethabi::Token;
             let config = self.ensure_configured()?;
             let mut client = connect(&config)?;
-            let action = match Self::answer_price_inner(&mut client)? {
+            let action = match self.answer_request_inner(&mut client)? {
                 PriceReponse::Response(rid, price) => ethabi::encode(&[
                     Token::Uint(TYPE_RESPONSE.into()),
                     Token::Uint(rid),
@@ -220,68 +171,64 @@ mod action_offchain_rollup {
             maybe_submit_tx(client, &config)
         }
 
-        /// Feeds a price data point to a customized rollup target.
-        ///
-        /// For dev purpose.
-        #[ink(message)]
-        pub fn feed_custom_price(
-            &self,
-            rpc: String,
-            anchor_addr: [u8; 20],
-            account_contract: AccountId,
-            feed_id: u32,
-            price: u128,
-        ) -> Result<Option<Vec<u8>>> {
-            use ethabi::Token;
-            let custom_config = Config {
-                rpc,
-                anchor_addr,
-                account_contract,
-                token0: Default::default(),
-                token1: Default::default(),
-                feed_id,
-            };
-            let mut client = connect(&custom_config)?;
-            let payload = ethabi::encode(&[
-                Token::Uint(TYPE_FEED.into()),
-                Token::Uint(feed_id.into()),
-                Token::Uint(price.into()),
-            ]);
-            client.action(Action::Reply(payload));
-            maybe_submit_tx(client, &custom_config)
-        }
+        // /// Feeds a price data point to a customized rollup target.
+        // ///
+        // /// For dev purpose.
+        // #[ink(message)]
+        // pub fn feed_custom_price(
+        //     &self,
+        //     rpc: String,
+        //     anchor_addr: [u8; 20],
+        //     account_contract: AccountId,
+        //     feed_id: u32,
+        //     price: u128,
+        // ) -> Result<Option<Vec<u8>>> {
+        //     use ethabi::Token;
+        //     let custom_config = Config {
+        //         rpc,
+        //         anchor_addr,
+        //         account_contract,
+        //         token0: Default::default(),
+        //         token1: Default::default(),
+        //         feed_id,
+        //     };
+        //     let mut client = connect(&custom_config)?;
+        //     let payload = ethabi::encode(&[
+        //         Token::Uint(TYPE_FEED.into()),
+        //         Token::Uint(feed_id.into()),
+        //         Token::Uint(price.into()),
+        //     ]);
+        //     client.action(Action::Reply(payload));
+        //     maybe_submit_tx(client, &custom_config)
+        // }
 
-        fn answer_price_inner(client: &mut EvmRollupClient) -> Result<PriceReponse> {
+        fn answer_request_inner(&self, client: &mut EvmRollupClient) -> Result<PriceReponse> {
             use ethabi::{ParamType, Token};
             use pink_kv_session::traits::QueueSession;
             // Get a request if presents
             let raw_req = client
                 .session()
                 .pop()
-                .log_err("answer_price: failed to read queue")
+                .log_err("answer_request: failed to read queue")
                 .or(Err(Error::FailedToGetStorage))?
                 .ok_or(Error::NoRequestInQueue)?;
             // Decode the queue data by ethabi (u256, bytes)
             let Ok(decoded) = ethabi::decode(&[ParamType::Uint(32), ParamType::Bytes], &raw_req) else {
                 return Ok(PriceReponse::Error(None, Error::FailedToDecode))
             };
-            let [Token::Uint(rid), Token::Bytes(pair)] = decoded.as_slice() else {
+            let [Token::Uint(rid), Token::Bytes(profile_id)] = decoded.as_slice() else {
                 return Err(Error::FailedToDecode);
             };
             // Extract tokens from "token0/token1" string
-            let pair = String::from_utf8_lossy(&pair);
-            let pair_components: Vec<&str> = pair.split('/').collect();
-            let [token0, token1] = pair_components.as_slice() else {
-                return Ok(PriceReponse::Error(Some(*rid), Error::InvalidRequest))
-            };
-            pink::info!("Request received: ({token0}, {token1})");
+            let profile_id = String::from_utf8_lossy(&profile_id);
+            pink::info!("Request received: ({profile_id})");
             // Get the price and respond as a rollup action.
-            let result = Self::fetch_coingecko_price(token0, token1);
+            let result = self.fetch_lens_api_stats(String::from(profile_id));
             match result {
-                Ok(price) => {
+                Ok(res) => {
                     // Respond
-                    pink::info!("Price: {price}");
-                    Ok(PriceReponse::Response(*rid, price))
+                    pink::info!("Precessed result: {res}");
+                    Ok(PriceReponse::Response(*rid, res))
                 }
                 // Error when fetching the price. Could be
                 Err(Error::FailedToDecode) => {
@@ -351,7 +298,6 @@ mod action_offchain_rollup {
 
         struct EnvVars {
             rpc: String,
-            key: Vec<u8>,
             anchor: Vec<u8>,
         }
 
@@ -361,18 +307,39 @@ mod action_offchain_rollup {
         fn config() -> EnvVars {
             dotenvy::dotenv().ok();
             let rpc = get_env("RPC");
-            let key = hex::decode(get_env("PRIVKEY")).expect("hex decode failed");
             let anchor = hex::decode(get_env("ANCHOR")).expect("hex decode failed");
-            EnvVars { rpc, key, anchor }
+            EnvVars { rpc, anchor }
         }
 
         #[ink::test]
-        fn fixed_parse() {
+        fn data_transform() {
             let _ = env_logger::try_init();
             pink_extension_runtime::mock_ext::mock_all_ext();
-            let p = ActionOffchainRollup::fetch_coingecko_price("polkadot", "usd").unwrap();
-            pink::warn!("Price: {p:?}");
+            let EnvVars { rpc, anchor } = config();
+
+            let mut oracle = ActionOffchainRollup::default();
+            let transform_js = String::from(
+                "
+            function transform(input) {
+                return input.data.profile.stats.totalCollects;
+            }
+            transform(scriptArgs[0])
+            ",
+            );
+            oracle
+                .config(rpc, anchor, AccountId::from([0u8; 32]), transform_js)
+                .unwrap();
+            let total_collects = oracle.fetch_lens_api_stats(String::from("0x01")).unwrap();
+            assert_eq!(total_collects, 1591);
         }
+
+        // #[ink::test]
+        // fn fixed_parse() {
+        //     let _ = env_logger::try_init();
+        //     pink_extension_runtime::mock_ext::mock_all_ext();
+        //     let p = ActionOffchainRollup::fetch_coingecko_price("polkadot", "usd").unwrap();
+        //     pink::warn!("Price: {p:?}");
+        // }
 
         // #[ink::test]
         // #[ignore]

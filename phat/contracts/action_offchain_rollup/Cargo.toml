@@ -27,6 +27,7 @@ ethabi = { version = "18.0.0", default-features = false, features = [
 
 phat_offchain_rollup = { path = "../../crates/rollup", default-features = false, features = ["evm"] }
 pink-kv-session = "0.2"
+phat_js = { path = "../../crates/js", default-features = false }
 
 hex = { version = "0.4", default-features = false }
 
@@ -55,6 +56,7 @@ std = [
     "scale-info/std",
     "phat_offchain_rollup/std",
     "pink-extension/std",
+    "phat_js/std",
     "pink-json/std",
     "pink-web3/std",
     "ethabi/std",

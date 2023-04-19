@@ -25,6 +25,7 @@ dependencies = [
  "ink",
  "ink_env",
  "parity-scale-codec",
+ "phat_js",
  "phat_offchain_rollup",
  "pink-extension",
  "pink-extension-runtime",
@@ -1615,6 +1616,16 @@ name = "percent-encoding"
 version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
+
+[[package]]
+name = "phat_js"
+version = "0.1.0"
+dependencies = [
+ "ink",
+ "parity-scale-codec",
+ "pink-extension",
+ "scale-info",
+]
 
 [[package]]
 name = "phat_offchain_rollup"
