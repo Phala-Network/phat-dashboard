@@ -19,10 +19,9 @@ mod action_offchain_rollup {
     use phat_js as js;
     use phat_offchain_rollup::{clients::evm::EvmRollupClient, Action};
 
-    // Defined in TestOracle.sol
+    // Defined in TestLensOracle.sol
     const TYPE_RESPONSE: u32 = 0;
-    const TYPE_FEED: u32 = 1;
-    const TYPE_ERROR: u32 = 3;
+    const TYPE_ERROR: u32 = 2;
 
     #[ink(storage)]
     pub struct ActionOffchainRollup {
