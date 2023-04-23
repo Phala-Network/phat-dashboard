@@ -1,21 +1,21 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const TestPriceReceiver = await ethers.getContractFactory("TestPriceReceiver");
+  const TestOracle = await ethers.getContractFactory("TestOracle");
 
   const [deployer] = await ethers.getSigners();
 
   console.log('Deploying...');
-  const receiver = await TestPriceReceiver.deploy();
-  await Promise.all([
-    receiver.deployed(),
-  ])
+  const attestor = deployer.address;  // When deploy for real e2e test, change it to the real attestor wallet.
+  const oracle = await TestOracle.deploy(attestor);
+  await oracle.deployed();
   console.log('Deployed', {
-    receiver: receiver.address,
+    oracle: oracle.address,
   });
 
   console.log('Configuring...');
-  await receiver.connect(deployer).getRecvLength();
+  await oracle.connect(deployer).request("bitcoin/usd");
+  await oracle.connect(deployer).registerFeed(0, "polkadot/usd");
   console.log('Done');
 }
 

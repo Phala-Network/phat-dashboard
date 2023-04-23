@@ -41,6 +41,8 @@ pub enum Error {
     EvmFailedToEstimateGas(pink_web3::contract::Error),
     #[cfg(feature = "evm")]
     EvmFailedToGetStorage(pink_web3::contract::Error),
+    #[cfg(feature = "evm")]
+    EvmFailedToPrepareMetaTx(pink_web3::contract::Error),
 
     QueueIndexOverflow,
     LockVersionOverflow,

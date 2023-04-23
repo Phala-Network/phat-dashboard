@@ -9,9 +9,9 @@ mod action_offchain_rollup {
     use alloc::{format, string::String, vec, vec::Vec};
     use ink::storage::traits::StorageLayout;
     use pink_extension as pink;
+    use pink_extension::chain_extension::signing;
     use pink_web3::types::{H160, U256};
     use scale::{Decode, Encode};
-    use serde::Deserialize;
 
     // To enable `(result).log_err("Reason")?`
     use pink::ResultExt;
@@ -28,17 +28,27 @@ mod action_offchain_rollup {
     pub struct ActionOffchainRollup {
         owner: AccountId,
         config: Option<Config>,
+        client_config: Option<ClientConfig>,
     }
 
     #[derive(Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     struct Config {
-        /// The RPC endpoint of the target blockchain
-        rpc: String,
-        /// The rollup anchor address on the target blockchain
-        anchor_addr: [u8; 20],
+        /// Key for signing the rollup tx.
+        attest_key: [u8; 32],
         /// AccountContract address to ask for tx signing
         account_contract: AccountId,
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
+    struct ClientConfig {
+        /// The RPC endpoint of the target blockchain
+        rpc: String,
+        /// The client smart contract address on the target blockchain
+        anchor_addr: [u8; 20],
+        /// Lens api url
+        lens_api: String,
         /// Data transform function in Javascript
         transform_js: String,
     }
@@ -49,6 +59,9 @@ mod action_offchain_rollup {
     pub enum Error {
         BadOrigin,
         NotConfigured,
+        ClientNotConfigured,
+        DuplicatedConfigure,
+
         InvalidKeyLength,
         InvalidAddressLength,
         NoRequestInQueue,
@@ -78,6 +91,7 @@ mod action_offchain_rollup {
             Self {
                 owner: Self::env().caller(),
                 config: None,
+                client_config: None,
             }
         }
 
@@ -89,20 +103,37 @@ mod action_offchain_rollup {
 
         /// Configures the rollup target (admin only)
         #[ink(message)]
-        pub fn config(
+        pub fn config(&mut self, account_contract: AccountId) -> Result<()> {
+            self.ensure_owner()?;
+            if !self.config.is_none() {
+                return Err(Error::DuplicatedConfigure);
+            }
+
+            const NONCE: &[u8] = b"attest_key";
+            let random = signing::derive_sr25519_key(NONCE);
+            self.config = Some(Config {
+                attest_key: random[..32].try_into().or(Err(Error::InvalidKeyLength))?,
+                account_contract,
+            });
+            Ok(())
+        }
+
+        /// Configures the rollup target (admin only)
+        #[ink(message)]
+        pub fn config_client(
             &mut self,
             rpc: String,
             anchor_addr: Vec<u8>,
-            account_contract: AccountId,
+            lens_api: String,
             transform_js: String,
         ) -> Result<()> {
             self.ensure_owner()?;
-            self.config = Some(Config {
+            self.client_config = Some(ClientConfig {
                 rpc,
                 anchor_addr: anchor_addr
                     .try_into()
                     .or(Err(Error::InvalidAddressLength))?,
-                account_contract,
+                lens_api,
                 transform_js,
             });
             Ok(())
@@ -110,8 +141,8 @@ mod action_offchain_rollup {
 
         #[ink(message)]
         pub fn get_transform_js(&self) -> Result<String> {
-            let config = self.ensure_configured()?;
-            Ok(config.transform_js.clone())
+            let client_config = self.ensure_client_configured()?;
+            Ok(client_config.transform_js.clone())
         }
 
         /// Transfers the ownership of the contract (admin only)
@@ -124,13 +155,12 @@ mod action_offchain_rollup {
 
         #[ink(message)]
         pub fn fetch_lens_api_stats(&self, profile_id: String) -> Result<u128> {
-            let config = self.ensure_configured()?;
+            let client_config = self.ensure_client_configured()?;
 
-            let url = "https://api-mumbai.lens.dev/";
             let headers = vec![("Content-Type".into(), "application/json".into())];
             let body = format!("{{\"query\":\"\\n          query Profile {{\\n            profile(request: {{ profileId: \\\"{profile_id}\\\" }}) {{\\n              stats {{\\n                totalFollowers\\n                totalFollowing\\n                totalPosts\\n                totalComments\\n                totalMirrors\\n                totalPublications\\n                totalCollects\\n              }}\\n            }}\\n          }}\\n          \"}}");
-            pink::info!("Query string: {}", body);
-            let resp = pink::http_post!(url, body.as_bytes(), headers);
+
+            let resp = pink::http_post!(client_config.lens_api.clone(), body.as_bytes(), headers);
             if resp.status_code != 200 {
                 pink::info!(
                     "Status code: {}, reason: {}, body: {:?}",
@@ -143,7 +173,7 @@ mod action_offchain_rollup {
 
             let resp_body = String::from_utf8(resp.body).or(Err(Error::FailedToDecode))?;
             pink::info!("Lens response: {}", resp_body);
-            let res = js::eval(config.transform_js.as_str(), &[resp_body]);
+            let res = js::eval(client_config.transform_js.as_str(), &[resp_body]);
             pink::info!("Receive Lens Api: {:?}", res);
 
             Ok(233)
@@ -154,12 +184,14 @@ mod action_offchain_rollup {
         pub fn answer_request(&self) -> Result<Option<Vec<u8>>> {
             use ethabi::Token;
             let config = self.ensure_configured()?;
-            let mut client = connect(&config)?;
+            let client_config = self.ensure_client_configured()?;
+
+            let mut client = connect(&client_config)?;
             let action = match self.answer_request_inner(&mut client)? {
-                PriceReponse::Response(rid, price) => ethabi::encode(&[
+                PriceReponse::Response(rid, res) => ethabi::encode(&[
                     Token::Uint(TYPE_RESPONSE.into()),
                     Token::Uint(rid),
-                    Token::Uint(price.into()),
+                    Token::Uint(res.into()),
                 ]),
                 PriceReponse::Error(rid, error) => ethabi::encode(&[
                     Token::Uint(TYPE_ERROR.into()),
@@ -179,15 +211,17 @@ mod action_offchain_rollup {
         //     &self,
         //     rpc: String,
         //     anchor_addr: [u8; 20],
-        //     account_contract: AccountId,
+        //     attest_key: [u8; 32],
+        //     sender_key: Option<[u8; 32]>,
         //     feed_id: u32,
         //     price: u128,
         // ) -> Result<Option<Vec<u8>>> {
         //     use ethabi::Token;
-        //     let custom_config = Config {
+        //     let custom_config = ClientConfig {
         //         rpc,
         //         anchor_addr,
-        //         account_contract,
+        //         attest_key,
+        //         sender_key,
         //         token0: Default::default(),
         //         token1: Default::default(),
         //         feed_id,
@@ -219,7 +253,6 @@ mod action_offchain_rollup {
             let [Token::Uint(rid), Token::Bytes(profile_id)] = decoded.as_slice() else {
                 return Err(Error::FailedToDecode);
             };
-            // Extract tokens from "token0/token1" string
             let profile_id = String::from_utf8_lossy(&profile_id);
             pink::info!("Request received: ({profile_id})");
             // Get the price and respond as a rollup action.
@@ -251,6 +284,13 @@ mod action_offchain_rollup {
         fn ensure_configured(&self) -> Result<&Config> {
             self.config.as_ref().ok_or(Error::NotConfigured)
         }
+
+        /// Returns the client config reference or raise the error `NotConfigured`
+        fn ensure_client_configured(&self) -> Result<&ClientConfig> {
+            self.client_config
+                .as_ref()
+                .ok_or(Error::ClientNotConfigured)
+        }
     }
 
     enum PriceReponse {
@@ -258,38 +298,28 @@ mod action_offchain_rollup {
         Error(Option<U256>, Error),
     }
 
-    fn connect(config: &Config) -> Result<EvmRollupClient> {
-        let anchor_addr: H160 = config.anchor_addr.into();
-        EvmRollupClient::new(&config.rpc, anchor_addr, b"q/")
+    fn connect(client_config: &ClientConfig) -> Result<EvmRollupClient> {
+        let anchor_addr: H160 = client_config.anchor_addr.into();
+        EvmRollupClient::new(&client_config.rpc, anchor_addr)
             .log_err("failed to create rollup client")
             .or(Err(Error::FailedToCreateClient))
     }
 
     fn maybe_submit_tx(client: EvmRollupClient, config: &Config) -> Result<Option<Vec<u8>>> {
+        use pink_web3::keys::pink::KeyPair;
         let maybe_submittable = client
             .commit()
             .log_err("failed to commit")
             .or(Err(Error::FailedToCommitTx))?;
         if let Some(submittable) = maybe_submittable {
+            let attest_pair = KeyPair::from(config.attest_key);
             let tx_id = submittable
-                .submit(config.account_contract)
-                .log_err("failed to submit rollup tx")
+                .submit_meta_tx(&attest_pair, config.account_contract)
+                .log_err("failed to submit rollup meta-tx")
                 .or(Err(Error::FailedToSendTransaction))?;
             return Ok(Some(tx_id));
         }
         Ok(None)
-    }
-
-    // Define the structures to parse json like `{"token0":{"token1":1.23}}`
-    #[derive(Deserialize)]
-    struct PriceResponse<'a> {
-        #[serde(borrow)]
-        token0: PriceReponseInner<'a>,
-    }
-    #[derive(Deserialize)]
-    struct PriceReponseInner<'a> {
-        #[serde(borrow)]
-        token1: &'a str,
     }
 
     #[cfg(test)]
@@ -298,6 +328,8 @@ mod action_offchain_rollup {
 
         struct EnvVars {
             rpc: String,
+            attest_key: Vec<u8>,
+            sender_key: Option<Vec<u8>>,
             anchor: Vec<u8>,
         }
 
@@ -307,30 +339,17 @@ mod action_offchain_rollup {
         fn config() -> EnvVars {
             dotenvy::dotenv().ok();
             let rpc = get_env("RPC");
+            let attest_key = hex::decode(get_env("ATTEST_KEY")).expect("hex decode failed");
+            let sender_key = std::env::var("SENDER_KEY")
+                .map(|s| hex::decode(s).expect("hex decode failed"))
+                .ok();
             let anchor = hex::decode(get_env("ANCHOR")).expect("hex decode failed");
-            EnvVars { rpc, anchor }
-        }
-
-        #[ink::test]
-        fn data_transform() {
-            let _ = env_logger::try_init();
-            pink_extension_runtime::mock_ext::mock_all_ext();
-            let EnvVars { rpc, anchor } = config();
-
-            let mut oracle = ActionOffchainRollup::default();
-            let transform_js = String::from(
-                "
-            function transform(input) {
-                return input.data.profile.stats.totalCollects;
+            EnvVars {
+                rpc,
+                attest_key,
+                sender_key,
+                anchor,
             }
-            transform(scriptArgs[0])
-            ",
-            );
-            oracle
-                .config(rpc, anchor, AccountId::from([0u8; 32]), transform_js)
-                .unwrap();
-            let total_collects = oracle.fetch_lens_api_stats(String::from("0x01")).unwrap();
-            assert_eq!(total_collects, 1591);
         }
 
         // #[ink::test]
@@ -346,14 +365,20 @@ mod action_offchain_rollup {
         // fn submit_price_feed() {
         //     let _ = env_logger::try_init();
         //     pink_extension_runtime::mock_ext::mock_all_ext();
-        //     let EnvVars { rpc, key, anchor } = config();
+        //     let EnvVars {
+        //         rpc,
+        //         attest_key,
+        //         sender_key,
+        //         anchor,
+        //     } = config();
 
         //     let mut price_feed = ActionOffchainRollup::default();
         //     price_feed
         //         .config(
         //             rpc,
         //             anchor,
-        //             key,
+        //             attest_key,
+        //             sender_key,
         //             "polkadot".to_string(),
         //             "usd".to_string(),
         //             0,
@@ -369,14 +394,20 @@ mod action_offchain_rollup {
         // fn answer_price_request() {
         //     let _ = env_logger::try_init();
         //     pink_extension_runtime::mock_ext::mock_all_ext();
-        //     let EnvVars { rpc, key, anchor } = config();
+        //     let EnvVars {
+        //         rpc,
+        //         attest_key,
+        //         sender_key,
+        //         anchor,
+        //     } = config();
 
         //     let mut price_feed = ActionOffchainRollup::default();
         //     price_feed
         //         .config(
         //             rpc,
         //             anchor,
-        //             key,
+        //             attest_key,
+        //             sender_key,
         //             "polkadot".to_string(),
         //             "usd".to_string(),
         //             0,

@@ -30,6 +30,10 @@ simple_cloud_wallet = { path = "../../contracts/simple_cloud_wallet", default-fe
 # for Substrate rollup
 subrpc = { package = "pink-subrpc", version = "0.4.1", default-features = false, optional = true }
 
+[dev-dependencies]
+hex-literal = "0.4.1"
+pink-extension-runtime = { version = "0.4.0", default-features = false }
+
 [features]
 default = ["std", "logging"]
 std = [
