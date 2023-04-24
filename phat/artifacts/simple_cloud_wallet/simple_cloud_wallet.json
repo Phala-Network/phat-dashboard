@@ -1,8 +1,8 @@
 {
   "source": {
-    "hash": "0xe9ab66c78420b450c212d2db91a55c8b2933bc85d86ab234841088be61739ed5",
+    "hash": "0xc4dbbc67fb085ee7d98b8bb1994fd76333e1791df3d04060485166d92d317fa5",
     "language": "ink! 4.0.1",
-    "compiler": "rustc 1.68.0",
+    "compiler": "rustc 1.68.2",
     "build_info": {
       "build_mode": "Debug",
       "cargo_contract_version": "2.1.0",
@@ -126,12 +126,21 @@
       {
         "args": [
           {
+            "label": "name",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 4
+            }
+          },
+          {
             "label": "commandline",
             "type": {
               "displayName": [
                 "String"
               ],
-              "type": 5
+              "type": 4
             }
           }
         ],
@@ -243,7 +252,9 @@
             }
           }
         ],
-        "docs": [],
+        "docs": [
+          " Get the EVM account address of give id, only owner is allowed"
+        ],
         "label": "get_evm_account_address",
         "mutates": false,
         "payable": false,
@@ -281,7 +292,7 @@
               "displayName": [
                 "String"
               ],
-              "type": 5
+              "type": 4
             }
           }
         ],
@@ -308,7 +319,7 @@
               "displayName": [
                 "String"
               ],
-              "type": 5
+              "type": 4
             }
           },
           {
@@ -425,6 +436,33 @@
         "selector": "0x844c3aa0"
       },
       {
+        "args": [
+          {
+            "label": "workflow",
+            "type": {
+              "displayName": [
+                "WorkflowId"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "docs": [
+          " This is an internal function which should only called by `poll()` in a cross-contract manner"
+        ],
+        "label": "set_workflow_session",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 13
+        },
+        "selector": "0xf5ad3222"
+      },
+      {
         "args": [],
         "docs": [
           " Called by a scheduler periodically"
@@ -440,6 +478,23 @@
           "type": 13
         },
         "selector": "0x1e44dfc6"
+      },
+      {
+        "args": [],
+        "docs": [
+          " Only self-initiated call is allowed"
+        ],
+        "label": "get_current_evm_account_address",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 21
+        },
+        "selector": "0xa6b3afd3"
       },
       {
         "args": [
@@ -554,13 +609,22 @@
                               "ty": 4
                             }
                           },
-                          "name": "enabled"
+                          "name": "name"
                         },
                         {
                           "layout": {
                             "leaf": {
                               "key": "0xdb36a4a5",
                               "ty": 5
+                            }
+                          },
+                          "name": "enabled"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0xdb36a4a5",
+                              "ty": 4
                             }
                           },
                           "name": "commandline"
@@ -602,7 +666,7 @@
                           "layout": {
                             "leaf": {
                               "key": "0x67ec4f1e",
-                              "ty": 4
+                              "ty": 5
                             }
                           },
                           "name": "enabled"
@@ -611,7 +675,7 @@
                           "layout": {
                             "enum": {
                               "dispatchKey": "0x67ec4f1e",
-                              "name": "EvmAccountType",
+                              "name": "ExternalAccountType",
                               "variants": {
                                 "0": {
                                   "fields": [],
@@ -634,7 +698,7 @@
                           "layout": {
                             "leaf": {
                               "key": "0x67ec4f1e",
-                              "ty": 5
+                              "ty": 4
                             }
                           },
                           "name": "rpc"
@@ -655,7 +719,7 @@
                           "name": "sk"
                         }
                       ],
-                      "name": "EvmAccount"
+                      "name": "ExternalAccount"
                     }
                   },
                   "root_key": "0x67ec4f1e"
@@ -765,7 +829,7 @@
       "id": 4,
       "type": {
         "def": {
-          "primitive": "bool"
+          "primitive": "str"
         }
       }
     },
@@ -773,7 +837,7 @@
       "id": 5,
       "type": {
         "def": {
-          "primitive": "str"
+          "primitive": "bool"
         }
       }
     },
@@ -1029,7 +1093,7 @@
               {
                 "fields": [
                   {
-                    "type": 5,
+                    "type": 4,
                     "typeName": "String"
                   }
                 ],
@@ -1039,7 +1103,7 @@
               {
                 "fields": [
                   {
-                    "type": 5,
+                    "type": 4,
                     "typeName": "String"
                   }
                 ],
@@ -1362,13 +1426,18 @@
                 "typeName": "WorkflowId"
               },
               {
-                "name": "enabled",
+                "name": "name",
                 "type": 4,
+                "typeName": "String"
+              },
+              {
+                "name": "enabled",
+                "type": 5,
                 "typeName": "bool"
               },
               {
                 "name": "commandline",
-                "type": 5,
+                "type": 4,
                 "typeName": "String"
               }
             ]

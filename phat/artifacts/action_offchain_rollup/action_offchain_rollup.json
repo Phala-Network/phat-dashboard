@@ -1,7 +1,7 @@
 {
   "source": {
-    "hash": "0x6d02697e9d0f55e69b47dc918880ba09cacfe4226467459bee1c527b9166ac47",
-    "language": "ink! 4.0.1",
+    "hash": "0x003433c583a7903523dbac7d0beb5d000841da87722b1914457f125682b3bf89",
+    "language": "ink! 4.1.0",
     "compiler": "rustc 1.68.2",
     "build_info": {
       "build_mode": "Debug",
@@ -14,10 +14,10 @@
     }
   },
   "contract": {
-    "name": "action_evm_transaction",
+    "name": "action_offchain_rollup",
     "version": "0.1.0",
     "authors": [
-      "Shelven Zhou <favoring.zhou49@gmail.com>"
+      "[your_name] <[your_email]>"
     ]
   },
   "spec": {
@@ -65,10 +65,22 @@
         "selector": "0xfeaea4fa"
       },
       {
-        "args": [],
-        "docs": [],
-        "label": "get_rpc",
-        "mutates": false,
+        "args": [
+          {
+            "label": "account_contract",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "docs": [
+          " Configures the account contract (admin only)"
+        ],
+        "label": "config",
+        "mutates": true,
         "payable": false,
         "returnType": {
           "displayName": [
@@ -77,7 +89,22 @@
           ],
           "type": 8
         },
-        "selector": "0xc1c64afe"
+        "selector": "0x70714744"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "get_attest_address",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 11
+        },
+        "selector": "0xa29595ff"
       },
       {
         "args": [
@@ -89,12 +116,39 @@
               ],
               "type": 3
             }
+          },
+          {
+            "label": "anchor_addr",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 15
+            }
+          },
+          {
+            "label": "lens_api",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "label": "transform_js",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
+            }
           }
         ],
         "docs": [
-          " Configures the transaction sending target"
+          " Configures the rollup target (admin only)"
         ],
-        "label": "config",
+        "label": "config_client",
         "mutates": true,
         "payable": false,
         "returnType": {
@@ -102,51 +156,16 @@
             "ink",
             "MessageResult"
           ],
-          "type": 11
+          "type": 8
         },
-        "selector": "0x70714744"
+        "selector": "0x35be49eb"
       },
       {
-        "args": [
-          {
-            "label": "to",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 3
-            }
-          },
-          {
-            "label": "abi",
-            "type": {
-              "displayName": [
-                "Vec"
-              ],
-              "type": 13
-            }
-          },
-          {
-            "label": "func",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 3
-            }
-          },
-          {
-            "label": "params",
-            "type": {
-              "displayName": [
-                "Vec"
-              ],
-              "type": 14
-            }
-          }
+        "args": [],
+        "docs": [
+          " admin only"
         ],
-        "docs": [],
-        "label": "build_transaction",
+        "label": "get_transform_js",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -154,24 +173,51 @@
             "ink",
             "MessageResult"
           ],
-          "type": 15
+          "type": 16
         },
-        "selector": "0x8a688c06"
+        "selector": "0x8de1bc82"
       },
       {
         "args": [
           {
-            "label": "rlp",
+            "label": "new_owner",
             "type": {
               "displayName": [
-                "Vec"
+                "AccountId"
               ],
-              "type": 13
+              "type": 0
+            }
+          }
+        ],
+        "docs": [
+          " Transfers the ownership of the contract (admin only)"
+        ],
+        "label": "transfer_ownership",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 8
+        },
+        "selector": "0x107e33ea"
+      },
+      {
+        "args": [
+          {
+            "label": "profile_id",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
             }
           }
         ],
         "docs": [],
-        "label": "maybe_send_transaction",
+        "label": "fetch_lens_api_stats",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -179,9 +225,26 @@
             "ink",
             "MessageResult"
           ],
-          "type": 17
+          "type": 18
         },
-        "selector": "0x072cd15a"
+        "selector": "0x51dbac3f"
+      },
+      {
+        "args": [],
+        "docs": [
+          " Processes a Lens Api stat request by a rollup transaction"
+        ],
+        "label": "answer_request",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 21
+        },
+        "selector": "0x2a5bcd75"
       }
     ]
   },
@@ -217,12 +280,27 @@
                               "fields": [
                                 {
                                   "layout": {
-                                    "leaf": {
-                                      "key": "0x00000000",
-                                      "ty": 3
+                                    "array": {
+                                      "layout": {
+                                        "leaf": {
+                                          "key": "0x00000000",
+                                          "ty": 2
+                                        }
+                                      },
+                                      "len": 32,
+                                      "offset": "0x00000000"
                                     }
                                   },
-                                  "name": "rpc"
+                                  "name": "attest_key"
+                                },
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 0
+                                    }
+                                  },
+                                  "name": "account_contract"
                                 }
                               ],
                               "name": "Config"
@@ -237,9 +315,81 @@
                 }
               },
               "name": "config"
+            },
+            {
+              "layout": {
+                "enum": {
+                  "dispatchKey": "0x00000000",
+                  "name": "Option",
+                  "variants": {
+                    "0": {
+                      "fields": [],
+                      "name": "None"
+                    },
+                    "1": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "struct": {
+                              "fields": [
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 3
+                                    }
+                                  },
+                                  "name": "rpc"
+                                },
+                                {
+                                  "layout": {
+                                    "array": {
+                                      "layout": {
+                                        "leaf": {
+                                          "key": "0x00000000",
+                                          "ty": 2
+                                        }
+                                      },
+                                      "len": 20,
+                                      "offset": "0x00000000"
+                                    }
+                                  },
+                                  "name": "anchor_addr"
+                                },
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 3
+                                    }
+                                  },
+                                  "name": "lens_api"
+                                },
+                                {
+                                  "layout": {
+                                    "leaf": {
+                                      "key": "0x00000000",
+                                      "ty": 3
+                                    }
+                                  },
+                                  "name": "transform_js"
+                                }
+                              ],
+                              "name": "ClientConfig"
+                            }
+                          },
+                          "name": "0"
+                        }
+                      ],
+                      "name": "Some"
+                    }
+                  }
+                }
+              },
+              "name": "client_config"
             }
           ],
-          "name": "ActionEvmTransaction"
+          "name": "ActionOffchainRollup"
         }
       },
       "root_key": "0x00000000"
@@ -455,7 +605,7 @@
               {
                 "fields": [
                   {
-                    "type": 3
+                    "type": 5
                   }
                 ],
                 "index": 0,
@@ -476,7 +626,7 @@
         "params": [
           {
             "name": "T",
-            "type": 3
+            "type": 5
           },
           {
             "name": "E",
@@ -504,36 +654,70 @@
               },
               {
                 "index": 2,
-                "name": "BadAbi"
+                "name": "ClientNotConfigured"
               },
               {
-                "fields": [
-                  {
-                    "type": 3,
-                    "typeName": "String"
-                  }
-                ],
                 "index": 3,
-                "name": "BadParams"
+                "name": "DuplicatedConfigure"
               },
               {
                 "index": 4,
-                "name": "BadToAddress"
+                "name": "InvalidKeyLength"
               },
               {
                 "index": 5,
-                "name": "BadTransaction"
+                "name": "InvalidAddressLength"
               },
               {
                 "index": 6,
+                "name": "NoRequestInQueue"
+              },
+              {
+                "index": 7,
+                "name": "FailedToCreateClient"
+              },
+              {
+                "index": 8,
+                "name": "FailedToCommitTx"
+              },
+              {
+                "index": 9,
+                "name": "FailedToFetchLensApi"
+              },
+              {
+                "index": 10,
+                "name": "FailedToTransformLensData"
+              },
+              {
+                "index": 11,
+                "name": "FailedToGetStorage"
+              },
+              {
+                "index": 12,
+                "name": "FailedToCreateTransaction"
+              },
+              {
+                "index": 13,
                 "name": "FailedToSendTransaction"
+              },
+              {
+                "index": 14,
+                "name": "FailedToGetBlockHash"
+              },
+              {
+                "index": 15,
+                "name": "FailedToDecode"
+              },
+              {
+                "index": 16,
+                "name": "InvalidRequest"
               }
             ]
           }
         },
         "path": [
-          "action_evm_transaction",
-          "action_evm_transaction",
+          "action_offchain_rollup",
+          "action_offchain_rollup",
           "Error"
         ]
       }
@@ -589,110 +773,6 @@
               {
                 "fields": [
                   {
-                    "type": 5
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 10
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 5
-          },
-          {
-            "name": "E",
-            "type": 10
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 13,
-      "type": {
-        "def": {
-          "sequence": {
-            "type": 2
-          }
-        }
-      }
-    },
-    {
-      "id": 14,
-      "type": {
-        "def": {
-          "sequence": {
-            "type": 13
-          }
-        }
-      }
-    },
-    {
-      "id": 15,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 16
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 16
-          },
-          {
-            "name": "E",
-            "type": 6
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 16,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
                     "type": 13
                   }
                 ],
@@ -727,7 +807,47 @@
       }
     },
     {
-      "id": 17,
+      "id": 13,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 14,
+                "typeName": "[u8; 20]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "primitive_types",
+          "H160"
+        ]
+      }
+    },
+    {
+      "id": 14,
+      "type": {
+        "def": {
+          "array": {
+            "len": 20,
+            "type": 2
+          }
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 2
+          }
+        }
+      }
+    },
+    {
+      "id": 16,
       "type": {
         "def": {
           "variant": {
@@ -735,7 +855,7 @@
               {
                 "fields": [
                   {
-                    "type": 18
+                    "type": 17
                   }
                 ],
                 "index": 0,
@@ -756,11 +876,53 @@
         "params": [
           {
             "name": "T",
-            "type": 18
+            "type": 17
           },
           {
             "name": "E",
             "type": 6
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 17,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 3
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 10
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 3
+          },
+          {
+            "name": "E",
+            "type": 10
           }
         ],
         "path": [
@@ -786,7 +948,7 @@
               {
                 "fields": [
                   {
-                    "type": 10
+                    "type": 6
                   }
                 ],
                 "index": 1,
@@ -802,7 +964,7 @@
           },
           {
             "name": "E",
-            "type": 10
+            "type": 6
           }
         ],
         "path": [
@@ -814,18 +976,166 @@
       "id": 19,
       "type": {
         "def": {
-          "composite": {
-            "fields": [
+          "variant": {
+            "variants": [
               {
-                "type": 1,
-                "typeName": "[u8; 32]"
+                "fields": [
+                  {
+                    "type": 20
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 10
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
               }
             ]
           }
         },
+        "params": [
+          {
+            "name": "T",
+            "type": 20
+          },
+          {
+            "name": "E",
+            "type": 10
+          }
+        ],
         "path": [
-          "primitive_types",
-          "H256"
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 20,
+      "type": {
+        "def": {
+          "primitive": "u128"
+        }
+      }
+    },
+    {
+      "id": 21,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 22
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 6
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 22
+          },
+          {
+            "name": "E",
+            "type": 6
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 22,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 23
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 10
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 23
+          },
+          {
+            "name": "E",
+            "type": 10
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 23,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "None"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Some"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 15
+          }
+        ],
+        "path": [
+          "Option"
         ]
       }
     }
