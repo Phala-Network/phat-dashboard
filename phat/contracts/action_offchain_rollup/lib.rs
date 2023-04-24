@@ -10,6 +10,7 @@ mod action_offchain_rollup {
     use ink::storage::traits::StorageLayout;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
+    use pink_web3::signing::Key;
     use pink_web3::types::{H160, U256};
     use scale::{Decode, Encode};
 
@@ -17,6 +18,7 @@ mod action_offchain_rollup {
     use pink::ResultExt;
 
     use phat_js as js;
+    use phat_js::Output;
     use phat_offchain_rollup::{clients::evm::EvmRollupClient, Action};
 
     // Defined in TestLensOracle.sol
@@ -67,6 +69,7 @@ mod action_offchain_rollup {
         FailedToCreateClient,
         FailedToCommitTx,
         FailedToFetchLensApi,
+        FailedToTransformLensData,
 
         FailedToGetStorage,
         FailedToCreateTransaction,
@@ -100,7 +103,7 @@ mod action_offchain_rollup {
             self.owner
         }
 
-        /// Configures the rollup target (admin only)
+        /// Configures the account contract (admin only)
         #[ink(message)]
         pub fn config(&mut self, account_contract: AccountId) -> Result<()> {
             self.ensure_owner()?;
@@ -115,6 +118,13 @@ mod action_offchain_rollup {
                 account_contract,
             });
             Ok(())
+        }
+
+        #[ink(message)]
+        pub fn get_attest_address(&self) -> Result<H160> {
+            let config = self.ensure_configured()?;
+            let sk = pink_web3::keys::pink::KeyPair::from(config.attest_key);
+            Ok(sk.address())
         }
 
         /// Configures the rollup target (admin only)
@@ -138,8 +148,10 @@ mod action_offchain_rollup {
             Ok(())
         }
 
+        /// admin only
         #[ink(message)]
         pub fn get_transform_js(&self) -> Result<String> {
+            self.ensure_owner()?;
             let client_config = self.ensure_client_configured()?;
             Ok(client_config.transform_js.clone())
         }
@@ -172,7 +184,7 @@ mod action_offchain_rollup {
 
             let resp_body = String::from_utf8(resp.body).or(Err(Error::FailedToDecode))?;
             pink::info!("Lens response: {}", resp_body);
-            let res = js::eval(client_config.transform_js.as_str(), &[resp_body]);
+            let res = js::eval(client_config.transform_js.as_str(), &[resp_body]).map_err(|_| Error::FailedToTransformLensData)?;
             pink::info!("Receive Lens Api: {:?}", res);
 
             Ok(233)
@@ -187,12 +199,12 @@ mod action_offchain_rollup {
 
             let mut client = connect(&client_config)?;
             let action = match self.answer_request_inner(&mut client)? {
-                PriceReponse::Response(rid, res) => ethabi::encode(&[
+                LensResponse::Response(rid, res) => ethabi::encode(&[
                     Token::Uint(TYPE_RESPONSE.into()),
                     Token::Uint(rid),
                     Token::Uint(res.into()),
                 ]),
-                PriceReponse::Error(rid, error) => ethabi::encode(&[
+                LensResponse::Error(rid, error) => ethabi::encode(&[
                     Token::Uint(TYPE_ERROR.into()),
                     Token::Uint(rid.unwrap_or_default()),
                     Token::Uint(error.into()),
@@ -202,40 +214,7 @@ mod action_offchain_rollup {
             maybe_submit_tx(client, &config)
         }
 
-        // /// Feeds a price data point to a customized rollup target.
-        // ///
-        // /// For dev purpose.
-        // #[ink(message)]
-        // pub fn feed_custom_price(
-        //     &self,
-        //     rpc: String,
-        //     anchor_addr: [u8; 20],
-        //     attest_key: [u8; 32],
-        //     sender_key: Option<[u8; 32]>,
-        //     feed_id: u32,
-        //     price: u128,
-        // ) -> Result<Option<Vec<u8>>> {
-        //     use ethabi::Token;
-        //     let custom_config = ClientConfig {
-        //         rpc,
-        //         anchor_addr,
-        //         attest_key,
-        //         sender_key,
-        //         token0: Default::default(),
-        //         token1: Default::default(),
-        //         feed_id,
-        //     };
-        //     let mut client = connect(&custom_config)?;
-        //     let payload = ethabi::encode(&[
-        //         Token::Uint(TYPE_FEED.into()),
-        //         Token::Uint(feed_id.into()),
-        //         Token::Uint(price.into()),
-        //     ]);
-        //     client.action(Action::Reply(payload));
-        //     maybe_submit_tx(client, &custom_config)
-        // }
-
-        fn answer_request_inner(&self, client: &mut EvmRollupClient) -> Result<PriceReponse> {
+        fn answer_request_inner(&self, client: &mut EvmRollupClient) -> Result<LensResponse> {
             use ethabi::{ParamType, Token};
             use pink_kv_session::traits::QueueSession;
             // Get a request if presents
@@ -247,24 +226,24 @@ mod action_offchain_rollup {
                 .ok_or(Error::NoRequestInQueue)?;
             // Decode the queue data by ethabi (u256, bytes)
             let Ok(decoded) = ethabi::decode(&[ParamType::Uint(32), ParamType::Bytes], &raw_req) else {
-                return Ok(PriceReponse::Error(None, Error::FailedToDecode))
+                return Ok(LensResponse::Error(None, Error::FailedToDecode))
             };
             let [Token::Uint(rid), Token::Bytes(profile_id)] = decoded.as_slice() else {
                 return Err(Error::FailedToDecode);
             };
             let profile_id = String::from_utf8_lossy(&profile_id);
             pink::info!("Request received: ({profile_id})");
-            // Get the price and respond as a rollup action.
+            // Get the Lens stats and respond as a rollup action.
             let result = self.fetch_lens_api_stats(String::from(profile_id));
             match result {
                 Ok(res) => {
                     // Respond
                     pink::info!("Precessed result: {res}");
-                    Ok(PriceReponse::Response(*rid, res))
+                    Ok(LensResponse::Response(*rid, res))
                 }
-                // Error when fetching the price. Could be
+                // Error when fetching the stats. Could be
                 Err(Error::FailedToDecode) => {
-                    Ok(PriceReponse::Error(Some(*rid), Error::FailedToDecode))
+                    Ok(LensResponse::Error(Some(*rid), Error::FailedToDecode))
                 }
                 Err(e) => return Err(e),
             }
@@ -292,7 +271,7 @@ mod action_offchain_rollup {
         }
     }
 
-    enum PriceReponse {
+    enum LensResponse {
         Response(U256, u128),
         Error(Option<U256>, Error),
     }
