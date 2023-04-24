@@ -184,7 +184,8 @@ mod action_offchain_rollup {
 
             let resp_body = String::from_utf8(resp.body).or(Err(Error::FailedToDecode))?;
             pink::info!("Lens response: {}", resp_body);
-            let res = js::eval(client_config.transform_js.as_str(), &[resp_body]).map_err(|_| Error::FailedToTransformLensData)?;
+            let res = js::eval(client_config.transform_js.as_str(), &[resp_body])
+                .map_err(|_| Error::FailedToTransformLensData)?;
             pink::info!("Receive Lens Api: {:?}", res);
 
             Ok(233)
@@ -304,10 +305,11 @@ mod action_offchain_rollup {
     mod tests {
         use super::*;
 
+        const LENS_API: &str = "https://api-mumbai.lens.dev/";
+        const TRANSFORM_JS: &str = "function transform(arg) { let input = JSON.parse(arg); return input.data.profile.stats.totalCollects; } transform(scriptArgs[0])";
+
         struct EnvVars {
             rpc: String,
-            attest_key: Vec<u8>,
-            sender_key: Option<Vec<u8>>,
             anchor: Vec<u8>,
         }
 
@@ -317,83 +319,30 @@ mod action_offchain_rollup {
         fn config() -> EnvVars {
             dotenvy::dotenv().ok();
             let rpc = get_env("RPC");
-            let attest_key = hex::decode(get_env("ATTEST_KEY")).expect("hex decode failed");
-            let sender_key = std::env::var("SENDER_KEY")
-                .map(|s| hex::decode(s).expect("hex decode failed"))
-                .ok();
             let anchor = hex::decode(get_env("ANCHOR")).expect("hex decode failed");
-            EnvVars {
-                rpc,
-                attest_key,
-                sender_key,
-                anchor,
-            }
+            EnvVars { rpc, anchor }
         }
 
         // #[ink::test]
         // fn fixed_parse() {
         //     let _ = env_logger::try_init();
         //     pink_extension_runtime::mock_ext::mock_all_ext();
-        //     let p = ActionOffchainRollup::fetch_coingecko_price("polkadot", "usd").unwrap();
-        //     pink::warn!("Price: {p:?}");
-        // }
+        //     let EnvVars { rpc, anchor } = config();
 
-        // #[ink::test]
-        // #[ignore]
-        // fn submit_price_feed() {
-        //     let _ = env_logger::try_init();
-        //     pink_extension_runtime::mock_ext::mock_all_ext();
-        //     let EnvVars {
-        //         rpc,
-        //         attest_key,
-        //         sender_key,
-        //         anchor,
-        //     } = config();
-
-        //     let mut price_feed = ActionOffchainRollup::default();
-        //     price_feed
-        //         .config(
+        //     let mut lens_oracle = ActionOffchainRollup::default();
+        //     lens_oracle
+        //         .config_client(
         //             rpc,
         //             anchor,
-        //             attest_key,
-        //             sender_key,
-        //             "polkadot".to_string(),
-        //             "usd".to_string(),
-        //             0,
+        //             String::from(LENS_API),
+        //             String::from(TRANSFORM_JS),
         //         )
         //         .unwrap();
 
-        //     let r = price_feed.feed_price().expect("failed to feed price");
-        //     pink::warn!("feed price: {r:?}");
-        // }
-
-        // #[ink::test]
-        // #[ignore]
-        // fn answer_price_request() {
-        //     let _ = env_logger::try_init();
-        //     pink_extension_runtime::mock_ext::mock_all_ext();
-        //     let EnvVars {
-        //         rpc,
-        //         attest_key,
-        //         sender_key,
-        //         anchor,
-        //     } = config();
-
-        //     let mut price_feed = ActionOffchainRollup::default();
-        //     price_feed
-        //         .config(
-        //             rpc,
-        //             anchor,
-        //             attest_key,
-        //             sender_key,
-        //             "polkadot".to_string(),
-        //             "usd".to_string(),
-        //             0,
-        //         )
+        //     let stats = lens_oracle
+        //         .fetch_lens_api_stats(String::from("0x01"))
         //         .unwrap();
-
-        //     let r = price_feed.answer_price().expect("failed to answer price");
-        //     pink::warn!("answer price: {r:?}");
+        //     pink::warn!("TotalCollects: {stats:?}");
         // }
     }
 }
