@@ -1,7 +1,7 @@
-# EvmPriceFeed
+# ActionOffchainRollup
 
-Implements a simple price feed with EVM Offchain Rollup. It supports streaming a price feed and
-answering individual requests from the EVM side.
+Implements a Lens profile stats Oracle with EVM Offchain Rollup. It supports streaming the stats of a
+single Lens profile and answering individual requests from the EVM side.
 
 ## Run a full unit tests
 
@@ -29,6 +29,9 @@ Some tests involving EVM testnet setup are marked as `ignored`. To run the full 
     npx hardhat run --network localhost ./scripts/deploy-test.ts
     ```
 
+> Now all the unittests are commented since ActionOffchainRollup requires JsDelegate driver and AccountContract
+> to work.
+
 2. Copy `.env_sample` as `.env` if you haven't done it before. It tells the Phat Contract to
    connect to the local EVM testnet you just created.
 
@@ -38,7 +41,7 @@ Some tests involving EVM testnet setup are marked as `ignored`. To run the full 
     cargo test -- --ignored
     ```
 
-Note that after running `deploy-test.ts`, it will push only one oracle reqeust to the rollup queue.
+Note that after running `deploy-test.ts`, it will push only one oracle request to the rollup queue.
 After a successful `answer_price_request` test run, the queue will become empty. To push a new
 request, run:
 
