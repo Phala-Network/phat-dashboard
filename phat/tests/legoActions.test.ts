@@ -54,6 +54,11 @@ describe("Run lego actions", () => {
   let currentStack: string;
   let systemContract: string;
 
+  const rpc = process.env.RPC ?? "http://localhost:8545";
+  const ethSecretKey = process.env.PRIVKEY ?? "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+  const lensApi = process.env.LENS ?? "https://api-mumbai.lens.dev/";
+  const anchorAddr = process.env.ANCHOR ?? "dc64a140aa3e981100a9beca4e685f962f0cf6c9";
+
   before(async function () {
     currentStack = (await RuntimeContext.getSingleton()).paths.currentStack;
     console.log("clusterId:", this.devPhase.mainClusterId);
@@ -128,44 +133,6 @@ describe("Run lego actions", () => {
     });
 
     it("can setup contracts", async function () {
-      const rpc = process.env.RPC;
-      const ethSecretKey = process.env.PRIVKEY;
-
-
-      await TxHandler.handle(
-        offchainRollup.tx.config({ gasLimit: "10000000000000" }, rpc, [...Uint8Array.from(Buffer.from('95222290dd7278aa3ddd389cc1e1d165cc4bafe5', 'hex'))], cloudWallet.address, `
-      function transform(arg) {
-          let input = JSON.parse(arg);
-          return input.data.profile.stats.totalCollects;
-      }
-      transform(scriptArgs[0])`),
-        alice,
-        true
-      );
-      console.log("offchain rollup configuring");
-      await checkUntil(async () => {
-        const result = await offchainRollup.query.getTransformJs(certAlice, {});
-        console.log(`${JSON.stringify(result)}`);
-        return !result.output.toJSON().ok.err;
-      }, 1000 * 10);
-      console.log("offchain rollup configured");
-
-      let res = await offchainRollup.query.fetchLensApiStats(certAlice, {}, "0x30783031"); // hex string for "0x01", polkadot.js will do the transformation for you
-
-      return;
-
-      // config action_evm_transaction
-      await TxHandler.handle(
-        evmTransaction.tx.config({ gasLimit: "10000000000000" }, rpc),
-        alice,
-        true,
-      );
-      await checkUntil(async () => {
-        const result = await evmTransaction.query.getRpc(certAlice, {});
-        return !result.output.toJSON().ok.err;
-      }, 1000 * 10);
-      console.log("ActionEvm configured");
-
       // STEP 1: config simple_cloud_wallet to the lego contract address
       await TxHandler.handle(
         cloudWallet.tx.config({ gasLimit: "10000000000000" }, lego.address.toHex()),
@@ -188,6 +155,31 @@ describe("Run lego actions", () => {
       // );
       console.log("CloudWallet account imported");
 
+      await TxHandler.handle(
+        evmTransaction.tx.config({ gasLimit: "10000000000000" }, rpc),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const result = await evmTransaction.query.getRpc(certAlice, {});
+        return !result.output.toJSON().ok.err;
+      }, 1000 * 10);
+      console.log("ActionEvmTransaction configured");
+
+      // STEP 3: link ActionOffchainRollup to CloudWallet
+      await TxHandler.handle(
+        offchainRollup.tx.config({ gasLimit: "10000000000000" }, cloudWallet.address.toHex()),
+        alice,
+        true
+      );
+      await checkUntil(async () => {
+        const result = await offchainRollup.query.getAttestAddress(certAlice, {});
+        let ready = !result.output.toJSON().ok.err;
+        if (ready) console.log(`ActionOffchainRollup identity: ${JSON.stringify(result)}`);
+        return ready;
+      }, 1000 * 10);
+      console.log("ActionOffchainRollup configured");
+
       await checkUntil(async () => {
         const resultJsRunner = await cloudWallet.query.getJsRunner(certAlice, {});
         // console.log(`cloudWallet js_runner: ${JSON.stringify(resultJsRunner)}`);
@@ -199,7 +191,77 @@ describe("Run lego actions", () => {
       }, 1000 * 10);
     });
 
-    it("can run actions", async function () {
+    it("can run rollup-based Oracle", async function () {
+      function cfg(o: object) {
+        return JSON.stringify(o);
+      }
+
+      function toHexString(o: object) {
+        return Buffer.from(JSON.stringify(o)).toString('hex')
+      }
+
+      // STEP 4: assume user has deployed the smart contract client
+      // config ActionOffchainRollup client
+      let transform_js = `
+        function transform(arg) {
+            let input = JSON.parse(arg);
+            return input.data.profile.stats.totalCollects;
+        }
+        transform(scriptArgs[0])
+      `;
+      await TxHandler.handle(
+        offchainRollup.tx.configClient({ gasLimit: "10000000000000" },
+          rpc,
+          [...Uint8Array.from(Buffer.from(anchorAddr, 'hex'))],
+          lensApi,
+          transform_js),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const result = await offchainRollup.query.getTransformJs(certAlice, {});
+        // console.log(`${JSON.stringify(result)}`);
+        return !result.output.toJSON().ok.err;
+      }, 1000 * 10);
+      console.log("ActionOffchainRollup client configured");
+
+      // STEP 5: add the workflow, the WorkflowId increases from 0
+      // pub fn answer_request(&self) -> Result<Option<Vec<u8>>>
+      // this return EVM tx id
+      const selectorAnswerRequest = 0x2a5bcd75
+      const actions_lens_api = `[
+        {"cmd": "call", "config": ${cfg({ "callee": offchainRollup.address.toHex(), "selector": selectorAnswerRequest })}},
+        {"cmd": "log"}
+      ]`;
+      await TxHandler.handle(
+        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
+        alice,
+        true,
+      );
+      // STEP 6: authorize the workflow to ask for the ETH account signing
+      await TxHandler.handle(
+        cloudWallet.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 0, 0),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const resultWorkflow = await cloudWallet.query.getWorkflow(certAlice, {}, 0); // 0 for WorkflowId
+        // console.log(`cloudWallet workflow: ${JSON.stringify(resultWorkflow)}`);
+        const resultWorkflowCount = await cloudWallet.query.workflowCount(certAlice, {});
+        const resultAuthorized = await cloudWallet.query.getAuthorizedAccount(certAlice, {}, 0); // 0 for WorkflowId
+        // console.log(`cloudWallet authorize: ${JSON.stringify(resultAuthorized)}`);
+        return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === 1
+          && resultAuthorized.output.toJSON().ok === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
+      }, 1000 * 10);
+
+      // Trigger the workflow execution, this will be done by our daemon server instead of frontend
+      // ATTENTION: the oralce is on-demand so it will only respond when there is request from EVM client
+      const result = await cloudWallet.query.poll(certAlice, {});
+      console.log(`cloudWallet poll: ${JSON.stringify(result)}`);
+      expect(!result.output.toJSON().ok.err).to.be.true;
+    });
+
+    it.skip("can run raw-tx-based Oracle", async function () {
       function cfg(o: object) {
         return JSON.stringify(o);
       }
@@ -233,24 +295,6 @@ describe("Run lego actions", () => {
       // 20-byte `address from`, in this case we don't care about this
       const arg_param_0 = Array(20).fill(0);
       // 32 byte `bytes calldata price`, this should be consturcted from the output of last step
-
-      const actions_price_feed = `[
-        {"cmd": "fetch", "config": ${cfg({
-        returnTextBody: true,
-        url: "https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR",
-      })}},
-        {"cmd": "eval", "config": "Math.round(JSON.parse(input.body).USD)"},
-        {"cmd": "eval", "config": "numToUint8Array32(input)"},
-        {"cmd": "eval", "config": "scale.encode(['${arg_to}', [${arg_abi}], '${arg_function}', [[${arg_param_0}], input]], scale.encodeBuildTx)"},
-        {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorBuildTransaction })}},
-        {"cmd": "eval", "config": "scale.decode(input, scale.decodeResultVecU8)"},
-        {"cmd": "eval", "config": "scale.encode(input.content, scale.encodeVecU8)"},
-        {"cmd": "call", "config": ${cfg({ "callee": calleeWallet, "selector": selectorSignEvmTransaction })}},
-        {"cmd": "eval", "config": "scale.decode(input, scale.decodeResultVecU8)"},
-        {"cmd": "eval", "config": "scale.encode(input.content, scale.encodeVecU8)"},
-        {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorMaybeSendTransaction })}},
-        {"cmd": "log"}
-      ]`;
 
       const lensApiRequest = {
         url: 'https://api-mumbai.lens.dev/',
@@ -293,25 +337,25 @@ describe("Run lego actions", () => {
         {"cmd": "log"}
       ]`;
 
-      // STEP 3: add the workflow, the WorkflowId increases from 0
+      // STEP 3: add the workflow
       await TxHandler.handle(
-        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestWorkflow", actions_lens_api),
+        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRaTxOracle", actions_lens_api),
         alice,
         true,
       );
       // STEP 4: authorize the workflow to ask for the ETH account signing
       await TxHandler.handle(
-        cloudWallet.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 0, 0),
+        cloudWallet.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 1, 0),
         alice,
         true,
       );
       await checkUntil(async () => {
-        const resultWorkflow = await cloudWallet.query.getWorkflow(certAlice, {}, 0); // 0 for WorkflowId
+        const resultWorkflow = await cloudWallet.query.getWorkflow(certAlice, {}, 1); // 1 for WorkflowId
         // console.log(`cloudWallet workflow: ${JSON.stringify(resultWorkflow)}`);
         const resultWorkflowCount = await cloudWallet.query.workflowCount(certAlice, {});
-        const resultAuthorized = await cloudWallet.query.getAuthorizedAccount(certAlice, {}, 0); // 0 for WorkflowId
+        const resultAuthorized = await cloudWallet.query.getAuthorizedAccount(certAlice, {}, 1); // 1 for WorkflowId
         // console.log(`cloudWallet authorize: ${JSON.stringify(resultAuthorized)}`);
-        return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === 1
+        return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === 2
           && resultAuthorized.output.toJSON().ok === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
       }, 1000 * 10);
 
