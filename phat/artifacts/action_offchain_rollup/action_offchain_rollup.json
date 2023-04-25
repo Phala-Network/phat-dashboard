@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x003433c583a7903523dbac7d0beb5d000841da87722b1914457f125682b3bf89",
+    "hash": "0x02e0945a13ca7935b74753702349b7435ffd7d35d7ed08292a946c90a9e8711e",
     "language": "ink! 4.1.0",
     "compiler": "rustc 1.68.2",
     "build_info": {
@@ -690,26 +690,30 @@
               },
               {
                 "index": 11,
-                "name": "FailedToGetStorage"
+                "name": "BadTransformedData"
               },
               {
                 "index": 12,
-                "name": "FailedToCreateTransaction"
+                "name": "FailedToGetStorage"
               },
               {
                 "index": 13,
-                "name": "FailedToSendTransaction"
+                "name": "FailedToCreateTransaction"
               },
               {
                 "index": 14,
-                "name": "FailedToGetBlockHash"
+                "name": "FailedToSendTransaction"
               },
               {
                 "index": 15,
-                "name": "FailedToDecode"
+                "name": "FailedToGetBlockHash"
               },
               {
                 "index": 16,
+                "name": "FailedToDecode"
+              },
+              {
+                "index": 17,
                 "name": "InvalidRequest"
               }
             ]
