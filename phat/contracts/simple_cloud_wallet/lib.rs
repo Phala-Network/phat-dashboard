@@ -181,11 +181,9 @@ mod simple_cloud_wallet {
             Ok(())
         }
 
-        /// Get the EVM account address of give id, only owner is allowed
+        /// Get the EVM account address of give id
         #[ink(message)]
         pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
-            self.ensure_owner()?;
-
             let account = self.ensure_enabled_external_account(id)?;
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
             Ok(sk.address())
@@ -362,8 +360,15 @@ mod simple_cloud_wallet {
             let tx: TransactionRequest =
                 json::from_slice(&tx).or(Err(Error::BadUnsignedTransaction))?;
             let tx = TransactionParameters {
+                nonce: tx.nonce,
                 to: tx.to,
+                gas: tx.gas.unwrap_or_default(),
+                gas_price: tx.gas_price,
+                value: tx.value.unwrap_or_default(),
                 data: tx.data.unwrap_or_default(),
+                transaction_type: tx.transaction_type,
+                access_list: tx.access_list,
+                max_priority_fee_per_gas: tx.max_priority_fee_per_gas,
                 ..Default::default()
             };
 
