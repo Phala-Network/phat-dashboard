@@ -70,6 +70,7 @@ mod action_offchain_rollup {
         FailedToCommitTx,
         FailedToFetchLensApi,
         FailedToTransformLensData,
+        BadTransformedData,
 
         FailedToGetStorage,
         FailedToCreateTransaction,
@@ -183,10 +184,19 @@ mod action_offchain_rollup {
             }
 
             let resp_body = String::from_utf8(resp.body).or(Err(Error::FailedToDecode))?;
-            let res = js::eval(client_config.transform_js.as_str(), &[resp_body])
+            let result = js::eval(client_config.transform_js.as_str(), &[resp_body])
                 .map_err(|_| Error::FailedToTransformLensData)?;
 
-            Ok(233)
+            let result_num: u128 = match result {
+                phat_js::Output::String(result_str) => {
+                    result_str.parse().map_err(|_| Error::BadTransformedData)?
+                }
+                phat_js::Output::Bytes(_) => {
+                    return Err(Error::BadTransformedData);
+                }
+            };
+
+            Ok(result_num)
         }
 
         /// Processes a Lens Api stat request by a rollup transaction
