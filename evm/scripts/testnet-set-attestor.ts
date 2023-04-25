@@ -11,7 +11,7 @@ async function main() {
   ])
 
   console.log('Pushing a request...');
-  await oracle.connect(deployer).request("0x01");
+  await oracle.connect(deployer).setAttestor("0x4122088e9273f4245f29c98fa1e3854c84971293");
   console.log('Done');
 }
 

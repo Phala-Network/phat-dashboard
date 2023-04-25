@@ -18,6 +18,10 @@ contract TestLensOracle is PhatRollupAnchor, Ownable {
         _grantRole(PhatRollupAnchor.ATTESTOR_ROLE, phatAttestor);
     }
 
+    function setAttestor(address phatAttestor) public {
+        _grantRole(PhatRollupAnchor.ATTESTOR_ROLE, phatAttestor);
+    }
+
     function request(string calldata profileId) public {
         // assemble the request
         uint id = nextRequest;
