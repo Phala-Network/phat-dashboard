@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./PhatRollupAnchor.sol";
 
 contract TestLensOracle is PhatRollupAnchor, Ownable {
-    event PriceReceived(uint reqId, string pair, uint256 price);
+    event ResponseReceived(uint reqId, string pair, uint256 value);
     event ErrorReceived(uint reqId, string pair, uint256 errno);
 
     uint constant TYPE_RESPONSE = 0;
@@ -37,7 +37,7 @@ contract TestLensOracle is PhatRollupAnchor, Ownable {
             (uint, uint, uint256)
         );
         if (respType == TYPE_RESPONSE) {
-            emit PriceReceived(id, requests[id], data);
+            emit ResponseReceived(id, requests[id], data);
             delete requests[id];
         } else if (respType == TYPE_ERROR) {
             emit ErrorReceived(id, requests[id], data);

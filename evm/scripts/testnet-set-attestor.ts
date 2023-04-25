@@ -11,7 +11,7 @@ async function main() {
   ])
 
   console.log('Setting attestor ...');
-  await oracle.connect(deployer).setAttestor("0xe141c8cb929c5322b4529a4ae9e4673a3c6e410b");
+  await oracle.connect(deployer).setAttestor("0xe141c8cb929c5322b4529a4ae9e4673a3c6e410b"); // change this to the identity of your ActionOffchainRollup
   console.log('Done');
 }
 

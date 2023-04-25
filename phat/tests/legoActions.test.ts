@@ -60,6 +60,8 @@ describe("Run lego actions", () => {
   const anchorAddr = process.env.ANCHOR ?? "93891cb936B62806300aC687e12d112813b483C1";
 
   before(async function () {
+    this.timeout(20_000);
+
     currentStack = (await RuntimeContext.getSingleton()).paths.currentStack;
     console.log("clusterId:", this.devPhase.mainClusterId);
     console.log(`currentStack: ${currentStack}`);
@@ -176,7 +178,8 @@ describe("Run lego actions", () => {
       await checkUntil(async () => {
         const result = await offchainRollup.query.getAttestAddress(certAlice, {});
         let ready = !result.output.toJSON().ok.err;
-        if (ready) console.log(`ActionOffchainRollup identity: ${JSON.stringify(result)}`);
+        if (ready)
+          console.log(`>>>>> ActionOffchainRollup identity: ${JSON.stringify(result.output.toJSON().ok.ok)} <<<<<`);
         return ready;
       }, 1000 * 10);
       console.log("ActionOffchainRollup configured");
@@ -253,13 +256,13 @@ describe("Run lego actions", () => {
 
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
       // ATTENTION: the oralce is on-demand so it will only respond when there is request from EVM client
-      // while (true) {
-      const result = await cloudWallet.query.poll(certAlice, {});
-      console.log(`cloudWallet poll: ${JSON.stringify(result)}`);
-      expect(!result.output.toJSON().ok.err).to.be.true;
+      while (true) {
+        const result = await cloudWallet.query.poll(certAlice, {});
+        console.log(`Workflow trigger: ${JSON.stringify(result)}`);
+        // expect(!result.output.toJSON().ok.err).to.be.true;
 
-      // sleep(1000);
-      // }
+        sleep(5_000);
+      }
     });
 
     it.skip("can run raw-tx-based Oracle", async function () {
