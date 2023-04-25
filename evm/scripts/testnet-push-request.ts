@@ -5,7 +5,7 @@ async function main() {
 
   const [deployer] = await ethers.getSigners();
 
-  const oracle = await TestLensOracle.attach('0x6D3c87968E9F637aBfE2ed4d1376242AF482dEbB');
+  const oracle = await TestLensOracle.attach('0x93891cb936B62806300aC687e12d112813b483C1');
   await Promise.all([
     oracle.deployed(),
   ])
