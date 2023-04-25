@@ -57,7 +57,7 @@ describe("Run lego actions", () => {
   const rpc = process.env.RPC ?? "http://localhost:8545";
   const ethSecretKey = process.env.PRIVKEY ?? "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
   const lensApi = process.env.LENS ?? "https://api-mumbai.lens.dev/";
-  const anchorAddr = process.env.ANCHOR ?? "dc64a140aa3e981100a9beca4e685f962f0cf6c9";
+  const anchorAddr = process.env.ANCHOR ?? "93891cb936B62806300aC687e12d112813b483C1";
 
   before(async function () {
     currentStack = (await RuntimeContext.getSingleton()).paths.currentStack;
@@ -116,9 +116,10 @@ describe("Run lego actions", () => {
     }, 1000 * 10);
   });
 
-  describe("Run actions", () => {
+  describe("Run actions", function () {
+    this.timeout(500_000_000);
+
     before(async function () {
-      this.timeout(30_000);
       // Deploy contract
       lego = await legoFactory.instantiate("default", [], {});
       evmTransaction = await evmTransactionFactory.instantiate("default", [], {});
@@ -196,10 +197,6 @@ describe("Run lego actions", () => {
         return JSON.stringify(o);
       }
 
-      function toHexString(o: object) {
-        return Buffer.from(JSON.stringify(o)).toString('hex')
-      }
-
       // STEP 4: assume user has deployed the smart contract client
       // config ActionOffchainRollup client
       let transform_js = `
@@ -230,7 +227,7 @@ describe("Run lego actions", () => {
       // this return EVM tx id
       const selectorAnswerRequest = 0x2a5bcd75
       const actions_lens_api = `[
-        {"cmd": "call", "config": ${cfg({ "callee": offchainRollup.address.toHex(), "selector": selectorAnswerRequest })}},
+        {"cmd": "call", "config": ${cfg({ "callee": offchainRollup.address.toHex(), "selector": selectorAnswerRequest, "input": [] })}},
         {"cmd": "log"}
       ]`;
       await TxHandler.handle(
@@ -256,9 +253,13 @@ describe("Run lego actions", () => {
 
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
       // ATTENTION: the oralce is on-demand so it will only respond when there is request from EVM client
+      // while (true) {
       const result = await cloudWallet.query.poll(certAlice, {});
       console.log(`cloudWallet poll: ${JSON.stringify(result)}`);
       expect(!result.output.toJSON().ok.err).to.be.true;
+
+      // sleep(1000);
+      // }
     });
 
     it.skip("can run raw-tx-based Oracle", async function () {
@@ -339,7 +340,7 @@ describe("Run lego actions", () => {
 
       // STEP 3: add the workflow
       await TxHandler.handle(
-        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRaTxOracle", actions_lens_api),
+        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRawTxOracle", actions_lens_api),
         alice,
         true,
       );
