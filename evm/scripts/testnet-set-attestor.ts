@@ -5,7 +5,7 @@ async function main() {
 
   const [deployer] = await ethers.getSigners();
 
-  const oracle = await TestLensOracle.attach('0x93891cb936B62806300aC687e12d112813b483C1');
+  const oracle = await TestLensOracle.attach('0x93891cb936B62806300aC687e12d112813b483C1'); // change this to your client smart contract address
   await Promise.all([
     oracle.deployed(),
   ])
