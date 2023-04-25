@@ -173,8 +173,8 @@ mod action_offchain_rollup {
 
             let resp = pink::http_post!(client_config.lens_api.clone(), body.as_bytes(), headers);
             if resp.status_code != 200 {
-                pink::info!(
-                    "Status code: {}, reason: {}, body: {:?}",
+                pink::warn!(
+                    "Fail to read Lens api withstatus code: {}, reason: {}, body: {:?}",
                     resp.status_code,
                     resp.reason_phrase,
                     resp.body
@@ -183,10 +183,8 @@ mod action_offchain_rollup {
             }
 
             let resp_body = String::from_utf8(resp.body).or(Err(Error::FailedToDecode))?;
-            pink::info!("Lens response: {}", resp_body);
             let res = js::eval(client_config.transform_js.as_str(), &[resp_body])
                 .map_err(|_| Error::FailedToTransformLensData)?;
-            pink::info!("Receive Lens Api: {:?}", res);
 
             Ok(233)
         }
@@ -233,7 +231,8 @@ mod action_offchain_rollup {
                 return Err(Error::FailedToDecode);
             };
             let profile_id = String::from_utf8_lossy(&profile_id);
-            pink::info!("Request received: ({profile_id})");
+            pink::info!("Request received for profile {profile_id}");
+
             // Get the Lens stats and respond as a rollup action.
             let result = self.fetch_lens_api_stats(String::from(profile_id));
             match result {

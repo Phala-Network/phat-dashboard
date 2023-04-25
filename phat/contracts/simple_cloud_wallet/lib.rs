@@ -111,6 +111,7 @@ mod simple_cloud_wallet {
             self.owner
         }
 
+        /// Gets the contract address of Js runner contract
         #[ink(message)]
         pub fn get_js_runner(&self) -> Result<AccountId> {
             let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
@@ -181,7 +182,7 @@ mod simple_cloud_wallet {
             Ok(())
         }
 
-        /// Get the EVM account address of give id
+        /// Get the EVM account address of given id
         #[ink(message)]
         pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
             let account = self.ensure_enabled_external_account(id)?;
@@ -190,6 +191,7 @@ mod simple_cloud_wallet {
         }
 
         /// Gets the total number of external accounts
+        /// The external account ids increase from 0 to current count
         #[ink(message)]
         pub fn external_account_count(&self) -> u64 {
             self.next_external_account_id
@@ -216,6 +218,7 @@ mod simple_cloud_wallet {
         }
 
         /// Adds an existing EVM account, only owner is allowed
+        /// This is only used for dev and will be removed in release
         #[ink(message)]
         pub fn import_evm_account(
             &mut self,
@@ -238,7 +241,7 @@ mod simple_cloud_wallet {
             Ok(id)
         }
 
-        /// Dump an EVM account secret key, this will disable it and zeroize the sk, only owner is allowed
+        /// Dump an EVM account secret key, this will disable the account and zeroize the sk, only owner is allowed
         #[ink(message)]
         pub fn dump_evm_account(&mut self, id: ExternalAccountId) -> Result<()> {
             // Deprecated in first release
@@ -269,12 +272,13 @@ mod simple_cloud_wallet {
             Ok(())
         }
 
+        /// Get the authorized external account id of given workflow
         #[ink(message)]
         pub fn get_authorized_account(&self, workflow: WorkflowId) -> Option<ExternalAccountId> {
             self.authorized_account.get(workflow)
         }
 
-        /// This is an internal function which should only called by `poll()` in a cross-contract manner
+        /// This is an internal function which can only be called by `this.poll()` in a cross-contract manner
         #[ink(message)]
         pub fn set_workflow_session(&mut self, workflow: WorkflowId) -> Result<()> {
             if self.env().caller() != self.env().account_id() {
@@ -284,7 +288,7 @@ mod simple_cloud_wallet {
             Ok(())
         }
 
-        /// Called by a scheduler periodically
+        /// Called by a scheduler periodically with Query
         #[ink(message)]
         pub fn poll(&mut self) -> Result<()> {
             use ink::env::call::{build_call, ExecutionInput, Selector};
@@ -341,20 +345,18 @@ mod simple_cloud_wallet {
         /// Only self-initiated call is allowed
         #[ink(message)]
         pub fn sign_evm_transaction(&self, tx: Vec<u8>) -> Result<Vec<u8>> {
-            pink::info!("[TEST]: entering sign_evm_transaction()");
             let now_workflow_id = self.ensure_workflow_session()?;
-            pink::info!("[TEST]: now_workflow_id {}", now_workflow_id);
+            pink::info!("Workflow {} asks for EVM tx signing", now_workflow_id);
 
             let account_id = self
                 .authorized_account
                 .get(now_workflow_id)
                 .ok_or(Error::NoAuthorizedExternalAccount)?;
-            pink::info!("[TEST]: account_id {}", account_id);
             let account = self.ensure_enabled_external_account(account_id)?;
-            pink::info!("[TEST]: account {:?}", &account);
+            pink::info!("ExternalAccount {} is allowed", account_id);
+
             let phttp = PinkHttp::new(account.rpc.clone());
             let web3 = pink_web3::Web3::new(phttp);
-
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
 
             let tx: TransactionRequest =
