@@ -1,6 +1,6 @@
 import { ProjectConfigOptions } from 'devphase';
 
-const config : ProjectConfigOptions = {
+const config: ProjectConfigOptions = {
     stack: {
         blockTime: 500,
         version: 'nightly-2023-02-20',
@@ -58,16 +58,16 @@ const config : ProjectConfigOptions = {
      * Default network is local and it can be changed using CLI argument
      */
     networks: {
-	local: {
-	    nodeUrl: 'ws://localhost:{{stack.node.port}}',
-	    workerUrl: 'http://localhost:{{stack.pruntime.port}}',
-	    blockTime: 500,
-	}
+        local: {
+            nodeUrl: 'ws://localhost:{{stack.node.port}}',
+            workerUrl: 'http://localhost:{{stack.pruntime.port}}',
+            blockTime: 500,
+        }
     },
     /**
      * Testing configuration
      */
-     testing: {
+    testing: {
         mocha: {}, // custom mocha configuration
         spawnStack: true, // spawn runtime stack? or assume there is running one
         stackLogOutput: true, // if specifed pipes output of all stack component to file (by default it is ignored)
