@@ -58,7 +58,7 @@ mod action_offchain_rollup {
         transform_js: String,
     }
 
-    #[derive(Encode, Decode, Debug)]
+    #[derive(Encode, Decode, Debug, PartialEq)]
     #[repr(u8)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
@@ -73,6 +73,8 @@ mod action_offchain_rollup {
         NoRequestInQueue,
         FailedToCreateClient,
         FailedToCommitTx,
+
+        BadProfileId,
         FailedToFetchLensApi,
         FailedToTransformLensData,
         BadTransformedData,
@@ -174,6 +176,12 @@ mod action_offchain_rollup {
         #[ink(message)]
         pub fn fetch_lens_api_stats(&self, profile_id: String) -> Result<u128> {
             let client_config = self.ensure_client_configured()?;
+
+            // profile_id should be like 0x0001
+            let is_hex_digit = |n| char::is_digit(n, 16);
+            if !profile_id.starts_with("0x") || !profile_id[2..].chars().all(is_hex_digit) {
+                return Err(Error::BadProfileId);
+            }
 
             let headers = vec![("Content-Type".into(), "application/json".into())];
             let body = format!("{{\"query\":\"\\n          query Profile {{\\n            profile(request: {{ profileId: \\\"{profile_id}\\\" }}) {{\\n              stats {{\\n                totalFollowers\\n                totalFollowing\\n                totalPosts\\n                totalComments\\n                totalMirrors\\n                totalPublications\\n                totalCollects\\n              }}\\n            }}\\n          }}\\n          \"}}");
@@ -372,26 +380,40 @@ mod action_offchain_rollup {
             EnvVars { rpc, anchor }
         }
 
-        // #[ink::test]
-        // fn fixed_parse() {
-        //     let _ = env_logger::try_init();
-        //     pink_extension_runtime::mock_ext::mock_all_ext();
-        //     let EnvVars { rpc, anchor } = config();
+        #[ink::test]
+        fn fixed_parse() {
+            let _ = env_logger::try_init();
+            pink_extension_runtime::mock_ext::mock_all_ext();
+            let EnvVars { rpc, anchor } = config();
 
-        //     let mut lens_oracle = ActionOffchainRollup::default();
-        //     lens_oracle
-        //         .config_client(
-        //             rpc,
-        //             anchor,
-        //             String::from(LENS_API),
-        //             String::from(TRANSFORM_JS),
-        //         )
-        //         .unwrap();
+            let mut lens_oracle = ActionOffchainRollup::default();
+            lens_oracle
+                .config_client(
+                    rpc,
+                    anchor,
+                    String::from(LENS_API),
+                    String::from(TRANSFORM_JS),
+                )
+                .unwrap();
 
-        //     let stats = lens_oracle
-        //         .fetch_lens_api_stats(String::from("0x01"))
-        //         .unwrap();
-        //     pink::warn!("TotalCollects: {stats:?}");
-        // }
+            assert_eq!(
+                lens_oracle.fetch_lens_api_stats(String::from("01")),
+                Err(Error::BadProfileId)
+            );
+            assert_eq!(
+                lens_oracle.fetch_lens_api_stats(String::from("0x01 \\\"")),
+                Err(Error::BadProfileId)
+            );
+            assert_eq!(
+                lens_oracle.fetch_lens_api_stats(String::from("0xg")),
+                Err(Error::BadProfileId)
+            );
+
+            // This will fail since there is no JS engine in unittest
+            // let stats = lens_oracle
+            //     .fetch_lens_api_stats(String::from("0x01"))
+            //     .unwrap();
+            // pink::warn!("TotalCollects: {stats:?}");
+        }
     }
 }

@@ -7,6 +7,8 @@
 /accounts.json
 /contracts.json
 
+.env
+
 node_modules
 
 !/artifacts/lego/
