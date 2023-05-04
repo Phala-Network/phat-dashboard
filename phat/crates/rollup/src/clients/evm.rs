@@ -1,11 +1,10 @@
 use crate::{Action, Error, Result, RollupTx};
 
-use alloc::{borrow::ToOwned, string::String, vec::Vec};
+use alloc::{borrow::ToOwned, vec::Vec};
 use primitive_types::{H160, U256};
 use scale::Encode;
 
 use ethabi::Token;
-use ink::env::call::{build_call, ExecutionInput, Selector};
 use kv_session::{
     rollup,
     traits::{BumpVersion, KvSnapshot, QueueIndexCodec},
@@ -26,7 +25,6 @@ const ANCHOR_ABI: &[u8] = include_bytes!("../../res/anchor.abi.json");
 const DEFAULT_QUEUE_PREFIX: &[u8] = b"q/";
 
 pub struct EvmSnapshot {
-    rpc: String,
     contract_id: H160,
     contract: Contract<PinkHttp>,
     at: u64,
@@ -43,15 +41,10 @@ impl EvmSnapshot {
         let contract =
             Contract::from_json(eth, contract_id, ANCHOR_ABI).or(Err(Error::BadEvmAnchorAbi))?;
         Ok(EvmSnapshot {
-            rpc: String::from(rpc),
             contract,
             contract_id,
             at: at.0[0],
         })
-    }
-
-    pub fn rpc(&self) -> String {
-        self.rpc.clone()
     }
 
     pub fn destruct(self) -> Contract<PinkHttp> {
@@ -129,7 +122,6 @@ pub struct EvmRollupClient {
 }
 
 pub struct SubmittableRollupTx {
-    pub rpc: String,
     pub contract: Contract<PinkHttp>,
     pub tx: RollupTx,
     pub at: u64,
@@ -210,7 +202,6 @@ impl EvmRollupClient {
 
         let at = kvdb.at;
         Ok(Some(SubmittableRollupTx {
-            rpc: kvdb.rpc(),
             contract: kvdb.destruct(),
             tx,
             at,
@@ -226,21 +217,9 @@ impl EvmRollupClient {
 }
 
 impl SubmittableRollupTx {
-    pub fn submit(self, account_contract: pink::AccountId) -> Result<Vec<u8>> {
+    pub fn build(self, from: H160) -> Result<Vec<u8>> {
         // Prepare rollupU256CondEq params
         let params = self.tx.into_params();
-
-        // get sender address from AccountContract
-        let address = build_call::<pink::PinkEnvironment>()
-            .call(account_contract)
-            .transferred_value(0)
-            // .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
-            .exec_input(ExecutionInput::new(Selector::new(ink::selector_bytes!(
-                "get_current_evm_account_address"
-            ))))
-            .returns::<simple_cloud_wallet::Result<H160>>()
-            .invoke()
-            .map_err(|_| Error::BadEvmAccount)?;
 
         // Estiamte gas before submission
         let gas = resolve_ready(
@@ -248,13 +227,13 @@ impl SubmittableRollupTx {
                 .estimate_gas::<(Token, Token, Token, Token, Token)>(
                     "rollupU256CondEq",
                     params.clone(),
-                    address,
+                    from,
                     Options::default(),
                 ),
         )
         .map_err(Error::EvmFailedToEstimateGas)?;
 
-        // Ask for AccountContract signing
+        // Build tx for signing
         let data = self
             .contract
             .abi()
@@ -270,60 +249,24 @@ impl SubmittableRollupTx {
         };
         let tx = pink_json::to_vec(&tx).map_err(|_| Error::BadEvmTransaction)?;
 
-        let signed_tx = build_call::<pink::PinkEnvironment>()
-            .call(account_contract)
-            .transferred_value(0)
-            // .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
-            .exec_input(
-                ExecutionInput::new(Selector::new(ink::selector_bytes!("sign_evm_transaction")))
-                    .push_arg(tx),
-            )
-            .returns::<simple_cloud_wallet::Result<Vec<u8>>>()
-            .invoke()
-            .map_err(|_| Error::BadEvmTransaction)?;
-
-        // Actually submit the tx (no guarantee for success)
-        let eth = Eth::new(PinkHttp::new(self.rpc));
-        let tx_id = resolve_ready(eth.send_raw_transaction(signed_tx.into()))
-            .map_err(Error::EvmFailedToSubmitTx)?;
-
-        #[cfg(feature = "logging")]
-        pink::warn!("Sent = {}", hex::encode(&tx_id));
-
-        Ok(tx_id.encode())
+        Ok(tx)
     }
 
-    pub fn submit_meta_tx(
-        self,
-        pair: &KeyPair,
-        account_contract: pink::AccountId,
-    ) -> Result<Vec<u8>> {
+    pub fn build_meta_tx(self, pair: &KeyPair, from: H160) -> Result<Vec<u8>> {
         let params = self.tx.into_params();
         let data = ethabi::encode(&[params.0, params.1, params.2, params.3, params.4]);
         let meta_params = sign_meta_tx(&self.contract, self.at, &data, pair).unwrap();
-
-        // get sender address from AccountContract
-        let address = build_call::<pink::PinkEnvironment>()
-            .call(account_contract)
-            .transferred_value(0)
-            // .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
-            .exec_input(ExecutionInput::new(Selector::new(ink::selector_bytes!(
-                "get_current_evm_account_address"
-            ))))
-            .returns::<simple_cloud_wallet::Result<H160>>()
-            .invoke()
-            .map_err(|_| Error::BadEvmAccount)?;
 
         // Estiamte gas before submission
         let gas = resolve_ready(self.contract.estimate_gas::<(Token, Bytes)>(
             "metaTxRollupU256CondEq",
             meta_params.clone(),
-            address,
+            from,
             Options::default(),
         ))
         .map_err(Error::EvmFailedToEstimateGas)?;
 
-        // Ask for AccountContract signing
+        // Build tx for signing
         let data = self
             .contract
             .abi()
@@ -339,27 +282,7 @@ impl SubmittableRollupTx {
         };
         let tx = pink_json::to_vec(&tx).map_err(|_| Error::BadEvmTransaction)?;
 
-        let signed_tx = build_call::<pink::PinkEnvironment>()
-            .call(account_contract)
-            .transferred_value(0)
-            // .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
-            .exec_input(
-                ExecutionInput::new(Selector::new(ink::selector_bytes!("sign_evm_transaction")))
-                    .push_arg(tx),
-            )
-            .returns::<simple_cloud_wallet::Result<Vec<u8>>>()
-            .invoke()
-            .map_err(|_| Error::BadEvmTransaction)?;
-
-        // Actually submit the tx (no guarantee for success)
-        let eth = Eth::new(PinkHttp::new(self.rpc));
-        let tx_id = resolve_ready(eth.send_raw_transaction(signed_tx.into()))
-            .map_err(Error::EvmFailedToSubmitTx)?;
-
-        #[cfg(feature = "logging")]
-        pink::warn!("Sent = {}", hex::encode(&tx_id));
-
-        Ok(tx_id.encode())
+        Ok(tx)
     }
 }
 

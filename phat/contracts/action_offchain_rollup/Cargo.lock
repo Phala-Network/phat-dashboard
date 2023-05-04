@@ -34,6 +34,7 @@ dependencies = [
  "pink-web3",
  "scale-info",
  "serde",
+ "simple_cloud_wallet",
 ]
 
 [[package]]
@@ -1642,7 +1643,6 @@ dependencies = [
  "pink-web3",
  "primitive-types",
  "scale-info",
- "simple_cloud_wallet",
 ]
 
 [[package]]

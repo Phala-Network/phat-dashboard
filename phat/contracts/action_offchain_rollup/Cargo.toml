@@ -27,7 +27,9 @@ ethabi = { version = "18.0.0", default-features = false, features = [
 
 phat_offchain_rollup = { path = "../../crates/rollup", default-features = false, features = ["evm"] }
 pink-kv-session = "0.2"
+
 phat_js = { path = "../../crates/js", default-features = false }
+simple_cloud_wallet = { path = "../../contracts/simple_cloud_wallet", default-features = false, features = ["ink-as-dependency"] }
 
 hex = { version = "0.4", default-features = false }
 
@@ -57,11 +59,12 @@ std = [
     "phat_offchain_rollup/std",
     "pink-extension/std",
     "phat_js/std",
+    "simple_cloud_wallet/std",
     "pink-json/std",
     "pink-web3/std",
     "ethabi/std",
 ]
-ink-as-dependency = []
+ink-as-dependency = [ "simple_cloud_wallet/ink-as-dependency" ]
 
 # Leave for `cargo contract` build.
 [patch.crates-io]

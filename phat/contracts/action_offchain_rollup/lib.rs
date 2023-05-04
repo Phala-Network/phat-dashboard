@@ -7,18 +7,22 @@ pub use crate::action_offchain_rollup::*;
 #[ink::contract(env = pink_extension::PinkEnvironment)]
 mod action_offchain_rollup {
     use alloc::{format, string::String, vec, vec::Vec};
+    use ink::env::call::{build_call, ExecutionInput, Selector};
     use ink::storage::traits::StorageLayout;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
-    use pink_web3::signing::Key;
-    use pink_web3::types::{H160, U256};
+    use pink_web3::{
+        api::{Eth, Namespace},
+        signing::Key,
+        transports::{resolve_ready, PinkHttp},
+        types::{H160, U256},
+    };
     use scale::{Decode, Encode};
 
     // To enable `(result).log_err("Reason")?`
     use pink::ResultExt;
 
     use phat_js as js;
-    use phat_js::Output;
     use phat_offchain_rollup::{clients::evm::EvmRollupClient, Action};
 
     // Defined in TestLensOracle.sol
@@ -62,6 +66,7 @@ mod action_offchain_rollup {
         NotConfigured,
         ClientNotConfigured,
         DuplicatedConfigure,
+        BadAccountContract,
 
         InvalidKeyLength,
         InvalidAddressLength,
@@ -74,6 +79,7 @@ mod action_offchain_rollup {
 
         FailedToGetStorage,
         FailedToCreateTransaction,
+        FailedToSignTransaction,
         FailedToSendTransaction,
         FailedToGetBlockHash,
         FailedToDecode,
@@ -220,7 +226,7 @@ mod action_offchain_rollup {
                 ]),
             };
             client.action(Action::Reply(action));
-            maybe_submit_tx(client, &config)
+            maybe_submit_tx(client, &config, client_config.rpc.clone())
         }
 
         fn answer_request_inner(&self, client: &mut EvmRollupClient) -> Result<LensResponse> {
@@ -293,19 +299,53 @@ mod action_offchain_rollup {
             .or(Err(Error::FailedToCreateClient))
     }
 
-    fn maybe_submit_tx(client: EvmRollupClient, config: &Config) -> Result<Option<Vec<u8>>> {
+    fn maybe_submit_tx(
+        client: EvmRollupClient,
+        config: &Config,
+        rpc: String,
+    ) -> Result<Option<Vec<u8>>> {
         use pink_web3::keys::pink::KeyPair;
         let maybe_submittable = client
             .commit()
             .log_err("failed to commit")
             .or(Err(Error::FailedToCommitTx))?;
         if let Some(submittable) = maybe_submittable {
+            // get AccountContract info
+            let from_address = build_call::<pink::PinkEnvironment>()
+                .call(config.account_contract)
+                .transferred_value(0)
+                .exec_input(ExecutionInput::new(Selector::new(ink::selector_bytes!(
+                    "get_current_evm_account_address"
+                ))))
+                .returns::<simple_cloud_wallet::Result<H160>>()
+                .invoke()
+                .map_err(|_| Error::BadAccountContract)?;
+
             let attest_pair = KeyPair::from(config.attest_key);
-            let tx_id = submittable
-                .submit_meta_tx(&attest_pair, config.account_contract)
-                .log_err("failed to submit rollup meta-tx")
-                .or(Err(Error::FailedToSendTransaction))?;
-            return Ok(Some(tx_id));
+            let tx_req = submittable
+                .build_meta_tx(&attest_pair, from_address)
+                .log_err("failed to build rollup meta-tx")
+                .or(Err(Error::FailedToCreateTransaction))?;
+
+            let signed_tx = build_call::<pink::PinkEnvironment>()
+                .call(config.account_contract)
+                .transferred_value(0)
+                .exec_input(
+                    ExecutionInput::new(Selector::new(ink::selector_bytes!(
+                        "sign_evm_transaction"
+                    )))
+                    .push_arg(tx_req),
+                )
+                .returns::<simple_cloud_wallet::Result<Vec<u8>>>()
+                .invoke()
+                .map_err(|_| Error::FailedToSignTransaction)?;
+
+            // Actually submit the tx (no guarantee for success)
+            let eth = Eth::new(PinkHttp::new(rpc));
+            let tx_id = resolve_ready(eth.send_raw_transaction(signed_tx.into()))
+                .map_err(|_| Error::FailedToSendTransaction)?;
+
+            return Ok(Some(tx_id.encode()));
         }
         Ok(None)
     }

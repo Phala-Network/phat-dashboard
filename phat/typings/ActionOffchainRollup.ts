@@ -9,7 +9,7 @@ export namespace ActionOffchainRollup {
     type InkPrimitives_Types_AccountId = any;
     type InkPrimitives_LangError = { CouldNotReadInput: null };
     type Result = { Ok: Result } | { Err: InkPrimitives_LangError };
-    type ActionOffchainRollup_ActionOffchainRollup_Error = { BadOrigin: null } | { NotConfigured: null } | { ClientNotConfigured: null } | { DuplicatedConfigure: null } | { InvalidKeyLength: null } | { InvalidAddressLength: null } | { NoRequestInQueue: null } | { FailedToCreateClient: null } | { FailedToCommitTx: null } | { FailedToFetchLensApi: null } | { FailedToTransformLensData: null } | { BadTransformedData: null } | { FailedToGetStorage: null } | { FailedToCreateTransaction: null } | { FailedToSendTransaction: null } | { FailedToGetBlockHash: null } | { FailedToDecode: null } | { InvalidRequest: null };
+    type ActionOffchainRollup_ActionOffchainRollup_Error = { BadOrigin: null } | { NotConfigured: null } | { ClientNotConfigured: null } | { DuplicatedConfigure: null } | { BadAccountContract: null } | { InvalidKeyLength: null } | { InvalidAddressLength: null } | { NoRequestInQueue: null } | { FailedToCreateClient: null } | { FailedToCommitTx: null } | { FailedToFetchLensApi: null } | { FailedToTransformLensData: null } | { BadTransformedData: null } | { FailedToGetStorage: null } | { FailedToCreateTransaction: null } | { FailedToSignTransaction: null } | { FailedToSendTransaction: null } | { FailedToGetBlockHash: null } | { FailedToDecode: null } | { InvalidRequest: null };
     type PrimitiveTypes_H160 = any;
     type Option = { None: null } | { Some: number[] };
 
