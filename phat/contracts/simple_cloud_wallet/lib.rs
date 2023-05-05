@@ -301,7 +301,13 @@ mod simple_cloud_wallet {
 
             // TODO: support workflow interval
             for workflow_id in 0..self.next_workflow_id {
-                let now_workflow = self.ensure_enabled_workflow(workflow_id)?;
+                let now_workflow = match self.ensure_enabled_workflow(workflow_id) {
+                    Ok(workflow) => workflow,
+                    Err(_) => {
+                        pink::info!("Skip disabled workflow {}", workflow_id);
+                        continue;
+                    }
+                };
                 // call `this.set_workflow_session()` in a cross-contract manner to let the `self.workflow_session` value
                 // change take effect
                 // this value change only lives in this execution since `poll()` is called with query
