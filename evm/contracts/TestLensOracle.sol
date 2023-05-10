@@ -30,6 +30,14 @@ contract TestLensOracle is PhatRollupAnchor, Ownable {
         nextRequest += 1;
     }
 
+    // For test
+    function malformedRequest(bytes calldata malformedData) public {
+        uint id = nextRequest;
+        requests[id] = "malformed_req";
+        _pushMessage(malformedData);
+        nextRequest += 1;
+    }
+
     function _onMessageReceived(bytes calldata action) internal override {
         require(action.length == 32 * 3, "cannot parse action");
         (uint respType, uint id, uint256 data) = abi.decode(
