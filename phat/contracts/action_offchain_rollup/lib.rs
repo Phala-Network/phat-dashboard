@@ -173,46 +173,6 @@ mod action_offchain_rollup {
             Ok(())
         }
 
-        #[ink(message)]
-        pub fn fetch_lens_api_stats(&self, profile_id: String) -> Result<u128> {
-            let client_config = self.ensure_client_configured()?;
-
-            // profile_id should be like 0x0001
-            let is_hex_digit = |n| char::is_digit(n, 16);
-            if !profile_id.starts_with("0x") || !profile_id[2..].chars().all(is_hex_digit) {
-                return Err(Error::BadProfileId);
-            }
-
-            let headers = vec![("Content-Type".into(), "application/json".into())];
-            let body = format!("{{\"query\":\"\\n          query Profile {{\\n            profile(request: {{ profileId: \\\"{profile_id}\\\" }}) {{\\n              stats {{\\n                totalFollowers\\n                totalFollowing\\n                totalPosts\\n                totalComments\\n                totalMirrors\\n                totalPublications\\n                totalCollects\\n              }}\\n            }}\\n          }}\\n          \"}}");
-
-            let resp = pink::http_post!(client_config.lens_api.clone(), body.as_bytes(), headers);
-            if resp.status_code != 200 {
-                pink::warn!(
-                    "Fail to read Lens api withstatus code: {}, reason: {}, body: {:?}",
-                    resp.status_code,
-                    resp.reason_phrase,
-                    resp.body
-                );
-                return Err(Error::FailedToFetchLensApi);
-            }
-
-            let resp_body = String::from_utf8(resp.body).or(Err(Error::FailedToDecode))?;
-            let result = js::eval(client_config.transform_js.as_str(), &[resp_body])
-                .map_err(|_| Error::FailedToTransformLensData)?;
-
-            let result_num: u128 = match result {
-                phat_js::Output::String(result_str) => {
-                    result_str.parse().map_err(|_| Error::BadTransformedData)?
-                }
-                phat_js::Output::Bytes(_) => {
-                    return Err(Error::BadTransformedData);
-                }
-            };
-
-            Ok(result_num)
-        }
-
         /// Processes a Lens Api stat request by a rollup transaction
         #[ink(message)]
         pub fn answer_request(&self) -> Result<Option<Vec<u8>>> {
@@ -221,7 +181,7 @@ mod action_offchain_rollup {
             let client_config = self.ensure_client_configured()?;
 
             let mut client = connect(&client_config)?;
-            let action = match self.answer_request_inner(&mut client)? {
+            let action = match self.answer_request_inner(&mut client, client_config)? {
                 LensResponse::Response(rid, res) => ethabi::encode(&[
                     Token::Uint(TYPE_RESPONSE.into()),
                     Token::Uint(rid),
@@ -237,7 +197,11 @@ mod action_offchain_rollup {
             maybe_submit_tx(client, &config, client_config.rpc.clone())
         }
 
-        fn answer_request_inner(&self, client: &mut EvmRollupClient) -> Result<LensResponse> {
+        fn answer_request_inner(
+            &self,
+            client: &mut EvmRollupClient,
+            client_config: &ClientConfig,
+        ) -> Result<LensResponse> {
             use ethabi::{ParamType, Token};
             use pink_kv_session::traits::QueueSession;
             // Get a request if presents
@@ -249,7 +213,8 @@ mod action_offchain_rollup {
                 .ok_or(Error::NoRequestInQueue)?;
             // Decode the queue data by ethabi (u256, bytes)
             let Ok(decoded) = ethabi::decode(&[ParamType::Uint(32), ParamType::Bytes], &raw_req) else {
-                return Ok(LensResponse::Error(None, Error::FailedToDecode))
+                pink::info!("Malformed request received");
+                return Ok(LensResponse::Error(None, Error::FailedToDecode));
             };
             let [Token::Uint(rid), Token::Bytes(profile_id)] = decoded.as_slice() else {
                 return Err(Error::FailedToDecode);
@@ -258,19 +223,63 @@ mod action_offchain_rollup {
             pink::info!("Request received for profile {profile_id}");
 
             // Get the Lens stats and respond as a rollup action.
-            let result = self.fetch_lens_api_stats(String::from(profile_id));
+            let result = Self::fetch_lens_api_stats(
+                client_config.rpc.clone(),
+                client_config.transform_js.clone(),
+                String::from(profile_id),
+            );
             match result {
                 Ok(res) => {
                     // Respond
-                    pink::info!("Precessed result: {res}");
+                    pink::info!("Processed result: {res}");
                     Ok(LensResponse::Response(*rid, res))
                 }
-                // Error when fetching the stats. Could be
-                Err(Error::FailedToDecode) => {
-                    Ok(LensResponse::Error(Some(*rid), Error::FailedToDecode))
-                }
-                Err(e) => return Err(e),
+                // Network issue, should retry
+                Err(Error::FailedToFetchLensApi) => Err(Error::FailedToFetchLensApi),
+                // otherwise tell client we cannot process it
+                Err(e) => Ok(LensResponse::Error(Some(*rid), e)),
             }
+        }
+
+        pub fn fetch_lens_api_stats(
+            lens_api: String,
+            transform_js: String,
+            profile_id: String,
+        ) -> Result<u128> {
+            // profile_id should be like 0x0001
+            let is_hex_digit = |n| char::is_digit(n, 16);
+            if !profile_id.starts_with("0x") || !profile_id[2..].chars().all(is_hex_digit) {
+                return Err(Error::BadProfileId);
+            }
+
+            let headers = vec![("Content-Type".into(), "application/json".into())];
+            let body = format!("{{\"query\":\"\\n          query Profile {{\\n            profile(request: {{ profileId: \\\"{profile_id}\\\" }}) {{\\n              stats {{\\n                totalFollowers\\n                totalFollowing\\n                totalPosts\\n                totalComments\\n                totalMirrors\\n                totalPublications\\n                totalCollects\\n              }}\\n            }}\\n          }}\\n          \"}}");
+
+            let resp = pink::http_post!(lens_api, body.as_bytes(), headers);
+            if resp.status_code != 200 {
+                pink::warn!(
+                    "Fail to read Lens api withstatus code: {}, reason: {}, body: {:?}",
+                    resp.status_code,
+                    resp.reason_phrase,
+                    resp.body
+                );
+                return Err(Error::FailedToFetchLensApi);
+            }
+
+            let resp_body = String::from_utf8(resp.body).or(Err(Error::FailedToDecode))?;
+            let result = js::eval(transform_js.as_str(), &[resp_body])
+                .map_err(|_| Error::FailedToTransformLensData)?;
+
+            let result_num: u128 = match result {
+                phat_js::Output::String(result_str) => {
+                    result_str.parse().map_err(|_| Error::BadTransformedData)?
+                }
+                phat_js::Output::Bytes(_) => {
+                    return Err(Error::BadTransformedData);
+                }
+            };
+
+            Ok(result_num)
         }
 
         /// Returns BadOrigin error if the caller is not the owner
@@ -384,35 +393,42 @@ mod action_offchain_rollup {
         fn fixed_parse() {
             let _ = env_logger::try_init();
             pink_extension_runtime::mock_ext::mock_all_ext();
-            let EnvVars { rpc, anchor } = config();
 
-            let mut lens_oracle = ActionOffchainRollup::default();
-            lens_oracle
-                .config_client(
-                    rpc,
-                    anchor,
-                    String::from(LENS_API),
-                    String::from(TRANSFORM_JS),
-                )
-                .unwrap();
+            let lens_api = String::from(LENS_API);
+            let transform_js = String::from(TRANSFORM_JS);
 
             assert_eq!(
-                lens_oracle.fetch_lens_api_stats(String::from("01")),
+                ActionOffchainRollup::fetch_lens_api_stats(
+                    lens_api.clone(),
+                    transform_js.clone(),
+                    String::from("01")
+                ),
                 Err(Error::BadProfileId)
             );
             assert_eq!(
-                lens_oracle.fetch_lens_api_stats(String::from("0x01 \\\"")),
+                ActionOffchainRollup::fetch_lens_api_stats(
+                    lens_api.clone(),
+                    transform_js.clone(),
+                    String::from("0x01 \\\"")
+                ),
                 Err(Error::BadProfileId)
             );
             assert_eq!(
-                lens_oracle.fetch_lens_api_stats(String::from("0xg")),
+                ActionOffchainRollup::fetch_lens_api_stats(
+                    lens_api.clone(),
+                    transform_js.clone(),
+                    String::from("0xg")
+                ),
                 Err(Error::BadProfileId)
             );
 
             // This will fail since there is no JS engine in unittest
-            // let stats = lens_oracle
-            //     .fetch_lens_api_stats(String::from("0x01"))
-            //     .unwrap();
+            // let stats = ActionOffchainRollup::fetch_lens_api_stats(
+            //     lens_api.clone(),
+            //     transform_js.clone(),
+            //     String::from("0x01"),
+            // )
+            // .unwrap();
             // pink::warn!("TotalCollects: {stats:?}");
         }
     }
