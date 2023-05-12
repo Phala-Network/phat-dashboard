@@ -16,6 +16,7 @@ mod action_evm_transaction {
     };
     use primitive_types::{H160, H256};
     use scale::{Decode, Encode};
+    use this_crate::{version_tuple, VersionTuple};
 
     /// Defines the storage of your contract.
     /// Add new fields to the below struct in order
@@ -55,6 +56,11 @@ mod action_evm_transaction {
                 owner: Self::env().caller(),
                 config: None,
             }
+        }
+
+        #[ink(message)]
+        pub fn version(&self) -> VersionTuple {
+            version_tuple!()
         }
 
         /// Gets the owner of the contract

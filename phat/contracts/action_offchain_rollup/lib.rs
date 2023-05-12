@@ -18,6 +18,7 @@ mod action_offchain_rollup {
         types::{H160, U256},
     };
     use scale::{Decode, Encode};
+    use this_crate::{version_tuple, VersionTuple};
 
     // To enable `(result).log_err("Reason")?`
     use pink::ResultExt;
@@ -104,6 +105,11 @@ mod action_offchain_rollup {
                 config: None,
                 client_config: None,
             }
+        }
+
+        #[ink(message)]
+        pub fn version(&self) -> VersionTuple {
+            version_tuple!()
         }
 
         /// Gets the owner of the contract

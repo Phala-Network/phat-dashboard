@@ -18,6 +18,7 @@ mod simple_cloud_wallet {
         types::{TransactionParameters, TransactionRequest, H160},
     };
     use scale::{Decode, Encode};
+    use this_crate::{version_tuple, VersionTuple};
 
     pub type ExternalAccountId = u64;
     pub type WorkflowId = u64;
@@ -103,6 +104,11 @@ mod simple_cloud_wallet {
                 authorized_account: Mapping::default(),
                 workflow_session: None,
             }
+        }
+
+        #[ink(message)]
+        pub fn version(&self) -> VersionTuple {
+            version_tuple!()
         }
 
         /// Gets the owner of the contract
