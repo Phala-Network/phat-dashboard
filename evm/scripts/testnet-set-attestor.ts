@@ -5,16 +5,13 @@ async function main() {
 
   const [deployer] = await ethers.getSigners();
 
-  console.log('Deploying...');
-  const attestor = deployer.address;  // When deploy for real e2e test, change it to the real attestor wallet.
-  const oracle = await TestLensOracle.deploy(attestor);
-  await oracle.deployed();
-  console.log('Deployed', {
-    oracle: oracle.address,
-  });
+  const oracle = await TestLensOracle.attach('0x2a6a5d59564C470f6aC3E93C4c197251F31EBCf8'); // change this to your client smart contract address
+  await Promise.all([
+    oracle.deployed(),
+  ])
 
-  console.log('Configuring...');
-  await oracle.connect(deployer).request("0x01");
+  console.log('Setting attestor ...');
+  await oracle.connect(deployer).setAttestor("0x4bea59bda90bdbfe702b28dc09b666bfe3562046"); // change this to the identity of your ActionOffchainRollup
   console.log('Done');
 }
 

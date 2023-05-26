@@ -31,8 +31,8 @@ hex = "0.4"
 name = "action_evm_transaction"
 path = "lib.rs"
 crate-type = [
-	# Used for normal contract Wasm blobs.
-	"cdylib",
+    # Used for normal contract Wasm blobs.
+    "cdylib",
     "rlib",
 ]
 

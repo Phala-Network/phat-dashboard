@@ -126,6 +126,7 @@ mod action_evm_transaction {
 
         #[ink(message)]
         pub fn maybe_send_transaction(&self, rlp: Vec<u8>) -> Result<H256> {
+            // TODO: estimate gas before sending
             let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
             let phttp = PinkHttp::new(config.rpc.clone());
             let web3 = pink_web3::Web3::new(phttp);

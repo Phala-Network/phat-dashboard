@@ -26,8 +26,8 @@ hex = "0.4"
 name = "simple_cloud_wallet"
 path = "lib.rs"
 crate-type = [
-	# Used for normal contract Wasm blobs.
-	"cdylib",
+    # Used for normal contract Wasm blobs.
+    "cdylib",
     "rlib",
 ]
 

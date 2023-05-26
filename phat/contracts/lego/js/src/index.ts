@@ -80,11 +80,8 @@ function actionFetch(action: ActionFetch, input: any): any {
   return response
 }
 
-function actionCall(action: ActionCall, input: any): Uint8Array {
+function actionCall(action: ActionCall, input: Uint8Array): Uint8Array {
   const args = action.config
-  if (!(input instanceof Uint8Array)) {
-    throw new Error('call contract input must be a Uint8Array')
-  }
   const output = pink.invokeContract({
     ...args,
     input

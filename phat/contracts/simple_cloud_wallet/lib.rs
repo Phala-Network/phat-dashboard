@@ -111,6 +111,7 @@ mod simple_cloud_wallet {
             self.owner
         }
 
+        /// Gets the contract address of Js runner contract
         #[ink(message)]
         pub fn get_js_runner(&self) -> Result<AccountId> {
             let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
@@ -181,16 +182,16 @@ mod simple_cloud_wallet {
             Ok(())
         }
 
+        /// Get the EVM account address of given id
         #[ink(message)]
         pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
-            self.ensure_owner()?;
-
             let account = self.ensure_enabled_external_account(id)?;
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
             Ok(sk.address())
         }
 
         /// Gets the total number of external accounts
+        /// The external account ids increase from 0 to current count
         #[ink(message)]
         pub fn external_account_count(&self) -> u64 {
             self.next_external_account_id
@@ -217,6 +218,7 @@ mod simple_cloud_wallet {
         }
 
         /// Adds an existing EVM account, only owner is allowed
+        /// This is only used for dev and will be removed in release
         #[ink(message)]
         pub fn import_evm_account(
             &mut self,
@@ -239,7 +241,7 @@ mod simple_cloud_wallet {
             Ok(id)
         }
 
-        /// Dump an EVM account secret key, this will disable it and zeroize the sk, only owner is allowed
+        /// Dump an EVM account secret key, this will disable the account and zeroize the sk, only owner is allowed
         #[ink(message)]
         pub fn dump_evm_account(&mut self, id: ExternalAccountId) -> Result<()> {
             // Deprecated in first release
@@ -270,12 +272,13 @@ mod simple_cloud_wallet {
             Ok(())
         }
 
+        /// Get the authorized external account id of given workflow
         #[ink(message)]
         pub fn get_authorized_account(&self, workflow: WorkflowId) -> Option<ExternalAccountId> {
             self.authorized_account.get(workflow)
         }
 
-        /// This is an internal function which should only called by `poll()` in a cross-contract manner
+        /// This is an internal function which can only be called by `this.poll()` in a cross-contract manner
         #[ink(message)]
         pub fn set_workflow_session(&mut self, workflow: WorkflowId) -> Result<()> {
             if self.env().caller() != self.env().account_id() {
@@ -285,7 +288,7 @@ mod simple_cloud_wallet {
             Ok(())
         }
 
-        /// Called by a scheduler periodically
+        /// Called by a scheduler periodically with Query
         #[ink(message)]
         pub fn poll(&mut self) -> Result<()> {
             use ink::env::call::{build_call, ExecutionInput, Selector};
@@ -298,7 +301,13 @@ mod simple_cloud_wallet {
 
             // TODO: support workflow interval
             for workflow_id in 0..self.next_workflow_id {
-                let job = self.ensure_enabled_workflow(workflow_id)?;
+                let now_workflow = match self.ensure_enabled_workflow(workflow_id) {
+                    Ok(workflow) => workflow,
+                    Err(_) => {
+                        pink::info!("Skip disabled workflow {}", workflow_id);
+                        continue;
+                    }
+                };
                 // call `this.set_workflow_session()` in a cross-contract manner to let the `self.workflow_session` value
                 // change take effect
                 // this value change only lives in this execution since `poll()` is called with query
@@ -310,7 +319,7 @@ mod simple_cloud_wallet {
                         ExecutionInput::new(Selector::new(ink::selector_bytes!(
                             "set_workflow_session"
                         )))
-                        .push_arg(job.id),
+                        .push_arg(now_workflow.id),
                     )
                     .returns::<Result<()>>()
                     .invoke();
@@ -324,7 +333,7 @@ mod simple_cloud_wallet {
                     .exec_input(
                         // pub fn run(&self, actions: String) -> bool, 0xb95b5eb3
                         ExecutionInput::new(Selector::new(ink::selector_bytes!("run")))
-                            .push_arg(job.commandline),
+                            .push_arg(now_workflow.commandline),
                     )
                     .returns::<bool>()
                     .invoke();
@@ -334,28 +343,40 @@ mod simple_cloud_wallet {
 
         /// Only self-initiated call is allowed
         #[ink(message)]
+        pub fn get_current_evm_account_address(&self) -> Result<H160> {
+            let now_workflow_id = self.ensure_workflow_session()?;
+            self.get_evm_account_address(now_workflow_id)
+        }
+
+        /// Only self-initiated call is allowed
+        #[ink(message)]
         pub fn sign_evm_transaction(&self, tx: Vec<u8>) -> Result<Vec<u8>> {
-            pink::info!("[TEST]: entering sign_evm_transaction()");
-            let workflow_id = self.ensure_workflow_session()?;
-            pink::info!("[TEST]: workflow_id {}", workflow_id);
+            let now_workflow_id = self.ensure_workflow_session()?;
+            pink::info!("Workflow {} asks for EVM tx signing", now_workflow_id);
 
             let account_id = self
                 .authorized_account
-                .get(workflow_id)
+                .get(now_workflow_id)
                 .ok_or(Error::NoAuthorizedExternalAccount)?;
-            pink::info!("[TEST]: account_id {}", account_id);
             let account = self.ensure_enabled_external_account(account_id)?;
-            pink::info!("[TEST]: account {:?}", &account);
+            pink::info!("ExternalAccount {} is allowed", account_id);
+
             let phttp = PinkHttp::new(account.rpc.clone());
             let web3 = pink_web3::Web3::new(phttp);
-
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
 
             let tx: TransactionRequest =
                 json::from_slice(&tx).or(Err(Error::BadUnsignedTransaction))?;
             let tx = TransactionParameters {
+                nonce: tx.nonce,
                 to: tx.to,
+                gas: tx.gas.unwrap_or_default(),
+                gas_price: tx.gas_price,
+                value: tx.value.unwrap_or_default(),
                 data: tx.data.unwrap_or_default(),
+                transaction_type: tx.transaction_type,
+                access_list: tx.access_list,
+                max_priority_fee_per_gas: tx.max_priority_fee_per_gas,
                 ..Default::default()
             };
 
