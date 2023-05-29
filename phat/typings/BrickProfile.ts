@@ -5,12 +5,12 @@ import type { ContractCallResult, ContractQuery } from "@polkadot/api-contract/b
 import type { ContractCallOutcome, ContractOptions } from "@polkadot/api-contract/types";
 import type { Codec } from "@polkadot/types/types";
 
-export namespace SimpleCloudWallet {
+export namespace BrickProfile {
     type InkPrimitives_Types_AccountId = any;
     type InkPrimitives_LangError = { CouldNotReadInput: null };
     type Result = { Ok: Result } | { Err: InkPrimitives_LangError };
-    type SimpleCloudWallet_SimpleCloudWallet_Error = { BadOrigin: null } | { NotConfigured: null } | { Deprecated: null } | { NoPollForTransaction: null } | { BadWorkflowSession: null } | { BadEvmSecretKey: null } | { BadUnsignedTransaction: null } | { WorkflowNotFound: null } | { WorkflowDisabled: null } | { NoAuthorizedExternalAccount: null } | { ExternalAccountNotFound: null } | { ExternalAccountDisabled: null } | { FailedToGetEthAccounts: string } | { FailedToSignTransaction: string };
-    type SimpleCloudWallet_SimpleCloudWallet_Workflow = { id: number, name: string, enabled: boolean, commandline: string };
+    type BrickProfile_BrickProfile_Error = { BadOrigin: null } | { NotConfigured: null } | { Deprecated: null } | { NoPollForTransaction: null } | { BadWorkflowSession: null } | { BadEvmSecretKey: null } | { BadUnsignedTransaction: null } | { WorkflowNotFound: null } | { WorkflowDisabled: null } | { NoAuthorizedExternalAccount: null } | { ExternalAccountNotFound: null } | { ExternalAccountDisabled: null } | { FailedToGetEthAccounts: string } | { FailedToSignTransaction: string };
+    type BrickProfile_BrickProfile_Workflow = { id: number, name: string, enabled: boolean, commandline: string };
     type PrimitiveTypes_H160 = any;
     type Option = { None: null } | { Some: number };
 
@@ -18,6 +18,10 @@ export namespace SimpleCloudWallet {
     /** Queries */
     /** */
     namespace ContractQuery {
+        export interface Version extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
+        }
+
         export interface Owner extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
@@ -53,13 +57,10 @@ export namespace SimpleCloudWallet {
         export interface SignEvmTransaction extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions, tx: number[]): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
-
-        export interface Poll extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
-        }
     }
 
     export interface MapMessageQuery extends DPT.MapMessageQuery {
+        version: ContractQuery.Version;
         owner: ContractQuery.Owner;
         getJsRunner: ContractQuery.GetJsRunner;
         workflowCount: ContractQuery.WorkflowCount;
@@ -69,7 +70,6 @@ export namespace SimpleCloudWallet {
         getAuthorizedAccount: ContractQuery.GetAuthorizedAccount;
         getCurrentEvmAccountAddress: ContractQuery.GetCurrentEvmAccountAddress;
         signEvmTransaction: ContractQuery.SignEvmTransaction;
-        poll: ContractQuery.Poll;
     }
 
     /** */
@@ -111,6 +111,10 @@ export namespace SimpleCloudWallet {
         export interface SetWorkflowSession extends DPT.ContractTx {
             (options: ContractOptions, workflow: number): DPT.SubmittableExtrinsic;
         }
+
+        export interface Poll extends DPT.ContractTx {
+            (options: ContractOptions): DPT.SubmittableExtrinsic;
+        }
     }
 
     export interface MapMessageTx extends DPT.MapMessageTx {
@@ -123,6 +127,7 @@ export namespace SimpleCloudWallet {
         dumpEvmAccount: ContractTx.DumpEvmAccount;
         authorizeWorkflow: ContractTx.AuthorizeWorkflow;
         setWorkflowSession: ContractTx.SetWorkflowSession;
+        poll: ContractTx.Poll;
     }
 
     /** */
@@ -137,6 +142,7 @@ export namespace SimpleCloudWallet {
     /** Contract factory */
     /** */
     export declare class Factory extends DevPhase.ContractFactory {
+        instantiate<T = Contract>(constructor: "new", params: [InkPrimitives_Types_AccountId], options?: DevPhase.InstantiateOptions): Promise<T>;
         instantiate<T = Contract>(constructor: "default", params: never[], options?: DevPhase.InstantiateOptions): Promise<T>;
     }
 }

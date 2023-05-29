@@ -7,12 +7,12 @@ pub use brick_profile_factory::*;
 #[ink::contract(env = pink::PinkEnvironment)]
 mod brick_profile_factory {
     use alloc::{collections::BTreeMap, format, string::String, vec::Vec};
+    use brick_profile::BrickProfileRef;
     use hex_literal::hex;
     use ink::ToAccountId;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
     use scale::{Decode, Encode};
-    use simple_cloud_wallet::SimpleCloudWalletRef;
     use this_crate::{version_tuple, VersionTuple};
 
     #[ink(storage)]
@@ -20,7 +20,7 @@ mod brick_profile_factory {
         owner: AccountId,
         profile_code_hash: Hash,
         user_count: u64,
-        users: BTreeMap<AccountId, SimpleCloudWalletRef>,
+        users: BTreeMap<AccountId, BrickProfileRef>,
     }
 
     #[derive(Encode, Decode, Debug)]
@@ -49,7 +49,7 @@ mod brick_profile_factory {
         pub fn default() -> Self {
             let caller = Self::env().caller();
             let profile_code_hash =
-                hex!("f7c4621841101f7cd48ef1308fe69a57e2e35e9d8ab3579f1ca5d18a0e5af14b").into();
+                hex!("1fad0d532dcabdf8a2473702430e847af7fa39a5c67306ab04238b8ec30165f4").into();
             Self {
                 owner: caller,
                 profile_code_hash,
@@ -99,7 +99,7 @@ mod brick_profile_factory {
             }
 
             let random = signing::derive_sr25519_key(&self.user_count.to_be_bytes());
-            let user_profile = SimpleCloudWalletRef::new(caller)
+            let user_profile = BrickProfileRef::new(caller)
                 .endowment(0)
                 .salt_bytes(&random[..4])
                 .code_hash(self.profile_code_hash)

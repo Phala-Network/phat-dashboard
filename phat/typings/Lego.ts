@@ -13,12 +13,17 @@ export namespace Lego {
     /** Queries */
     /** */
     namespace ContractQuery {
+        export interface Version extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
+        }
+
         export interface Run extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions, actions: string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
     }
 
     export interface MapMessageQuery extends DPT.MapMessageQuery {
+        version: ContractQuery.Version;
         run: ContractQuery.Run;
     }
 

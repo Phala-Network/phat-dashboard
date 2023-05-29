@@ -2,10 +2,10 @@
 
 extern crate alloc;
 
-pub use simple_cloud_wallet::*;
+pub use brick_profile::*;
 
 #[ink::contract(env = pink::PinkEnvironment)]
-mod simple_cloud_wallet {
+mod brick_profile {
     use alloc::{format, string::String, vec::Vec};
     use core::convert::TryInto;
     use ink::storage::{traits::StorageLayout, Mapping};
@@ -32,7 +32,7 @@ mod simple_cloud_wallet {
     }
 
     #[ink(storage)]
-    pub struct SimpleCloudWallet {
+    pub struct BrickProfile {
         owner: AccountId,
         config: Option<Config>,
         next_workflow_id: WorkflowId,
@@ -91,7 +91,7 @@ mod simple_cloud_wallet {
     }
     pub type Result<T> = core::result::Result<T, Error>;
 
-    impl SimpleCloudWallet {
+    impl BrickProfile {
         #[ink(constructor)]
         pub fn new(owner: AccountId) -> Self {
             Self {
@@ -470,7 +470,7 @@ mod simple_cloud_wallet {
             let _ = env_logger::try_init();
             pink_extension_runtime::mock_ext::mock_all_ext();
 
-            let mut wallet = SimpleCloudWallet::default();
+            let mut profile = BrickProfile::default();
 
             // Basic add and get
             let cmd = String::from("[
@@ -479,25 +479,25 @@ mod simple_cloud_wallet {
                 {\"cmd\": \"eval\", \"config\": \"numToUint8Array32(input)\"},
             ]");
             let name = String::from("TestWorkflow");
-            let wf1_id = wallet.add_workflow(name.clone(), cmd.clone()).unwrap();
-            let _ = wallet.add_workflow(name.clone(), cmd.clone()).unwrap();
-            assert_eq!(wallet.workflow_count(), 2);
+            let wf1_id = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
+            let _ = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
+            assert_eq!(profile.workflow_count(), 2);
 
-            let wf1_details = wallet.get_workflow(wf1_id).unwrap();
+            let wf1_details = profile.get_workflow(wf1_id).unwrap();
             assert_eq!(wf1_details.commandline, cmd);
             assert!(wf1_details.enabled);
             assert!(matches!(
-                wallet.get_workflow(3),
+                profile.get_workflow(3),
                 Err(Error::WorkflowNotFound)
             ));
 
             // Account enable and disable
-            let _ = wallet.disable_workflow(wf1_id);
-            let wf1_details = wallet.get_workflow(wf1_id).unwrap();
+            let _ = profile.disable_workflow(wf1_id);
+            let wf1_details = profile.get_workflow(wf1_id).unwrap();
             assert!(!wf1_details.enabled);
 
-            let _ = wallet.enable_workflow(wf1_id);
-            let wf1_details = wallet.get_workflow(wf1_id).unwrap();
+            let _ = profile.enable_workflow(wf1_id);
+            let wf1_details = profile.get_workflow(wf1_id).unwrap();
             assert!(wf1_details.enabled);
 
             // Access control
@@ -507,16 +507,19 @@ mod simple_cloud_wallet {
             ink::env::test::set_caller::<pink::PinkEnvironment>(accounts.bob);
 
             assert!(matches!(
-                wallet.add_workflow(name.clone(), cmd.clone()),
-                Err(Error::BadOrigin)
-            ));
-            assert!(matches!(wallet.get_workflow(wf1_id), Err(Error::BadOrigin)));
-            assert!(matches!(
-                wallet.enable_workflow(wf1_id),
+                profile.add_workflow(name.clone(), cmd.clone()),
                 Err(Error::BadOrigin)
             ));
             assert!(matches!(
-                wallet.disable_workflow(wf1_id),
+                profile.get_workflow(wf1_id),
+                Err(Error::BadOrigin)
+            ));
+            assert!(matches!(
+                profile.enable_workflow(wf1_id),
+                Err(Error::BadOrigin)
+            ));
+            assert!(matches!(
+                profile.disable_workflow(wf1_id),
                 Err(Error::BadOrigin)
             ));
         }
@@ -528,21 +531,21 @@ mod simple_cloud_wallet {
 
             let EnvVars { rpc, key } = config();
 
-            let mut wallet = SimpleCloudWallet::default();
+            let mut profile = BrickProfile::default();
 
             // Account generation
-            let ea1_id = wallet.generate_evm_account(rpc.clone()).unwrap();
-            let _ = wallet.generate_evm_account(rpc.clone()).unwrap();
-            assert_eq!(wallet.external_account_count(), 2);
-            let _address = wallet.get_evm_account_address(ea1_id).unwrap();
+            let ea1_id = profile.generate_evm_account(rpc.clone()).unwrap();
+            let _ = profile.generate_evm_account(rpc.clone()).unwrap();
+            assert_eq!(profile.external_account_count(), 2);
+            let _address = profile.get_evm_account_address(ea1_id).unwrap();
 
             // Deprecated for first release
             // assert!(matches!(
-            //     wallet.import_evm_account(rpc.clone(), key.clone()),
+            //     profile.import_evm_account(rpc.clone(), key.clone()),
             //     Err(Error::Deprecated)
             // ));
             assert!(matches!(
-                wallet.dump_evm_account(ea1_id),
+                profile.dump_evm_account(ea1_id),
                 Err(Error::Deprecated)
             ));
 
@@ -552,11 +555,11 @@ mod simple_cloud_wallet {
             ink::env::test::set_callee::<pink::PinkEnvironment>(contract);
             ink::env::test::set_caller::<pink::PinkEnvironment>(accounts.bob);
             assert!(matches!(
-                wallet.generate_evm_account(rpc.clone()),
+                profile.generate_evm_account(rpc.clone()),
                 Err(Error::BadOrigin)
             ));
             assert!(matches!(
-                wallet.get_evm_account_address(ea1_id),
+                profile.get_evm_account_address(ea1_id),
                 Err(Error::BadOrigin)
             ));
         }
@@ -568,7 +571,7 @@ mod simple_cloud_wallet {
 
             let EnvVars { rpc, key: _ } = config();
 
-            let mut wallet = SimpleCloudWallet::default();
+            let mut profile = BrickProfile::default();
 
             let cmd = String::from("[
                 {\"cmd\": \"fetch\", \"config\": {\"returnTextBody\":true,\"url\":\"https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR\"}},
@@ -576,11 +579,11 @@ mod simple_cloud_wallet {
                 {\"cmd\": \"eval\", \"config\": \"numToUint8Array32(input)\"},
             ]");
             let name = String::from("TestWorkflow");
-            let wf1_id = wallet.add_workflow(name.clone(), cmd.clone()).unwrap();
-            let ea1_id = wallet.generate_evm_account(rpc.clone()).unwrap();
+            let wf1_id = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
+            let ea1_id = profile.generate_evm_account(rpc.clone()).unwrap();
 
-            wallet.authorize_workflow(wf1_id, ea1_id).unwrap();
-            assert_eq!(wallet.get_authorized_account(wf1_id), Some(ea1_id));
+            profile.authorize_workflow(wf1_id, ea1_id).unwrap();
+            assert_eq!(profile.get_authorized_account(wf1_id), Some(ea1_id));
         }
     }
 }

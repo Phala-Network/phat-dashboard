@@ -13,7 +13,7 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 this-crate = "0.1.0"
 pink-extension = { version = "0.4", default-features = false }
 
-simple_cloud_wallet = { path = "../simple_cloud_wallet", default-features = false, features = ["ink-as-dependency"] }
+brick_profile = { path = "../brick_profile", default-features = false, features = ["ink-as-dependency"] }
 hex-literal = "0.3.3"
 
 [lib]
@@ -26,7 +26,7 @@ std = [
     "scale/std",
     "scale-info/std",
     "pink-extension/std",
-    "simple_cloud_wallet/std",
+    "brick_profile/std",
 ]
 ink-as-dependency = []
 e2e-tests = []

@@ -340,7 +340,7 @@ mod action_offchain_rollup {
                 .exec_input(ExecutionInput::new(Selector::new(ink::selector_bytes!(
                     "get_current_evm_account_address"
                 ))))
-                .returns::<simple_cloud_wallet::Result<H160>>()
+                .returns::<brick_profile::Result<H160>>()
                 .invoke()
                 .map_err(|_| Error::BadAccountContract)?;
 
@@ -359,7 +359,7 @@ mod action_offchain_rollup {
                     )))
                     .push_arg(tx_req),
                 )
-                .returns::<simple_cloud_wallet::Result<Vec<u8>>>()
+                .returns::<brick_profile::Result<Vec<u8>>>()
                 .invoke()
                 .map_err(|_| Error::FailedToSignTransaction)?;
 

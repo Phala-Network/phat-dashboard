@@ -1,5 +1,5 @@
 [package]
-name = "simple_cloud_wallet"
+name = "brick_profile"
 version = "0.1.0"
 authors = ["Shelven Zhou <favoring.zhou49@gmail.com>"]
 edition = "2021"
@@ -24,7 +24,7 @@ env_logger = "0.9"
 hex = "0.4"
 
 [lib]
-name = "simple_cloud_wallet"
+name = "brick_profile"
 path = "lib.rs"
 crate-type = [
     # Used for normal contract Wasm blobs.

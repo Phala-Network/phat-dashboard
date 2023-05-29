@@ -11,7 +11,7 @@ import {
 import { PinkSystem } from "@/typings/PinkSystem";
 import { Lego } from "@/typings/Lego";
 import { BrickProfileFactory } from "@/typings/BrickProfileFactory"
-import { SimpleCloudWallet } from '@/typings/SimpleCloudWallet';
+import { BrickProfile } from '@/typings/BrickProfile';
 import { ActionEvmTransaction } from "@/typings/ActionEvmTransaction";
 import { ActionOffchainRollup } from '@/typings/ActionOffchainRollup';
 
@@ -43,8 +43,8 @@ describe("Run lego actions", () => {
   let lego: Lego.Contract;
   let profileFactoryFactory: BrickProfileFactory.Factory;
   let profileFactory: BrickProfileFactory.Contract;
-  let cloudWalletFactory: SimpleCloudWallet.Factory;
-  let cloudWallet: SimpleCloudWallet.Contract;
+  let brickProfileFactory: BrickProfile.Factory;
+  let brickProfile: BrickProfile.Contract;
   let evmTransactionFactory: ActionEvmTransaction.Factory;
   let evmTransaction: ActionEvmTransaction.Contract;
   let offchainRollupFactory: ActionOffchainRollup.Factory;
@@ -84,14 +84,14 @@ describe("Run lego actions", () => {
     });
     legoFactory = await this.devPhase.getFactory('lego');
     profileFactoryFactory = await this.devPhase.getFactory('brick_profile_factory');
-    cloudWalletFactory = await this.devPhase.getFactory('simple_cloud_wallet');
+    brickProfileFactory = await this.devPhase.getFactory('brick_profile');
     evmTransactionFactory = await this.devPhase.getFactory('action_evm_transaction');
     offchainRollupFactory = await this.devPhase.getFactory('action_offchain_rollup');
 
     await qjsFactory.deploy();
     await legoFactory.deploy();
     await profileFactoryFactory.deploy();
-    await cloudWalletFactory.deploy();
+    await brickProfileFactory.deploy();
     await evmTransactionFactory.deploy();
     await offchainRollupFactory.deploy();
 
@@ -149,18 +149,18 @@ describe("Run lego actions", () => {
         let ready = !output.toJSON().ok.err;
         if (ready) {
           let profileAddress = output.asOk.asOk.toHex();
-          cloudWallet = await cloudWalletFactory.attach(profileAddress);
+          brickProfile = await brickProfileFactory.attach(profileAddress);
           console.log(`CloudWallet deployed to ${profileAddress}`);
-          // const result = await cloudWallet.query.owner(certAlice, {});
+          // const result = await brickProfile.query.owner(certAlice, {});
           // console.log(`Profile owner: ${JSON.stringify(result.output)}`);
           return true;
         }
         return false;
       }, 1000 * 10);
 
-      // STEP 1: config simple_cloud_wallet to the lego contract address
+      // STEP 1: config brick_profile to the lego contract address
       await TxHandler.handle(
-        cloudWallet.tx.config({ gasLimit: "10000000000000" }, lego.address.toHex()),
+        brickProfile.tx.config({ gasLimit: "10000000000000" }, lego.address.toHex()),
         alice,
         true,
       );
@@ -169,12 +169,12 @@ describe("Run lego actions", () => {
       // STEP 2: generate the external ETH account, the ExternalAccountId increases from 0
       // importEvmAccount is only available for debug, will be disabled in first release
       await TxHandler.handle(
-        cloudWallet.tx.importEvmAccount({ gasLimit: "10000000000000" }, rpc, [...Uint8Array.from(Buffer.from(ethSecretKey, 'hex'))]),
+        brickProfile.tx.importEvmAccount({ gasLimit: "10000000000000" }, rpc, [...Uint8Array.from(Buffer.from(ethSecretKey, 'hex'))]),
         alice,
         true,
       );
       // await TxHandler.handle(
-      //   cloudWallet.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
+      //   brickProfile.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
       //   alice,
       //   true,
       // );
@@ -193,7 +193,7 @@ describe("Run lego actions", () => {
 
       // STEP 3: link ActionOffchainRollup to CloudWallet
       await TxHandler.handle(
-        offchainRollup.tx.config({ gasLimit: "10000000000000" }, cloudWallet.address.toHex()),
+        offchainRollup.tx.config({ gasLimit: "10000000000000" }, brickProfile.address.toHex()),
         alice,
         true
       );
@@ -207,11 +207,11 @@ describe("Run lego actions", () => {
       console.log("ActionOffchainRollup configured");
 
       await checkUntil(async () => {
-        const resultJsRunner = await cloudWallet.query.getJsRunner(certAlice, {});
-        // console.log(`cloudWallet js_runner: ${JSON.stringify(resultJsRunner)}`);
-        const resultAccountCount = await cloudWallet.query.externalAccountCount(certAlice, {});
-        const resultAccount = await cloudWallet.query.getEvmAccountAddress(certAlice, {}, 0); // 0 for ExternalAccountId
-        // console.log(`cloudWallet account_0: ${JSON.stringify(resultAccount)}`);
+        const resultJsRunner = await brickProfile.query.getJsRunner(certAlice, {});
+        // console.log(`brickProfile js_runner: ${JSON.stringify(resultJsRunner)}`);
+        const resultAccountCount = await brickProfile.query.externalAccountCount(certAlice, {});
+        const resultAccount = await brickProfile.query.getEvmAccountAddress(certAlice, {}, 0); // 0 for ExternalAccountId
+        // console.log(`brickProfile account_0: ${JSON.stringify(resultAccount)}`);
         return !resultJsRunner.output.toJSON().ok.err
           && !resultAccount.output.toJSON().ok.err && resultAccountCount.output.toJSON().ok === 1;
       }, 1000 * 10);
@@ -256,22 +256,22 @@ describe("Run lego actions", () => {
         {"cmd": "log"}
       ]`;
       await TxHandler.handle(
-        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
+        brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
         alice,
         true,
       );
       // STEP 6: authorize the workflow to ask for the ETH account signing
       await TxHandler.handle(
-        cloudWallet.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 0, 0),
+        brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 0, 0),
         alice,
         true,
       );
       await checkUntil(async () => {
-        const resultWorkflow = await cloudWallet.query.getWorkflow(certAlice, {}, 0); // 0 for WorkflowId
-        // console.log(`cloudWallet workflow: ${JSON.stringify(resultWorkflow)}`);
-        const resultWorkflowCount = await cloudWallet.query.workflowCount(certAlice, {});
-        const resultAuthorized = await cloudWallet.query.getAuthorizedAccount(certAlice, {}, 0); // 0 for WorkflowId
-        // console.log(`cloudWallet authorize: ${JSON.stringify(resultAuthorized)}`);
+        const resultWorkflow = await brickProfile.query.getWorkflow(certAlice, {}, 0); // 0 for WorkflowId
+        // console.log(`brickProfile workflow: ${JSON.stringify(resultWorkflow)}`);
+        const resultWorkflowCount = await brickProfile.query.workflowCount(certAlice, {});
+        const resultAuthorized = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 0); // 0 for WorkflowId
+        // console.log(`brickProfile authorize: ${JSON.stringify(resultAuthorized)}`);
         return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === 1
           && resultAuthorized.output.toJSON().ok === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
       }, 1000 * 10);
@@ -279,7 +279,7 @@ describe("Run lego actions", () => {
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
       // ATTENTION: the oralce is on-demand so it will only respond when there is request from EVM client
       while (true) {
-        const result = await cloudWallet.query.poll(certAlice, {});
+        const result = await brickProfile.query.poll(certAlice, {});
         console.log(`Workflow trigger: ${JSON.stringify(result)}`);
         // expect(!result.output.toJSON().ok.err).to.be.true;
 
@@ -308,8 +308,8 @@ describe("Run lego actions", () => {
       const selectorBuildTransaction = 0x8a688c06;
       // pub fn maybe_send_transaction(&self, rlp: Vec<u8>) -> Result<H256>
       const selectorMaybeSendTransaction = 0x072cd15a;
-      // then call simple_cloud_wallet to sign it
-      const calleeWallet = cloudWallet.address.toHex();
+      // then call brick_profile to sign it
+      const calleeWallet = brickProfile.address.toHex();
       // pub fn sign_evm_transaction(&self, tx: Vec<u8>) -> Result<Vec<u8>>
       const selectorSignEvmTransaction = 0xad848771;
 
@@ -365,29 +365,29 @@ describe("Run lego actions", () => {
 
       // STEP 3: add the workflow
       await TxHandler.handle(
-        cloudWallet.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRawTxOracle", actions_lens_api),
+        brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRawTxOracle", actions_lens_api),
         alice,
         true,
       );
       // STEP 4: authorize the workflow to ask for the ETH account signing
       await TxHandler.handle(
-        cloudWallet.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 1, 0),
+        brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 1, 0),
         alice,
         true,
       );
       await checkUntil(async () => {
-        const resultWorkflow = await cloudWallet.query.getWorkflow(certAlice, {}, 1); // 1 for WorkflowId
-        // console.log(`cloudWallet workflow: ${JSON.stringify(resultWorkflow)}`);
-        const resultWorkflowCount = await cloudWallet.query.workflowCount(certAlice, {});
-        const resultAuthorized = await cloudWallet.query.getAuthorizedAccount(certAlice, {}, 1); // 1 for WorkflowId
-        // console.log(`cloudWallet authorize: ${JSON.stringify(resultAuthorized)}`);
+        const resultWorkflow = await brickProfile.query.getWorkflow(certAlice, {}, 1); // 1 for WorkflowId
+        // console.log(`brickProfile workflow: ${JSON.stringify(resultWorkflow)}`);
+        const resultWorkflowCount = await brickProfile.query.workflowCount(certAlice, {});
+        const resultAuthorized = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 1); // 1 for WorkflowId
+        // console.log(`brickProfile authorize: ${JSON.stringify(resultAuthorized)}`);
         return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === 2
           && resultAuthorized.output.toJSON().ok === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
       }, 1000 * 10);
 
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
-      const result = await cloudWallet.query.poll(certAlice, {});
-      console.log(`cloudWallet poll: ${JSON.stringify(result)}`);
+      const result = await brickProfile.query.poll(certAlice, {});
+      console.log(`brickProfile poll: ${JSON.stringify(result)}`);
       expect(!result.output.toJSON().ok.err).to.be.true;
     });
   });

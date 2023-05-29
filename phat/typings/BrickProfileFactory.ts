@@ -5,13 +5,16 @@ import type { ContractCallResult, ContractQuery } from "@polkadot/api-contract/b
 import type { ContractCallOutcome, ContractOptions } from "@polkadot/api-contract/types";
 import type { Codec } from "@polkadot/types/types";
 
-export namespace ActionOffchainRollup {
+export namespace BrickProfileFactory {
     type InkPrimitives_Types_AccountId = any;
+    type InkPrimitives_Types_Hash = any;
+    type BTreeMap = any;
+    type BrickProfile_BrickProfile_CallBuilder = { account_id: InkPrimitives_Types_AccountId };
+    type BrickProfile_BrickProfile_BrickProfileRef = { inner: BrickProfile_BrickProfile_CallBuilder };
     type InkPrimitives_LangError = { CouldNotReadInput: null };
     type Result = { Ok: Result } | { Err: InkPrimitives_LangError };
-    type ActionOffchainRollup_ActionOffchainRollup_Error = { BadOrigin: null } | { NotConfigured: null } | { ClientNotConfigured: null } | { DuplicatedConfigure: null } | { BadAccountContract: null } | { InvalidKeyLength: null } | { InvalidAddressLength: null } | { NoRequestInQueue: null } | { FailedToCreateClient: null } | { FailedToCommitTx: null } | { BadProfileId: null } | { FailedToFetchLensApi: null } | { FailedToTransformLensData: null } | { BadTransformedData: null } | { FailedToGetStorage: null } | { FailedToCreateTransaction: null } | { FailedToSignTransaction: null } | { FailedToSendTransaction: null } | { FailedToGetBlockHash: null } | { FailedToDecode: null } | { InvalidRequest: null };
-    type PrimitiveTypes_H160 = any;
-    type Option = { None: null } | { Some: number[] };
+    type BrickProfileFactory_BrickProfileFactory_Error = { BadOrigin: null } | { NoDuplicatedUserProfile: null } | { FailedToCreateProfile: string } | { UserProfileNotExists: null };
+    type PinkExtension_ChainExtension_PinkExt = {};
 
     /** */
     /** Queries */
@@ -25,15 +28,19 @@ export namespace ActionOffchainRollup {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
 
-        export interface GetAttestAddress extends DPT.ContractQuery {
+        export interface UserCount extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
 
-        export interface GetTransformJs extends DPT.ContractQuery {
+        export interface ProfileCodeHash extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
 
-        export interface AnswerRequest extends DPT.ContractQuery {
+        export interface GetUserProfileAddress extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
+        }
+
+        export interface GetUserProfiles extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
     }
@@ -41,32 +48,28 @@ export namespace ActionOffchainRollup {
     export interface MapMessageQuery extends DPT.MapMessageQuery {
         version: ContractQuery.Version;
         owner: ContractQuery.Owner;
-        getAttestAddress: ContractQuery.GetAttestAddress;
-        getTransformJs: ContractQuery.GetTransformJs;
-        answerRequest: ContractQuery.AnswerRequest;
+        userCount: ContractQuery.UserCount;
+        profileCodeHash: ContractQuery.ProfileCodeHash;
+        getUserProfileAddress: ContractQuery.GetUserProfileAddress;
+        getUserProfiles: ContractQuery.GetUserProfiles;
     }
 
     /** */
     /** Transactions */
     /** */
     namespace ContractTx {
-        export interface Config extends DPT.ContractTx {
-            (options: ContractOptions, account_contract: InkPrimitives_Types_AccountId): DPT.SubmittableExtrinsic;
+        export interface SetProfileCodeHash extends DPT.ContractTx {
+            (options: ContractOptions, profile_code_hash: InkPrimitives_Types_Hash): DPT.SubmittableExtrinsic;
         }
 
-        export interface ConfigClient extends DPT.ContractTx {
-            (options: ContractOptions, rpc: string, anchor_addr: number[], lens_api: string, transform_js: string): DPT.SubmittableExtrinsic;
-        }
-
-        export interface TransferOwnership extends DPT.ContractTx {
-            (options: ContractOptions, new_owner: InkPrimitives_Types_AccountId): DPT.SubmittableExtrinsic;
+        export interface CreateUserProfile extends DPT.ContractTx {
+            (options: ContractOptions): DPT.SubmittableExtrinsic;
         }
     }
 
     export interface MapMessageTx extends DPT.MapMessageTx {
-        config: ContractTx.Config;
-        configClient: ContractTx.ConfigClient;
-        transferOwnership: ContractTx.TransferOwnership;
+        setProfileCodeHash: ContractTx.SetProfileCodeHash;
+        createUserProfile: ContractTx.CreateUserProfile;
     }
 
     /** */
@@ -81,6 +84,7 @@ export namespace ActionOffchainRollup {
     /** Contract factory */
     /** */
     export declare class Factory extends DevPhase.ContractFactory {
+        instantiate<T = Contract>(constructor: "new", params: [InkPrimitives_Types_Hash], options?: DevPhase.InstantiateOptions): Promise<T>;
         instantiate<T = Contract>(constructor: "default", params: never[], options?: DevPhase.InstantiateOptions): Promise<T>;
     }
 }

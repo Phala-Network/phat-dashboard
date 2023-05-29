@@ -1,6 +1,6 @@
-# Simple Cloud Wallet
+# Phat Bricks User Profile
 
-Demo account contract implementation.
+Phat Bricks user profile contract with EVM-compatible accounts support and workflow management.
 
 ## To test
 

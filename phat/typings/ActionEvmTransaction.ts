@@ -16,6 +16,10 @@ export namespace ActionEvmTransaction {
     /** Queries */
     /** */
     namespace ContractQuery {
+        export interface Version extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
+        }
+
         export interface Owner extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result>>>;
         }
@@ -34,6 +38,7 @@ export namespace ActionEvmTransaction {
     }
 
     export interface MapMessageQuery extends DPT.MapMessageQuery {
+        version: ContractQuery.Version;
         owner: ContractQuery.Owner;
         getRpc: ContractQuery.GetRpc;
         buildTransaction: ContractQuery.BuildTransaction;

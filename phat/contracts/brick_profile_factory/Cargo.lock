@@ -75,15 +75,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "brick_profile"
+version = "0.1.0"
+dependencies = [
+ "ink",
+ "parity-scale-codec",
+ "pink-extension",
+ "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
+ "pink-web3",
+ "primitive-types",
+ "scale-info",
+ "secp256k1 0.24.3",
+ "this-crate",
+]
+
+[[package]]
 name = "brick_profile_factory"
 version = "0.1.0"
 dependencies = [
+ "brick_profile",
  "hex-literal",
  "ink",
  "parity-scale-codec",
  "pink-extension",
  "scale-info",
- "simple_cloud_wallet",
  "this-crate",
 ]
 
@@ -1238,21 +1253,6 @@ checksum = "75872d278a8f37ef87fa0ddbda7802605cb18344497949862c0d4dcb291eba60"
 dependencies = [
  "digest",
  "keccak",
-]
-
-[[package]]
-name = "simple_cloud_wallet"
-version = "0.1.0"
-dependencies = [
- "ink",
- "parity-scale-codec",
- "pink-extension",
- "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
- "pink-web3",
- "primitive-types",
- "scale-info",
- "secp256k1 0.24.3",
- "this-crate",
 ]
 
 [[package]]
