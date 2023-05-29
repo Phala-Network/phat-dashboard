@@ -69,6 +69,12 @@ mod brick_profile_factory {
             self.owner
         }
 
+        /// Get the user profile number.
+        #[ink(message)]
+        pub fn user_count(&self) -> u64 {
+            self.user_count
+        }
+
         /// Get the code hash of the user profile contract.
         #[ink(message)]
         pub fn profile_code_hash(&self) -> Hash {

@@ -10,8 +10,9 @@ import {
 } from "devphase";
 import { PinkSystem } from "@/typings/PinkSystem";
 import { Lego } from "@/typings/Lego";
-import { ActionEvmTransaction } from "@/typings/ActionEvmTransaction";
+import { BrickProfileFactory } from "@/typings/BrickProfileFactory"
 import { SimpleCloudWallet } from '@/typings/SimpleCloudWallet';
+import { ActionEvmTransaction } from "@/typings/ActionEvmTransaction";
 import { ActionOffchainRollup } from '@/typings/ActionOffchainRollup';
 
 import "dotenv/config";
@@ -40,12 +41,14 @@ describe("Run lego actions", () => {
   let qjsFactory: ContractFactory;
   let legoFactory: Lego.Factory;
   let lego: Lego.Contract;
+  let profileFactoryFactory: BrickProfileFactory.Factory;
+  let profileFactory: BrickProfileFactory.Contract;
+  let cloudWalletFactory: SimpleCloudWallet.Factory;
+  let cloudWallet: SimpleCloudWallet.Contract;
   let evmTransactionFactory: ActionEvmTransaction.Factory;
   let evmTransaction: ActionEvmTransaction.Contract;
   let offchainRollupFactory: ActionOffchainRollup.Factory;
   let offchainRollup: ActionOffchainRollup.Contract;
-  let cloudWalletFactory: SimpleCloudWallet.Factory;
-  let cloudWallet: SimpleCloudWallet.Contract;
 
   let api: ApiPromise;
   let alice: KeyringPair;
@@ -80,15 +83,17 @@ describe("Run lego actions", () => {
       contractType: "IndeterministicInkCode" as any,
     });
     legoFactory = await this.devPhase.getFactory('lego');
+    profileFactoryFactory = await this.devPhase.getFactory('brick_profile_factory');
+    cloudWalletFactory = await this.devPhase.getFactory('simple_cloud_wallet');
     evmTransactionFactory = await this.devPhase.getFactory('action_evm_transaction');
     offchainRollupFactory = await this.devPhase.getFactory('action_offchain_rollup');
-    cloudWalletFactory = await this.devPhase.getFactory('simple_cloud_wallet');
 
     await qjsFactory.deploy();
     await legoFactory.deploy();
+    await profileFactoryFactory.deploy();
+    await cloudWalletFactory.deploy();
     await evmTransactionFactory.deploy();
     await offchainRollupFactory.deploy();
-    await cloudWalletFactory.deploy();
 
     alice = this.devPhase.accounts.alice;
     certAlice = await PhalaSdk.signCertificate({
@@ -126,16 +131,33 @@ describe("Run lego actions", () => {
       lego = await legoFactory.instantiate("default", [], {});
       evmTransaction = await evmTransactionFactory.instantiate("default", [], {});
       offchainRollup = await offchainRollupFactory.instantiate("default", [], {});
-      // STEP 0: now the stake goes to simple_cloud_wallet since it initiates all the call
-      cloudWallet = await cloudWalletFactory.instantiate("default", [], { transferToCluster: 1e12 });
+      profileFactory = await profileFactoryFactory.instantiate("default", [], { transferToCluster: 1e12 });
       console.log(`Lego deployed to ${lego.address.toHex()}`);
+      console.log(`BrickProfileFactory deployed to ${profileFactory.address.toHex()}`);
       console.log(`ActionEvm deployed to ${evmTransaction.address.toHex()}`);
       console.log(`ActionOffchainRollup deployed to ${offchainRollup.address.toHex()}`);
-      console.log(`CloudWallet deployed to ${cloudWallet.address.toHex()}`);
       await sleep(3_000);
     });
 
     it("can setup contracts", async function () {
+      // STEP 0: create profile contract using profileFactory
+      await TxHandler.handle(
+        profileFactory.tx.createUserProfile({ gasLimit: "10000000000000" }), alice, true
+      );
+      await checkUntil(async () => {
+        const { output } = await profileFactory.query.getUserProfileAddress(certAlice, {});
+        let ready = !output.toJSON().ok.err;
+        if (ready) {
+          let profileAddress = output.asOk.asOk.toHex();
+          cloudWallet = await cloudWalletFactory.attach(profileAddress);
+          console.log(`CloudWallet deployed to ${profileAddress}`);
+          // const result = await cloudWallet.query.owner(certAlice, {});
+          // console.log(`Profile owner: ${JSON.stringify(result.output)}`);
+          return true;
+        }
+        return false;
+      }, 1000 * 10);
+
       // STEP 1: config simple_cloud_wallet to the lego contract address
       await TxHandler.handle(
         cloudWallet.tx.config({ gasLimit: "10000000000000" }, lego.address.toHex()),
