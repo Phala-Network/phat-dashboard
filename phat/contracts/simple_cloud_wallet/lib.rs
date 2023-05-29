@@ -93,9 +93,9 @@ mod simple_cloud_wallet {
 
     impl SimpleCloudWallet {
         #[ink(constructor)]
-        pub fn default() -> Self {
+        pub fn new(owner: AccountId) -> Self {
             Self {
-                owner: Self::env().caller(),
+                owner,
                 config: None,
                 next_workflow_id: 0,
                 workflows: Mapping::default(),
@@ -104,6 +104,11 @@ mod simple_cloud_wallet {
                 authorized_account: Mapping::default(),
                 workflow_session: None,
             }
+        }
+
+        #[ink(constructor)]
+        pub fn default() -> Self {
+            Self::new(Self::env().caller())
         }
 
         #[ink(message)]

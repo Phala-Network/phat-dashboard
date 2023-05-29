@@ -6,7 +6,7 @@ pub use brick_profile_factory::*;
 
 #[ink::contract(env = pink::PinkEnvironment)]
 mod brick_profile_factory {
-    use alloc::collections::BTreeMap;
+    use alloc::{collections::BTreeMap, format, string::String, vec::Vec};
     use hex_literal::hex;
     use ink::ToAccountId;
     use pink_extension as pink;
@@ -28,6 +28,7 @@ mod brick_profile_factory {
     pub enum Error {
         BadOrigin,
         NoDuplicatedUserProfile,
+        FailedToCreateProfile(String),
         UserProfileNotExists,
     }
     pub type Result<T> = core::result::Result<T, Error>;
@@ -48,7 +49,7 @@ mod brick_profile_factory {
         pub fn default() -> Self {
             let caller = Self::env().caller();
             let profile_code_hash =
-                hex!("6a81c3f8130069d7d2265fa65307cdcdd23d6c0bb9f79a34db0b9d5ca85f5676").into();
+                hex!("f7c4621841101f7cd48ef1308fe69a57e2e35e9d8ab3579f1ca5d18a0e5af14b").into();
             Self {
                 owner: caller,
                 profile_code_hash,
@@ -92,11 +93,13 @@ mod brick_profile_factory {
             }
 
             let random = signing::derive_sr25519_key(&self.user_count.to_be_bytes());
-            let user_profile = SimpleCloudWalletRef::default()
+            let user_profile = SimpleCloudWalletRef::new(caller)
                 .endowment(0)
                 .salt_bytes(&random[..4])
                 .code_hash(self.profile_code_hash)
-                .instantiate();
+                .try_instantiate()
+                .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?
+                .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?;
 
             self.users.insert(caller, user_profile);
             self.user_count += 1;
@@ -110,6 +113,18 @@ mod brick_profile_factory {
             let caller = self.env().caller();
             let user_profile = self.users.get(&caller).ok_or(Error::UserProfileNotExists)?;
             Ok(user_profile.to_account_id())
+        }
+
+        /// Get the user profile contract list.
+        #[ink(message)]
+        pub fn get_user_profiles(&self) -> Result<Vec<(AccountId, AccountId)>> {
+            let profiles = self
+                .users
+                .clone()
+                .into_iter()
+                .map(|kv| (kv.0, kv.1.to_account_id()))
+                .collect();
+            Ok(profiles)
         }
 
         /// Return BadOrigin error if the caller is not the owner.
