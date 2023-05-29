@@ -7,7 +7,8 @@ import {
   ContractFactory,
   RuntimeContext,
   TxHandler,
-} from "devphase";
+  ContractType
+} from "@devphase/service";
 import { PinkSystem } from "@/typings/PinkSystem";
 import { Lego } from "@/typings/Lego";
 import { BrickProfileFactory } from "@/typings/BrickProfileFactory"
@@ -71,22 +72,22 @@ describe("Run lego actions", () => {
 
     api = this.api;
     const clusterInfo =
-      await api.query.phalaFatContracts.clusters(
+      await api.query.phalaPhatContracts.clusters(
         this.devPhase.mainClusterId
       );
     systemContract = clusterInfo.unwrap().systemContract.toString();
     console.log("system contract:", systemContract);
 
-    systemFactory = await this.devPhase.getFactory(`${currentStack}/system.contract`);
+    systemFactory = await this.devPhase.getFactory(`${currentStack}/system.contract`, { contractType: ContractType.InkCode });
     qjsFactory = await this.devPhase.getFactory('qjs', {
       clusterId: this.devPhase.mainClusterId,
-      contractType: "IndeterministicInkCode" as any,
+      contractType: ContractType.IndeterministicInkCode,
     });
-    legoFactory = await this.devPhase.getFactory('lego');
-    profileFactoryFactory = await this.devPhase.getFactory('brick_profile_factory');
-    brickProfileFactory = await this.devPhase.getFactory('brick_profile');
-    evmTransactionFactory = await this.devPhase.getFactory('action_evm_transaction');
-    offchainRollupFactory = await this.devPhase.getFactory('action_offchain_rollup');
+    legoFactory = await this.devPhase.getFactory('lego', { contractType: ContractType.InkCode });
+    profileFactoryFactory = await this.devPhase.getFactory('brick_profile_factory', { contractType: ContractType.InkCode });
+    brickProfileFactory = await this.devPhase.getFactory('brick_profile', { contractType: ContractType.InkCode });
+    evmTransactionFactory = await this.devPhase.getFactory('action_evm_transaction', { contractType: ContractType.InkCode });
+    offchainRollupFactory = await this.devPhase.getFactory('action_offchain_rollup', { contractType: ContractType.InkCode });
 
     await qjsFactory.deploy();
     await legoFactory.deploy();
@@ -144,6 +145,8 @@ describe("Run lego actions", () => {
       await TxHandler.handle(
         profileFactory.tx.createUserProfile({ gasLimit: "10000000000000" }), alice, true
       );
+      await sleep(1_000);
+
       await checkUntil(async () => {
         const { output } = await profileFactory.query.getUserProfileAddress(certAlice, {});
         let ready = !output.toJSON().ok.err;
@@ -280,7 +283,7 @@ describe("Run lego actions", () => {
       // ATTENTION: the oralce is on-demand so it will only respond when there is request from EVM client
       while (true) {
         const result = await brickProfile.query.poll(certAlice, {});
-        console.log(`Workflow trigger: ${JSON.stringify(result)}`);
+        console.log(`Workflow trigger: ${JSON.stringify(result.output)}`);
         // expect(!result.output.toJSON().ok.err).to.be.true;
 
         sleep(5_000);
