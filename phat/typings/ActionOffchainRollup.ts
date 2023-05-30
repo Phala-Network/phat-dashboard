@@ -22,20 +22,25 @@ export namespace ActionOffchainRollup {
         Ok? : InkPrimitives_Types_AccountId$1,
         Err? : InkPrimitives_LangError$4
         };
-    type ActionOffchainRollup_ActionOffchainRollup_Error$10 = {
+    type PrimitiveTypes_H160$9 = any;
+    type Result$8 = {
+        Ok? : PrimitiveTypes_H160$9,
+        Err? : InkPrimitives_LangError$4
+        };
+    type ActionOffchainRollup_ActionOffchainRollup_Client$12 = { rpc: string, client_addr: DPT.FixedArray<number, 20> };
+    type ActionOffchainRollup_ActionOffchainRollup_Error$13 = {
         BadOrigin? : null,
-        NotConfigured? : null,
         ClientNotConfigured? : null,
-        DuplicatedConfigure? : null,
-        BadAccountContract? : null,
+        DataSourceNotConfigured? : null,
+        BadBrickProfile? : null,
         InvalidKeyLength? : null,
         InvalidAddressLength? : null,
         NoRequestInQueue? : null,
         FailedToCreateClient? : null,
         FailedToCommitTx? : null,
-        BadProfileId? : null,
-        FailedToFetchLensApi? : null,
-        FailedToTransformLensData? : null,
+        BadLensProfileId? : null,
+        FailedToFetchData? : null,
+        FailedToTransformData? : null,
         BadTransformedData? : null,
         FailedToGetStorage? : null,
         FailedToCreateTransaction? : null,
@@ -45,41 +50,41 @@ export namespace ActionOffchainRollup {
         FailedToDecode? : null,
         InvalidRequest? : null
         };
-    type Result$9 = {
-        Ok? : never[],
-        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$10
-        };
-    type Result$8 = {
-        Ok? : Result$9,
-        Err? : InkPrimitives_LangError$4
-        };
-    type PrimitiveTypes_H160$13 = any;
-    type Result$12 = {
-        Ok? : PrimitiveTypes_H160$13,
-        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$10
-        };
     type Result$11 = {
-        Ok? : Result$12,
+        Ok? : ActionOffchainRollup_ActionOffchainRollup_Client$12,
+        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$13
+        };
+    type Result$10 = {
+        Ok? : Result$11,
         Err? : InkPrimitives_LangError$4
         };
+    type ActionOffchainRollup_ActionOffchainRollup_DataSource$16 = { url: string, transform_js: string };
     type Result$15 = {
-        Ok? : string,
-        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$10
+        Ok? : ActionOffchainRollup_ActionOffchainRollup_DataSource$16,
+        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$13
         };
     type Result$14 = {
         Ok? : Result$15,
         Err? : InkPrimitives_LangError$4
         };
-    type Option$18 = {
+    type Result$18 = {
+        Ok? : never[],
+        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$13
+        };
+    type Result$17 = {
+        Ok? : Result$18,
+        Err? : InkPrimitives_LangError$4
+        };
+    type Option$21 = {
         None? : null,
         Some? : number[] | string
         };
-    type Result$17 = {
-        Ok? : Option$18,
-        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$10
+    type Result$20 = {
+        Ok? : Option$21,
+        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$13
         };
-    type Result$16 = {
-        Ok? : Result$17,
+    type Result$19 = {
+        Ok? : Result$20,
         Err? : InkPrimitives_LangError$4
         };
 
@@ -96,15 +101,23 @@ export namespace ActionOffchainRollup {
         }
 
         export interface GetAttestAddress extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$11>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$8>>>;
         }
 
-        export interface GetTransformJs extends DPT.ContractQuery {
+        export interface GetBrickProfileAddress extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$7>>>;
+        }
+
+        export interface GetClient extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$10>>>;
+        }
+
+        export interface GetDataSource extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$14>>>;
         }
 
         export interface AnswerRequest extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$16>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$19>>>;
         }
     }
 
@@ -112,7 +125,9 @@ export namespace ActionOffchainRollup {
         version: ContractQuery.Version;
         owner: ContractQuery.Owner;
         getAttestAddress: ContractQuery.GetAttestAddress;
-        getTransformJs: ContractQuery.GetTransformJs;
+        getBrickProfileAddress: ContractQuery.GetBrickProfileAddress;
+        getClient: ContractQuery.GetClient;
+        getDataSource: ContractQuery.GetDataSource;
         answerRequest: ContractQuery.AnswerRequest;
     }
 
@@ -120,12 +135,12 @@ export namespace ActionOffchainRollup {
     /** Transactions */
     /** */
     namespace ContractTx {
-        export interface Config extends DPT.ContractTx {
-            (options: ContractOptions, account_contract: InkPrimitives_Types_AccountId$1): DPT.SubmittableExtrinsic;
+        export interface ConfigClient extends DPT.ContractTx {
+            (options: ContractOptions, rpc: string, client_addr: number[] | string): DPT.SubmittableExtrinsic;
         }
 
-        export interface ConfigClient extends DPT.ContractTx {
-            (options: ContractOptions, rpc: string, anchor_addr: number[] | string, lens_api: string, transform_js: string): DPT.SubmittableExtrinsic;
+        export interface ConfigDataSource extends DPT.ContractTx {
+            (options: ContractOptions, rpc: string, client_addr: number[] | string): DPT.SubmittableExtrinsic;
         }
 
         export interface TransferOwnership extends DPT.ContractTx {
@@ -134,8 +149,8 @@ export namespace ActionOffchainRollup {
     }
 
     export interface MapMessageTx extends DPT.MapMessageTx {
-        config: ContractTx.Config;
         configClient: ContractTx.ConfigClient;
+        configDataSource: ContractTx.ConfigDataSource;
         transferOwnership: ContractTx.TransferOwnership;
     }
 
@@ -151,6 +166,6 @@ export namespace ActionOffchainRollup {
     /** Contract factory */
     /** */
     export declare class Factory extends DevPhase.ContractFactory {
-        instantiate<T = Contract>(constructor: "default", params: never[], options?: DevPhase.InstantiateOptions): Promise<T>;
+        instantiate<T = Contract>(constructor: "new", params: [InkPrimitives_Types_AccountId$1], options?: DevPhase.InstantiateOptions): Promise<T>;
     }
 }

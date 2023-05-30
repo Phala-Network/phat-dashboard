@@ -35,8 +35,8 @@ mod action_offchain_rollup {
         owner: AccountId,
         /// Key for signing the rollup tx
         attest_key: [u8; 32],
-        /// AccountContract address to ask for tx signing (to pay gas fee)
-        account_contract: AccountId,
+        /// BrickProfile address to ask for tx signing (to pay gas fee)
+        brick_profile: AccountId,
         client: Option<Client>,
         data_source: Option<DataSource>,
     }
@@ -66,7 +66,7 @@ mod action_offchain_rollup {
         BadOrigin,
         ClientNotConfigured,
         DataSourceNotConfigured,
-        BadAccountContract,
+        BadBrickProfile,
 
         InvalidKeyLength,
         InvalidAddressLength,
@@ -99,7 +99,7 @@ mod action_offchain_rollup {
 
     impl ActionOffchainRollup {
         #[ink(constructor)]
-        pub fn new(account_contract: AccountId) -> Self {
+        pub fn new(brick_profile: AccountId) -> Self {
             const NONCE: &[u8] = b"attest_key";
             let random = signing::derive_sr25519_key(NONCE);
             Self {
@@ -107,7 +107,7 @@ mod action_offchain_rollup {
                 attest_key: random[..32]
                     .try_into()
                     .expect("random is long enough; qed."),
-                account_contract,
+                brick_profile,
                 client: None,
                 data_source: None,
             }
@@ -132,8 +132,8 @@ mod action_offchain_rollup {
         }
 
         #[ink(message)]
-        pub fn get_account_contract_address(&self) -> AccountId {
-            self.account_contract
+        pub fn get_brick_profile_address(&self) -> AccountId {
+            self.brick_profile
         }
 
         #[ink(message)]
@@ -208,7 +208,7 @@ mod action_offchain_rollup {
             maybe_submit_tx(
                 rollup_client,
                 self.attest_key,
-                self.account_contract,
+                self.brick_profile,
                 client.rpc.clone(),
             )
         }
@@ -335,7 +335,7 @@ mod action_offchain_rollup {
     fn maybe_submit_tx(
         rollup_client: EvmRollupClient,
         attest_key: [u8; 32],
-        account_contract: AccountId,
+        brick_profile: AccountId,
         rpc: String,
     ) -> Result<Option<Vec<u8>>> {
         use pink_web3::keys::pink::KeyPair;
@@ -344,16 +344,16 @@ mod action_offchain_rollup {
             .log_err("failed to commit")
             .or(Err(Error::FailedToCommitTx))?;
         if let Some(submittable) = maybe_submittable {
-            // get AccountContract info
+            // get BrickProfile info
             let from_address = build_call::<pink::PinkEnvironment>()
-                .call(account_contract)
+                .call(brick_profile)
                 .transferred_value(0)
                 .exec_input(ExecutionInput::new(Selector::new(ink::selector_bytes!(
                     "get_current_evm_account_address"
                 ))))
                 .returns::<brick_profile::Result<H160>>()
                 .invoke()
-                .map_err(|_| Error::BadAccountContract)?;
+                .map_err(|_| Error::BadBrickProfile)?;
 
             let attest_pair = KeyPair::from(attest_key);
             let tx_req = submittable
@@ -362,7 +362,7 @@ mod action_offchain_rollup {
                 .or(Err(Error::FailedToCreateTransaction))?;
 
             let signed_tx = build_call::<pink::PinkEnvironment>()
-                .call(account_contract)
+                .call(brick_profile)
                 .transferred_value(0)
                 .exec_input(
                     ExecutionInput::new(Selector::new(ink::selector_bytes!(

@@ -137,6 +137,5 @@ export namespace BrickProfileFactory {
     /** */
     export declare class Factory extends DevPhase.ContractFactory {
         instantiate<T = Contract>(constructor: "new", params: [InkPrimitives_Types_Hash$2], options?: DevPhase.InstantiateOptions): Promise<T>;
-        instantiate<T = Contract>(constructor: "default", params: never[], options?: DevPhase.InstantiateOptions): Promise<T>;
     }
 }
