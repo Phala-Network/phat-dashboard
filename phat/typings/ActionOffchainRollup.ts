@@ -140,7 +140,7 @@ export namespace ActionOffchainRollup {
         }
 
         export interface ConfigDataSource extends DPT.ContractTx {
-            (options: ContractOptions, rpc: string, client_addr: number[] | string): DPT.SubmittableExtrinsic;
+            (options: ContractOptions, url: string, transform_js: string): DPT.SubmittableExtrinsic;
         }
 
         export interface TransferOwnership extends DPT.ContractTx {

@@ -163,14 +163,9 @@ mod action_offchain_rollup {
 
         /// Configures the data source and transform js (admin only)
         #[ink(message)]
-        pub fn config_data_source(&mut self, rpc: String, client_addr: Vec<u8>) -> Result<()> {
+        pub fn config_data_source(&mut self, url: String, transform_js: String) -> Result<()> {
             self.ensure_owner()?;
-            self.client = Some(Client {
-                rpc,
-                client_addr: client_addr
-                    .try_into()
-                    .or(Err(Error::InvalidAddressLength))?,
-            });
+            self.data_source = Some(DataSource { url, transform_js });
             Ok(())
         }
 
