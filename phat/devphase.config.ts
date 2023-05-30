@@ -26,7 +26,7 @@ const config: ProjectConfigOptions = {
             binary: '{{directories.stacks}}/{{stack.version}}/pruntime',
             workingDir: '{{directories.stacks}}/.data/pruntime',
             envs: {
-                'RUST_LOG': 'debug,runtime=trace'
+                'RUST_LOG': 'debug'
             },
             args: {
                 '--allow-cors': true,
@@ -61,7 +61,7 @@ const config: ProjectConfigOptions = {
         local: {
             nodeUrl: 'ws://localhost:{{stack.node.port}}',
             workerUrl: 'http://localhost:{{stack.pruntime.port}}',
-            blockTime: 500,
+            blockTime: 100,
         }
     },
     /**
