@@ -1,11 +1,11 @@
 {
   "source": {
-    "hash": "0x02e0945a13ca7935b74753702349b7435ffd7d35d7ed08292a946c90a9e8711e",
+    "hash": "0x36e162efc92fc5238b46927c36115057f8672efae6b19c551e53e518f69c0084",
     "language": "ink! 4.1.0",
-    "compiler": "rustc 1.68.2",
+    "compiler": "rustc 1.69.0",
     "build_info": {
       "build_mode": "Debug",
-      "cargo_contract_version": "2.1.0",
+      "cargo_contract_version": "2.2.1",
       "rust_toolchain": "stable-x86_64-unknown-linux-gnu",
       "wasm_opt_settings": {
         "keep_debug_symbols": false,
@@ -23,9 +23,19 @@
   "spec": {
     "constructors": [
       {
-        "args": [],
+        "args": [
+          {
+            "label": "brick_profile",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 0
+            }
+          }
+        ],
         "docs": [],
-        "label": "default",
+        "label": "new",
         "payable": false,
         "returnType": {
           "displayName": [
@@ -34,7 +44,7 @@
           ],
           "type": 4
         },
-        "selector": "0xed4b9d1b"
+        "selector": "0x9bae9d5e"
       }
     ],
     "docs": [],
@@ -49,6 +59,21 @@
     "messages": [
       {
         "args": [],
+        "docs": [],
+        "label": "version",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 7
+        },
+        "selector": "0xec6d41e1"
+      },
+      {
+        "args": [],
         "docs": [
           " Gets the owner of the contract"
         ],
@@ -60,40 +85,15 @@
             "ink",
             "MessageResult"
           ],
-          "type": 7
+          "type": 10
         },
         "selector": "0xfeaea4fa"
       },
       {
-        "args": [
-          {
-            "label": "account_contract",
-            "type": {
-              "displayName": [
-                "AccountId"
-              ],
-              "type": 0
-            }
-          }
-        ],
-        "docs": [
-          " Configures the account contract (admin only)"
-        ],
-        "label": "config",
-        "mutates": true,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 8
-        },
-        "selector": "0x70714744"
-      },
-      {
         "args": [],
-        "docs": [],
+        "docs": [
+          " Get the identity of offchain rollup"
+        ],
         "label": "get_attest_address",
         "mutates": false,
         "payable": false,
@@ -107,6 +107,51 @@
         "selector": "0xa29595ff"
       },
       {
+        "args": [],
+        "docs": [],
+        "label": "get_brick_profile_address",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 10
+        },
+        "selector": "0x0f2392a4"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "get_client",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 14
+        },
+        "selector": "0xbb27d5c4"
+      },
+      {
+        "args": [],
+        "docs": [],
+        "label": "get_data_source",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 18
+        },
+        "selector": "0x0fa12e05"
+      },
+      {
         "args": [
           {
             "label": "rpc",
@@ -118,16 +163,34 @@
             }
           },
           {
-            "label": "anchor_addr",
+            "label": "client_addr",
             "type": {
               "displayName": [
                 "Vec"
               ],
-              "type": 15
+              "type": 21
             }
-          },
+          }
+        ],
+        "docs": [
+          " Configures the rollup target (admin only)"
+        ],
+        "label": "config_client",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 22
+        },
+        "selector": "0x35be49eb"
+      },
+      {
+        "args": [
           {
-            "label": "lens_api",
+            "label": "url",
             "type": {
               "displayName": [
                 "String"
@@ -146,9 +209,9 @@
           }
         ],
         "docs": [
-          " Configures the rollup target (admin only)"
+          " Configures the data source and transform js (admin only)"
         ],
-        "label": "config_client",
+        "label": "config_data_source",
         "mutates": true,
         "payable": false,
         "returnType": {
@@ -156,26 +219,9 @@
             "ink",
             "MessageResult"
           ],
-          "type": 8
+          "type": 22
         },
-        "selector": "0x35be49eb"
-      },
-      {
-        "args": [],
-        "docs": [
-          " admin only"
-        ],
-        "label": "get_transform_js",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 16
-        },
-        "selector": "0x8de1bc82"
+        "selector": "0xb33f9392"
       },
       {
         "args": [
@@ -190,7 +236,9 @@
           }
         ],
         "docs": [
-          " Transfers the ownership of the contract (admin only)"
+          " Transfers the ownership of the contract (admin only)",
+          "",
+          " transfer this to non-existent owner to renounce ownership and lock the configuration"
         ],
         "label": "transfer_ownership",
         "mutates": true,
@@ -200,34 +248,9 @@
             "ink",
             "MessageResult"
           ],
-          "type": 8
+          "type": 22
         },
         "selector": "0x107e33ea"
-      },
-      {
-        "args": [
-          {
-            "label": "profile_id",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 3
-            }
-          }
-        ],
-        "docs": [],
-        "label": "fetch_lens_api_stats",
-        "mutates": false,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 18
-        },
-        "selector": "0x51dbac3f"
       },
       {
         "args": [],
@@ -242,7 +265,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 21
+          "type": 24
         },
         "selector": "0x2a5bcd75"
       }
@@ -264,57 +287,27 @@
             },
             {
               "layout": {
-                "enum": {
-                  "dispatchKey": "0x00000000",
-                  "name": "Option",
-                  "variants": {
-                    "0": {
-                      "fields": [],
-                      "name": "None"
-                    },
-                    "1": {
-                      "fields": [
-                        {
-                          "layout": {
-                            "struct": {
-                              "fields": [
-                                {
-                                  "layout": {
-                                    "array": {
-                                      "layout": {
-                                        "leaf": {
-                                          "key": "0x00000000",
-                                          "ty": 2
-                                        }
-                                      },
-                                      "len": 32,
-                                      "offset": "0x00000000"
-                                    }
-                                  },
-                                  "name": "attest_key"
-                                },
-                                {
-                                  "layout": {
-                                    "leaf": {
-                                      "key": "0x00000000",
-                                      "ty": 0
-                                    }
-                                  },
-                                  "name": "account_contract"
-                                }
-                              ],
-                              "name": "Config"
-                            }
-                          },
-                          "name": "0"
-                        }
-                      ],
-                      "name": "Some"
+                "array": {
+                  "layout": {
+                    "leaf": {
+                      "key": "0x00000000",
+                      "ty": 2
                     }
-                  }
+                  },
+                  "len": 32,
+                  "offset": "0x00000000"
                 }
               },
-              "name": "config"
+              "name": "attest_key"
+            },
+            {
+              "layout": {
+                "leaf": {
+                  "key": "0x00000000",
+                  "ty": 0
+                }
+              },
+              "name": "brick_profile"
             },
             {
               "layout": {
@@ -354,8 +347,38 @@
                                       "offset": "0x00000000"
                                     }
                                   },
-                                  "name": "anchor_addr"
-                                },
+                                  "name": "client_addr"
+                                }
+                              ],
+                              "name": "Client"
+                            }
+                          },
+                          "name": "0"
+                        }
+                      ],
+                      "name": "Some"
+                    }
+                  }
+                }
+              },
+              "name": "client"
+            },
+            {
+              "layout": {
+                "enum": {
+                  "dispatchKey": "0x00000000",
+                  "name": "Option",
+                  "variants": {
+                    "0": {
+                      "fields": [],
+                      "name": "None"
+                    },
+                    "1": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "struct": {
+                              "fields": [
                                 {
                                   "layout": {
                                     "leaf": {
@@ -363,7 +386,7 @@
                                       "ty": 3
                                     }
                                   },
-                                  "name": "lens_api"
+                                  "name": "url"
                                 },
                                 {
                                   "layout": {
@@ -375,7 +398,7 @@
                                   "name": "transform_js"
                                 }
                               ],
-                              "name": "ClientConfig"
+                              "name": "DataSource"
                             }
                           },
                           "name": "0"
@@ -386,7 +409,7 @@
                   }
                 }
               },
-              "name": "client_config"
+              "name": "data_source"
             }
           ],
           "name": "ActionOffchainRollup"
@@ -521,6 +544,68 @@
               {
                 "fields": [
                   {
+                    "type": 8
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 6
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 8
+          },
+          {
+            "name": "E",
+            "type": 6
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "type": {
+        "def": {
+          "tuple": [
+            9,
+            9,
+            9
+          ]
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": {
+        "def": {
+          "primitive": "u16"
+        }
+      }
+    },
+    {
+      "id": 10,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
                     "type": 0
                   }
                 ],
@@ -551,178 +636,6 @@
         ],
         "path": [
           "Result"
-        ]
-      }
-    },
-    {
-      "id": 8,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 9
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 9
-          },
-          {
-            "name": "E",
-            "type": 6
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 9,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 5
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 10
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 5
-          },
-          {
-            "name": "E",
-            "type": 10
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 10,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "index": 0,
-                "name": "BadOrigin"
-              },
-              {
-                "index": 1,
-                "name": "NotConfigured"
-              },
-              {
-                "index": 2,
-                "name": "ClientNotConfigured"
-              },
-              {
-                "index": 3,
-                "name": "DuplicatedConfigure"
-              },
-              {
-                "index": 4,
-                "name": "InvalidKeyLength"
-              },
-              {
-                "index": 5,
-                "name": "InvalidAddressLength"
-              },
-              {
-                "index": 6,
-                "name": "NoRequestInQueue"
-              },
-              {
-                "index": 7,
-                "name": "FailedToCreateClient"
-              },
-              {
-                "index": 8,
-                "name": "FailedToCommitTx"
-              },
-              {
-                "index": 9,
-                "name": "FailedToFetchLensApi"
-              },
-              {
-                "index": 10,
-                "name": "FailedToTransformLensData"
-              },
-              {
-                "index": 11,
-                "name": "BadTransformedData"
-              },
-              {
-                "index": 12,
-                "name": "FailedToGetStorage"
-              },
-              {
-                "index": 13,
-                "name": "FailedToCreateTransaction"
-              },
-              {
-                "index": 14,
-                "name": "FailedToSendTransaction"
-              },
-              {
-                "index": 15,
-                "name": "FailedToGetBlockHash"
-              },
-              {
-                "index": 16,
-                "name": "FailedToDecode"
-              },
-              {
-                "index": 17,
-                "name": "InvalidRequest"
-              }
-            ]
-          }
-        },
-        "path": [
-          "action_offchain_rollup",
-          "action_offchain_rollup",
-          "Error"
         ]
       }
     },
@@ -772,52 +685,10 @@
       "id": 12,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 13
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 10
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 13
-          },
-          {
-            "name": "E",
-            "type": 10
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 13,
-      "type": {
-        "def": {
           "composite": {
             "fields": [
               {
-                "type": 14,
+                "type": 13,
                 "typeName": "[u8; 20]"
               }
             ]
@@ -830,7 +701,7 @@
       }
     },
     {
-      "id": 14,
+      "id": 13,
       "type": {
         "def": {
           "array": {
@@ -841,17 +712,7 @@
       }
     },
     {
-      "id": 15,
-      "type": {
-        "def": {
-          "sequence": {
-            "type": 2
-          }
-        }
-      }
-    },
-    {
-      "id": 16,
+      "id": 14,
       "type": {
         "def": {
           "variant": {
@@ -859,7 +720,7 @@
               {
                 "fields": [
                   {
-                    "type": 17
+                    "type": 15
                   }
                 ],
                 "index": 0,
@@ -880,7 +741,7 @@
         "params": [
           {
             "name": "T",
-            "type": 17
+            "type": 15
           },
           {
             "name": "E",
@@ -893,7 +754,7 @@
       }
     },
     {
-      "id": 17,
+      "id": 15,
       "type": {
         "def": {
           "variant": {
@@ -901,7 +762,7 @@
               {
                 "fields": [
                   {
-                    "type": 3
+                    "type": 16
                   }
                 ],
                 "index": 0,
@@ -910,7 +771,7 @@
               {
                 "fields": [
                   {
-                    "type": 10
+                    "type": 17
                   }
                 ],
                 "index": 1,
@@ -922,15 +783,137 @@
         "params": [
           {
             "name": "T",
-            "type": 3
+            "type": 16
           },
           {
             "name": "E",
-            "type": 10
+            "type": 17
           }
         ],
         "path": [
           "Result"
+        ]
+      }
+    },
+    {
+      "id": 16,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "name": "rpc",
+                "type": 3,
+                "typeName": "String"
+              },
+              {
+                "name": "client_addr",
+                "type": 13,
+                "typeName": "[u8; 20]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "action_offchain_rollup",
+          "action_offchain_rollup",
+          "Client"
+        ]
+      }
+    },
+    {
+      "id": 17,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "BadOrigin"
+              },
+              {
+                "index": 1,
+                "name": "ClientNotConfigured"
+              },
+              {
+                "index": 2,
+                "name": "DataSourceNotConfigured"
+              },
+              {
+                "index": 3,
+                "name": "BadBrickProfile"
+              },
+              {
+                "index": 4,
+                "name": "InvalidKeyLength"
+              },
+              {
+                "index": 5,
+                "name": "InvalidAddressLength"
+              },
+              {
+                "index": 6,
+                "name": "NoRequestInQueue"
+              },
+              {
+                "index": 7,
+                "name": "FailedToCreateClient"
+              },
+              {
+                "index": 8,
+                "name": "FailedToCommitTx"
+              },
+              {
+                "index": 9,
+                "name": "BadLensProfileId"
+              },
+              {
+                "index": 10,
+                "name": "FailedToFetchData"
+              },
+              {
+                "index": 11,
+                "name": "FailedToTransformData"
+              },
+              {
+                "index": 12,
+                "name": "BadTransformedData"
+              },
+              {
+                "index": 13,
+                "name": "FailedToGetStorage"
+              },
+              {
+                "index": 14,
+                "name": "FailedToCreateTransaction"
+              },
+              {
+                "index": 15,
+                "name": "FailedToSignTransaction"
+              },
+              {
+                "index": 16,
+                "name": "FailedToSendTransaction"
+              },
+              {
+                "index": 17,
+                "name": "FailedToGetBlockHash"
+              },
+              {
+                "index": 18,
+                "name": "FailedToDecode"
+              },
+              {
+                "index": 19,
+                "name": "InvalidRequest"
+              }
+            ]
+          }
+        },
+        "path": [
+          "action_offchain_rollup",
+          "action_offchain_rollup",
+          "Error"
         ]
       }
     },
@@ -994,7 +977,7 @@
               {
                 "fields": [
                   {
-                    "type": 10
+                    "type": 17
                   }
                 ],
                 "index": 1,
@@ -1010,7 +993,7 @@
           },
           {
             "name": "E",
-            "type": 10
+            "type": 17
           }
         ],
         "path": [
@@ -1022,50 +1005,36 @@
       "id": 20,
       "type": {
         "def": {
-          "primitive": "u128"
-        }
+          "composite": {
+            "fields": [
+              {
+                "name": "url",
+                "type": 3,
+                "typeName": "String"
+              },
+              {
+                "name": "transform_js",
+                "type": 3,
+                "typeName": "String"
+              }
+            ]
+          }
+        },
+        "path": [
+          "action_offchain_rollup",
+          "action_offchain_rollup",
+          "DataSource"
+        ]
       }
     },
     {
       "id": 21,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 22
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
+          "sequence": {
+            "type": 2
           }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 22
-          },
-          {
-            "name": "E",
-            "type": 6
-          }
-        ],
-        "path": [
-          "Result"
-        ]
+        }
       }
     },
     {
@@ -1086,7 +1055,7 @@
               {
                 "fields": [
                   {
-                    "type": 10
+                    "type": 6
                   }
                 ],
                 "index": 1,
@@ -1102,7 +1071,7 @@
           },
           {
             "name": "E",
-            "type": 10
+            "type": 6
           }
         ],
         "path": [
@@ -1117,13 +1086,139 @@
           "variant": {
             "variants": [
               {
+                "fields": [
+                  {
+                    "type": 5
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 17
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 5
+          },
+          {
+            "name": "E",
+            "type": 17
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 24,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 25
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 6
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 25
+          },
+          {
+            "name": "E",
+            "type": 6
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 25,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 26
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 17
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 26
+          },
+          {
+            "name": "E",
+            "type": 17
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 26,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
                 "index": 0,
                 "name": "None"
               },
               {
                 "fields": [
                   {
-                    "type": 15
+                    "type": 21
                   }
                 ],
                 "index": 1,
@@ -1135,7 +1230,7 @@
         "params": [
           {
             "name": "T",
-            "type": 15
+            "type": 21
           }
         ],
         "path": [

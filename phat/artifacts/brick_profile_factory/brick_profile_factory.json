@@ -1,7 +1,7 @@
 {
   "source": {
-    "hash": "0x75ae931e384fbab36aa0d9616779a0b4481d7f623e1442179ff2ccb9c87722b0",
-    "language": "ink! 4.0.1",
+    "hash": "0xfe4cbd256503107263aff7dac25a2e8b6c597171d8c04db8af61f3a870f6c27e",
+    "language": "ink! 4.2.0",
     "compiler": "rustc 1.69.0",
     "build_info": {
       "build_mode": "Debug",
@@ -14,7 +14,7 @@
     }
   },
   "contract": {
-    "name": "action_evm_transaction",
+    "name": "brick_profile_factory",
     "version": "0.1.0",
     "authors": [
       "Shelven Zhou <favoring.zhou49@gmail.com>"
@@ -23,32 +23,83 @@
   "spec": {
     "constructors": [
       {
-        "args": [],
+        "args": [
+          {
+            "label": "profile_code_hash",
+            "type": {
+              "displayName": [
+                "Hash"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "default": false,
         "docs": [],
-        "label": "default",
+        "label": "new",
         "payable": false,
         "returnType": {
           "displayName": [
             "ink_primitives",
             "ConstructorResult"
           ],
-          "type": 4
+          "type": 10
         },
-        "selector": "0xed4b9d1b"
+        "selector": "0x9bae9d5e"
       }
     ],
     "docs": [],
+    "environment": {
+      "accountId": {
+        "displayName": [
+          "AccountId"
+        ],
+        "type": 0
+      },
+      "balance": {
+        "displayName": [
+          "Balance"
+        ],
+        "type": 29
+      },
+      "blockNumber": {
+        "displayName": [
+          "BlockNumber"
+        ],
+        "type": 30
+      },
+      "chainExtension": {
+        "displayName": [
+          "ChainExtension"
+        ],
+        "type": 31
+      },
+      "hash": {
+        "displayName": [
+          "Hash"
+        ],
+        "type": 3
+      },
+      "maxEventTopics": 4,
+      "timestamp": {
+        "displayName": [
+          "Timestamp"
+        ],
+        "type": 4
+      }
+    },
     "events": [],
     "lang_error": {
       "displayName": [
         "ink",
         "LangError"
       ],
-      "type": 6
+      "type": 12
     },
     "messages": [
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "version",
         "mutates": false,
@@ -58,14 +109,15 @@
             "ink",
             "MessageResult"
           ],
-          "type": 7
+          "type": 13
         },
         "selector": "0xec6d41e1"
       },
       {
         "args": [],
+        "default": false,
         "docs": [
-          " Gets the owner of the contract"
+          " Get the owner of the contract, only owner can change the profile contract code hash."
         ],
         "label": "owner",
         "mutates": false,
@@ -75,14 +127,17 @@
             "ink",
             "MessageResult"
           ],
-          "type": 10
+          "type": 16
         },
         "selector": "0xfeaea4fa"
       },
       {
         "args": [],
-        "docs": [],
-        "label": "get_rpc",
+        "default": false,
+        "docs": [
+          " Get the user profile number."
+        ],
+        "label": "user_count",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -90,78 +145,17 @@
             "ink",
             "MessageResult"
           ],
-          "type": 11
+          "type": 17
         },
-        "selector": "0xc1c64afe"
+        "selector": "0x09a6dfcb"
       },
       {
-        "args": [
-          {
-            "label": "rpc",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 3
-            }
-          }
-        ],
+        "args": [],
+        "default": false,
         "docs": [
-          " Configures the transaction sending target"
+          " Get the code hash of the user profile contract."
         ],
-        "label": "config",
-        "mutates": true,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 14
-        },
-        "selector": "0x70714744"
-      },
-      {
-        "args": [
-          {
-            "label": "to",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 3
-            }
-          },
-          {
-            "label": "abi",
-            "type": {
-              "displayName": [
-                "Vec"
-              ],
-              "type": 16
-            }
-          },
-          {
-            "label": "func",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 3
-            }
-          },
-          {
-            "label": "params",
-            "type": {
-              "displayName": [
-                "Vec"
-              ],
-              "type": 17
-            }
-          }
-        ],
-        "docs": [],
-        "label": "build_transaction",
+        "label": "profile_code_hash",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -171,22 +165,61 @@
           ],
           "type": 18
         },
-        "selector": "0x8a688c06"
+        "selector": "0x5f67936a"
       },
       {
         "args": [
           {
-            "label": "rlp",
+            "label": "profile_code_hash",
             "type": {
               "displayName": [
-                "Vec"
+                "Hash"
               ],
-              "type": 16
+              "type": 3
             }
           }
         ],
-        "docs": [],
-        "label": "maybe_send_transaction",
+        "default": false,
+        "docs": [
+          " Set the code hash of the user profile contract. Only owner."
+        ],
+        "label": "set_profile_code_hash",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 19
+        },
+        "selector": "0x59aa1311"
+      },
+      {
+        "args": [],
+        "default": false,
+        "docs": [
+          " Instantiate a user profile contract for caller. Only once for each account."
+        ],
+        "label": "create_user_profile",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 19
+        },
+        "selector": "0x2b8decd4"
+      },
+      {
+        "args": [],
+        "default": false,
+        "docs": [
+          " Get the user profile contract address."
+        ],
+        "label": "get_user_profile_address",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -194,9 +227,27 @@
             "ink",
             "MessageResult"
           ],
-          "type": 20
+          "type": 23
         },
-        "selector": "0x072cd15a"
+        "selector": "0x1970e185"
+      },
+      {
+        "args": [],
+        "default": false,
+        "docs": [
+          " Get the user profile contract list."
+        ],
+        "label": "get_user_profiles",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 25
+        },
+        "selector": "0xbcb18cc3"
       }
     ]
   },
@@ -216,45 +267,33 @@
             },
             {
               "layout": {
-                "enum": {
-                  "dispatchKey": "0x00000000",
-                  "name": "Option",
-                  "variants": {
-                    "0": {
-                      "fields": [],
-                      "name": "None"
-                    },
-                    "1": {
-                      "fields": [
-                        {
-                          "layout": {
-                            "struct": {
-                              "fields": [
-                                {
-                                  "layout": {
-                                    "leaf": {
-                                      "key": "0x00000000",
-                                      "ty": 3
-                                    }
-                                  },
-                                  "name": "rpc"
-                                }
-                              ],
-                              "name": "Config"
-                            }
-                          },
-                          "name": "0"
-                        }
-                      ],
-                      "name": "Some"
-                    }
-                  }
+                "leaf": {
+                  "key": "0x00000000",
+                  "ty": 3
                 }
               },
-              "name": "config"
+              "name": "profile_code_hash"
+            },
+            {
+              "layout": {
+                "leaf": {
+                  "key": "0x00000000",
+                  "ty": 4
+                }
+              },
+              "name": "user_count"
+            },
+            {
+              "layout": {
+                "leaf": {
+                  "key": "0x00000000",
+                  "ty": 5
+                }
+              },
+              "name": "users"
             }
           ],
-          "name": "ActionEvmTransaction"
+          "name": "BrickProfileFactory"
         }
       },
       "root_key": "0x00000000"
@@ -304,12 +343,122 @@
       "id": 3,
       "type": {
         "def": {
-          "primitive": "str"
-        }
+          "composite": {
+            "fields": [
+              {
+                "type": 1,
+                "typeName": "[u8; 32]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "types",
+          "Hash"
+        ]
       }
     },
     {
       "id": 4,
+      "type": {
+        "def": {
+          "primitive": "u64"
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 8
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "K",
+            "type": 0
+          },
+          {
+            "name": "V",
+            "type": 6
+          }
+        ],
+        "path": [
+          "BTreeMap"
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "name": "inner",
+                "type": 7,
+                "typeName": "<BrickProfile as::ink::codegen::ContractCallBuilder>::Type"
+              }
+            ]
+          }
+        },
+        "path": [
+          "brick_profile",
+          "brick_profile",
+          "BrickProfileRef"
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "name": "account_id",
+                "type": 0,
+                "typeName": "AccountId"
+              }
+            ]
+          }
+        },
+        "path": [
+          "brick_profile",
+          "brick_profile",
+          "CallBuilder"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 9
+          }
+        }
+      }
+    },
+    {
+      "id": 9,
+      "type": {
+        "def": {
+          "tuple": [
+            0,
+            6
+          ]
+        }
+      }
+    },
+    {
+      "id": 10,
       "type": {
         "def": {
           "variant": {
@@ -317,7 +466,7 @@
               {
                 "fields": [
                   {
-                    "type": 5
+                    "type": 11
                   }
                 ],
                 "index": 0,
@@ -326,7 +475,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 12
                   }
                 ],
                 "index": 1,
@@ -338,11 +487,11 @@
         "params": [
           {
             "name": "T",
-            "type": 5
+            "type": 11
           },
           {
             "name": "E",
-            "type": 6
+            "type": 12
           }
         ],
         "path": [
@@ -351,7 +500,7 @@
       }
     },
     {
-      "id": 5,
+      "id": 11,
       "type": {
         "def": {
           "tuple": []
@@ -359,7 +508,7 @@
       }
     },
     {
-      "id": 6,
+      "id": 12,
       "type": {
         "def": {
           "variant": {
@@ -378,7 +527,7 @@
       }
     },
     {
-      "id": 7,
+      "id": 13,
       "type": {
         "def": {
           "variant": {
@@ -386,7 +535,7 @@
               {
                 "fields": [
                   {
-                    "type": 8
+                    "type": 14
                   }
                 ],
                 "index": 0,
@@ -395,7 +544,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 12
                   }
                 ],
                 "index": 1,
@@ -407,11 +556,11 @@
         "params": [
           {
             "name": "T",
-            "type": 8
+            "type": 14
           },
           {
             "name": "E",
-            "type": 6
+            "type": 12
           }
         ],
         "path": [
@@ -420,19 +569,19 @@
       }
     },
     {
-      "id": 8,
+      "id": 14,
       "type": {
         "def": {
           "tuple": [
-            9,
-            9,
-            9
+            15,
+            15,
+            15
           ]
         }
       }
     },
     {
-      "id": 9,
+      "id": 15,
       "type": {
         "def": {
           "primitive": "u16"
@@ -440,7 +589,7 @@
       }
     },
     {
-      "id": 10,
+      "id": 16,
       "type": {
         "def": {
           "variant": {
@@ -457,7 +606,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 12
                   }
                 ],
                 "index": 1,
@@ -473,7 +622,7 @@
           },
           {
             "name": "E",
-            "type": 6
+            "type": 12
           }
         ],
         "path": [
@@ -482,7 +631,7 @@
       }
     },
     {
-      "id": 11,
+      "id": 17,
       "type": {
         "def": {
           "variant": {
@@ -490,7 +639,7 @@
               {
                 "fields": [
                   {
-                    "type": 12
+                    "type": 4
                   }
                 ],
                 "index": 0,
@@ -499,7 +648,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 12
                   }
                 ],
                 "index": 1,
@@ -511,11 +660,11 @@
         "params": [
           {
             "name": "T",
-            "type": 12
+            "type": 4
           },
           {
             "name": "E",
-            "type": 6
+            "type": 12
           }
         ],
         "path": [
@@ -524,7 +673,7 @@
       }
     },
     {
-      "id": 12,
+      "id": 18,
       "type": {
         "def": {
           "variant": {
@@ -541,7 +690,7 @@
               {
                 "fields": [
                   {
-                    "type": 13
+                    "type": 12
                   }
                 ],
                 "index": 1,
@@ -557,203 +706,7 @@
           },
           {
             "name": "E",
-            "type": 13
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 13,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "index": 0,
-                "name": "BadOrigin"
-              },
-              {
-                "index": 1,
-                "name": "NotConfigured"
-              },
-              {
-                "index": 2,
-                "name": "BadAbi"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 3,
-                    "typeName": "String"
-                  }
-                ],
-                "index": 3,
-                "name": "BadParams"
-              },
-              {
-                "index": 4,
-                "name": "BadToAddress"
-              },
-              {
-                "index": 5,
-                "name": "BadTransaction"
-              },
-              {
-                "index": 6,
-                "name": "FailedToSendTransaction"
-              }
-            ]
-          }
-        },
-        "path": [
-          "action_evm_transaction",
-          "action_evm_transaction",
-          "Error"
-        ]
-      }
-    },
-    {
-      "id": 14,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 15
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 15
-          },
-          {
-            "name": "E",
-            "type": 6
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 15,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 5
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 13
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 5
-          },
-          {
-            "name": "E",
-            "type": 13
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 16,
-      "type": {
-        "def": {
-          "sequence": {
-            "type": 2
-          }
-        }
-      }
-    },
-    {
-      "id": 17,
-      "type": {
-        "def": {
-          "sequence": {
-            "type": 16
-          }
-        }
-      }
-    },
-    {
-      "id": 18,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 19
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 19
-          },
-          {
-            "name": "E",
-            "type": 6
+            "type": 12
           }
         ],
         "path": [
@@ -770,7 +723,7 @@
               {
                 "fields": [
                   {
-                    "type": 16
+                    "type": 20
                   }
                 ],
                 "index": 0,
@@ -779,7 +732,7 @@
               {
                 "fields": [
                   {
-                    "type": 13
+                    "type": 12
                   }
                 ],
                 "index": 1,
@@ -791,11 +744,11 @@
         "params": [
           {
             "name": "T",
-            "type": 16
+            "type": 20
           },
           {
             "name": "E",
-            "type": 13
+            "type": 12
           }
         ],
         "path": [
@@ -812,7 +765,7 @@
               {
                 "fields": [
                   {
-                    "type": 21
+                    "type": 11
                   }
                 ],
                 "index": 0,
@@ -821,7 +774,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 21
                   }
                 ],
                 "index": 1,
@@ -833,11 +786,11 @@
         "params": [
           {
             "name": "T",
-            "type": 21
+            "type": 11
           },
           {
             "name": "E",
-            "type": 6
+            "type": 21
           }
         ],
         "path": [
@@ -852,9 +805,55 @@
           "variant": {
             "variants": [
               {
+                "index": 0,
+                "name": "BadOrigin"
+              },
+              {
+                "index": 1,
+                "name": "NoDuplicatedUserProfile"
+              },
+              {
                 "fields": [
                   {
-                    "type": 22
+                    "type": 22,
+                    "typeName": "String"
+                  }
+                ],
+                "index": 2,
+                "name": "FailedToCreateProfile"
+              },
+              {
+                "index": 3,
+                "name": "UserProfileNotExists"
+              }
+            ]
+          }
+        },
+        "path": [
+          "brick_profile_factory",
+          "brick_profile_factory",
+          "Error"
+        ]
+      }
+    },
+    {
+      "id": 22,
+      "type": {
+        "def": {
+          "primitive": "str"
+        }
+      }
+    },
+    {
+      "id": 23,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 24
                   }
                 ],
                 "index": 0,
@@ -863,7 +862,7 @@
               {
                 "fields": [
                   {
-                    "type": 13
+                    "type": 12
                   }
                 ],
                 "index": 1,
@@ -875,11 +874,11 @@
         "params": [
           {
             "name": "T",
-            "type": 22
+            "type": 24
           },
           {
             "name": "E",
-            "type": 13
+            "type": 12
           }
         ],
         "path": [
@@ -888,21 +887,178 @@
       }
     },
     {
-      "id": 22,
+      "id": 24,
       "type": {
         "def": {
-          "composite": {
-            "fields": [
+          "variant": {
+            "variants": [
               {
-                "type": 1,
-                "typeName": "[u8; 32]"
+                "fields": [
+                  {
+                    "type": 0
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 21
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
               }
             ]
           }
         },
+        "params": [
+          {
+            "name": "T",
+            "type": 0
+          },
+          {
+            "name": "E",
+            "type": 21
+          }
+        ],
         "path": [
-          "primitive_types",
-          "H256"
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 25,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 26
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 12
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 26
+          },
+          {
+            "name": "E",
+            "type": 12
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 26,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 27
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 21
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 27
+          },
+          {
+            "name": "E",
+            "type": 21
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 27,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 28
+          }
+        }
+      }
+    },
+    {
+      "id": 28,
+      "type": {
+        "def": {
+          "tuple": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": 29,
+      "type": {
+        "def": {
+          "primitive": "u128"
+        }
+      }
+    },
+    {
+      "id": 30,
+      "type": {
+        "def": {
+          "primitive": "u32"
+        }
+      }
+    },
+    {
+      "id": 31,
+      "type": {
+        "def": {
+          "variant": {}
+        },
+        "path": [
+          "pink_extension",
+          "chain_extension",
+          "PinkExt"
         ]
       }
     }

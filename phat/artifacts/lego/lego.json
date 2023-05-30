@@ -1,11 +1,11 @@
 {
   "source": {
-    "hash": "0x042978e62321eb25bd624e1ca869bac8953525aca9f9c8d81937488318f96d69",
+    "hash": "0xf72cf5b1a8b9591fe87d91acef76d8b8fc3faec06066f33d60caeb01f272a41b",
     "language": "ink! 4.0.1",
-    "compiler": "rustc 1.68.2",
+    "compiler": "rustc 1.69.0",
     "build_info": {
       "build_mode": "Debug",
-      "cargo_contract_version": "2.1.0",
+      "cargo_contract_version": "2.2.1",
       "rust_toolchain": "stable-x86_64-unknown-linux-gnu",
       "wasm_opt_settings": {
         "keep_debug_symbols": false,
@@ -48,6 +48,21 @@
     },
     "messages": [
       {
+        "args": [],
+        "docs": [],
+        "label": "version",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 3
+        },
+        "selector": "0xec6d41e1"
+      },
+      {
         "args": [
           {
             "label": "actions",
@@ -55,7 +70,7 @@
               "displayName": [
                 "String"
               ],
-              "type": 3
+              "type": 6
             }
           }
         ],
@@ -68,7 +83,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 4
+          "type": 7
         },
         "selector": "0xb95b5eb3"
       }
@@ -159,20 +174,12 @@
       "id": 3,
       "type": {
         "def": {
-          "primitive": "str"
-        }
-      }
-    },
-    {
-      "id": 4,
-      "type": {
-        "def": {
           "variant": {
             "variants": [
               {
                 "fields": [
                   {
-                    "type": 5
+                    "type": 4
                   }
                 ],
                 "index": 0,
@@ -193,7 +200,7 @@
         "params": [
           {
             "name": "T",
-            "type": 5
+            "type": 4
           },
           {
             "name": "E",
@@ -206,7 +213,77 @@
       }
     },
     {
+      "id": 4,
+      "type": {
+        "def": {
+          "tuple": [
+            5,
+            5,
+            5
+          ]
+        }
+      }
+    },
+    {
       "id": 5,
+      "type": {
+        "def": {
+          "primitive": "u16"
+        }
+      }
+    },
+    {
+      "id": 6,
+      "type": {
+        "def": {
+          "primitive": "str"
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 8
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 2
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 8
+          },
+          {
+            "name": "E",
+            "type": 2
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 8,
       "type": {
         "def": {
           "primitive": "bool"
