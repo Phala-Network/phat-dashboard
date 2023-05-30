@@ -45,19 +45,6 @@ mod brick_profile_factory {
             }
         }
 
-        #[ink(constructor)]
-        pub fn default() -> Self {
-            let caller = Self::env().caller();
-            let profile_code_hash =
-                hex!("1fad0d532dcabdf8a2473702430e847af7fa39a5c67306ab04238b8ec30165f4").into();
-            Self {
-                owner: caller,
-                profile_code_hash,
-                user_count: 0,
-                users: Default::default(),
-            }
-        }
-
         #[ink(message)]
         pub fn version(&self) -> VersionTuple {
             version_tuple!()
