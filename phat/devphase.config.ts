@@ -1,9 +1,9 @@
-import { ProjectConfigOptions } from 'devphase';
+import type { ProjectConfigOptions } from '@devphase/service';
 
 const config: ProjectConfigOptions = {
     stack: {
-        blockTime: 500,
-        version: 'nightly-2023-02-20',
+        blockTime: 100,
+        version: 'nightly-2023-05-26',
         node: {
             port: 39944,
             binary: '{{directories.stacks}}/{{stack.version}}/phala-node',
@@ -26,7 +26,7 @@ const config: ProjectConfigOptions = {
             binary: '{{directories.stacks}}/{{stack.version}}/pruntime',
             workingDir: '{{directories.stacks}}/.data/pruntime',
             envs: {
-                'RUST_LOG': 'debug,runtime=trace'
+                'RUST_LOG': 'debug'
             },
             args: {
                 '--allow-cors': true,
@@ -61,7 +61,7 @@ const config: ProjectConfigOptions = {
         local: {
             nodeUrl: 'ws://localhost:{{stack.node.port}}',
             workerUrl: 'http://localhost:{{stack.pruntime.port}}',
-            blockTime: 500,
+            blockTime: 100,
         }
     },
     /**
@@ -69,9 +69,8 @@ const config: ProjectConfigOptions = {
      */
     testing: {
         mocha: {}, // custom mocha configuration
-        spawnStack: true, // spawn runtime stack? or assume there is running one
         stackLogOutput: true, // if specifed pipes output of all stack component to file (by default it is ignored)
-        envSetup: { // environment setup
+        stackSetupConfig: { // environment setup
             setup: {
                 // custom setup procedure callback; (devPhase) => Promise<void>
                 custom: undefined,

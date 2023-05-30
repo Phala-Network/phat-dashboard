@@ -191,6 +191,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "brick_profile"
+version = "0.1.0"
+dependencies = [
+ "dotenvy",
+ "env_logger 0.9.3",
+ "hex",
+ "ink",
+ "parity-scale-codec",
+ "pink-extension",
+ "pink-extension-runtime",
+ "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
+ "pink-web3",
+ "primitive-types",
+ "scale-info",
+ "secp256k1 0.24.3",
+ "this-crate",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2261,24 +2280,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "simple_cloud_wallet"
-version = "0.1.0"
-dependencies = [
- "dotenvy",
- "env_logger 0.9.3",
- "hex",
- "ink",
- "parity-scale-codec",
- "pink-extension",
- "pink-extension-runtime",
- "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
- "pink-web3",
- "primitive-types",
- "scale-info",
- "secp256k1 0.24.3",
-]
-
-[[package]]
 name = "slab"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2559,6 +2560,12 @@ checksum = "be55cf8942feac5c765c2c993422806843c9a9a45d4d5c407ad6dd2ea95eb9b6"
 dependencies = [
  "winapi-util",
 ]
+
+[[package]]
+name = "this-crate"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23c3dac231fac5770597ae4670029b06ea5adab46e2fd192838e9a77007ec656"
 
 [[package]]
 name = "thiserror"

@@ -15,4 +15,5 @@ node_modules
 !/artifacts/qjs/
 !/artifacts/action_evm_transaction/
 !/artifacts/action_offchain_rollup/
-!/artifacts/simple_cloud_wallet/
+!/artifacts/brick_profile/
+!/artifacts/brick_profile_factory/

@@ -10,6 +10,7 @@ ink = { version = "4", default-features = false }
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
 
+this-crate = "0.1.0"
 pink-extension = { version = "0.4", default-features = false }
 phat_js = { path = "../../crates/js", default-features = false }
 

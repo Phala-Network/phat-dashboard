@@ -1,5 +1,5 @@
 [package]
-name = "simple_cloud_wallet"
+name = "brick_profile"
 version = "0.1.0"
 authors = ["Shelven Zhou <favoring.zhou49@gmail.com>"]
 edition = "2021"
@@ -11,6 +11,7 @@ scale = { package = "parity-scale-codec", version = "3", default-features = fals
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
 primitive-types = { version = "0.12", default-features = false, features = ["codec", "scale-info"] }
 
+this-crate = "0.1.0"
 secp256k1 = { version = "0.24.3", default-features = false }
 pink-extension = { version = "0.4", default-features = false }
 pink-json = { git = "https://github.com/Phala-Network/pink-json.git", branch = "pink", default-features = false, features = ["de-number-as-str"] }
@@ -23,7 +24,7 @@ env_logger = "0.9"
 hex = "0.4"
 
 [lib]
-name = "simple_cloud_wallet"
+name = "brick_profile"
 path = "lib.rs"
 crate-type = [
     # Used for normal contract Wasm blobs.

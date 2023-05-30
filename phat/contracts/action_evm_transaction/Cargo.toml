@@ -14,6 +14,7 @@ scale = { package = "parity-scale-codec", version = "3", default-features = fals
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
 primitive-types = { version = "0.12", default-features = false, features = ["codec", "scale-info"] }
 
+this-crate = "0.1.0"
 pink-extension = { version = "0.4", default-features = false }
 pink-json = { git = "https://github.com/Phala-Network/pink-json.git", branch = "pink", default-features = false, features = ["de-number-as-str"] }
 pink-web3 = { version = "0.20", default-features = false, features = ["pink", "signing"] }
