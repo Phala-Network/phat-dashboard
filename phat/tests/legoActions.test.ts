@@ -59,9 +59,9 @@ describe("Run lego actions", () => {
   let systemContract: string;
 
   const rpc = process.env.RPC ?? "http://localhost:8545";
-  const ethSecretKey = process.env.PRIVKEY ?? "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+  const ethSecretKey = process.env.PRIVKEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
   const lensApi = process.env.LENS ?? "https://api-mumbai.lens.dev/";
-  const anchorAddr = process.env.ANCHOR ?? "2a6a5d59564C470f6aC3E93C4c197251F31EBCf8";
+  const anchorAddr = process.env.ANCHOR ?? "0x2a6a5d59564C470f6aC3E93C4c197251F31EBCf8";
 
   before(async function () {
     this.timeout(20_000);
@@ -128,32 +128,28 @@ describe("Run lego actions", () => {
     this.timeout(500_000_000);
 
     before(async function () {
-      // Deploy contract
+      // Deploy contracts
       lego = await legoFactory.instantiate("default", [], {});
       evmTransaction = await evmTransactionFactory.instantiate("default", [], {});
-      offchainRollup = await offchainRollupFactory.instantiate("default", [], {});
-      profileFactory = await profileFactoryFactory.instantiate("default", [], { transferToCluster: 1e12 });
-      console.log(`Lego deployed to ${lego.address.toHex()}`);
-      console.log(`BrickProfileFactory deployed to ${profileFactory.address.toHex()}`);
-      console.log(`ActionEvm deployed to ${evmTransaction.address.toHex()}`);
-      console.log(`ActionOffchainRollup deployed to ${offchainRollup.address.toHex()}`);
-      await sleep(3_000);
-    });
+      // setup BrickProfileFactory
+      profileFactory = await profileFactoryFactory.instantiate("new", [brickProfileFactory.metadata.source.hash], { transferToCluster: 1e12 });
+      {
+        const { output } = await profileFactory.query.profileCodeHash(certAlice, {});
+        console.log(`BrickProfileFactory uses code ${output.asOk}`);
+      }
 
-    it("can setup contracts", async function () {
-      // STEP 0: create profile contract using profileFactory
+      // STEP 0: create BrickProfile using BrickProfileFactory
       await TxHandler.handle(
         profileFactory.tx.createUserProfile({ gasLimit: "10000000000000" }), alice, true
       );
       await sleep(1_000);
-
       await checkUntil(async () => {
         const { output } = await profileFactory.query.getUserProfileAddress(certAlice, {});
         let ready = !output.toJSON().ok.err;
         if (ready) {
           let profileAddress = output.asOk.asOk.toHex();
           brickProfile = await brickProfileFactory.attach(profileAddress);
-          console.log(`CloudWallet deployed to ${profileAddress}`);
+          console.log(`BrickProfile deployed to ${profileAddress}`);
           // const result = await brickProfile.query.owner(certAlice, {});
           // console.log(`Profile owner: ${JSON.stringify(result.output)}`);
           return true;
@@ -161,18 +157,34 @@ describe("Run lego actions", () => {
         return false;
       }, 1000 * 10);
 
-      // STEP 1: config brick_profile to the lego contract address
+      // connect ActionOffchainRollup to BrickProfile
+      offchainRollup = await offchainRollupFactory.instantiate("new", [brickProfile.address], {});
+      {
+        const { output: profileAddress } = await offchainRollup.query.getBrickProfileAddress(certAlice, {});
+        console.log(`ActionOffchainRollup connects to BrickProfile ${profileAddress.asOk.toHex()}`);
+        const { output: rollupIdentity } = await offchainRollup.query.getAttestAddress(certAlice, {});
+        console.log(`>>>>> ActionOffchainRollup identity: ${rollupIdentity.asOk} <<<<<`);
+      }
+
+      console.log(`Lego deployed to ${lego.address.toHex()}`);
+      console.log(`BrickProfileFactory deployed to ${profileFactory.address.toHex()}`);
+      console.log(`ActionEvmTransaction deployed to ${evmTransaction.address.toHex()}`);
+      console.log(`ActionOffchainRollup deployed to ${offchainRollup.address.toHex()}`);
+    });
+
+    it("can setup contracts", async function () {
+      // STEP 1: config BrickProfile to the lego contract address
       await TxHandler.handle(
         brickProfile.tx.config({ gasLimit: "10000000000000" }, lego.address.toHex()),
         alice,
         true,
       );
-      console.log("CloudWallet configured");
+      console.log("BrickProfile configured");
 
       // STEP 2: generate the external ETH account, the ExternalAccountId increases from 0
       // importEvmAccount is only available for debug, will be disabled in first release
       await TxHandler.handle(
-        brickProfile.tx.importEvmAccount({ gasLimit: "10000000000000" }, rpc, [...Uint8Array.from(Buffer.from(ethSecretKey, 'hex'))]),
+        brickProfile.tx.importEvmAccount({ gasLimit: "10000000000000" }, rpc, ethSecretKey),
         alice,
         true,
       );
@@ -181,7 +193,7 @@ describe("Run lego actions", () => {
       //   alice,
       //   true,
       // );
-      console.log("CloudWallet account imported");
+      console.log("BrickProfile account imported");
 
       await TxHandler.handle(
         evmTransaction.tx.config({ gasLimit: "10000000000000" }, rpc),
@@ -193,21 +205,6 @@ describe("Run lego actions", () => {
         return !result.output.toJSON().ok.err;
       }, 1000 * 10);
       console.log("ActionEvmTransaction configured");
-
-      // STEP 3: link ActionOffchainRollup to CloudWallet
-      await TxHandler.handle(
-        offchainRollup.tx.config({ gasLimit: "10000000000000" }, brickProfile.address.toHex()),
-        alice,
-        true
-      );
-      await checkUntil(async () => {
-        const result = await offchainRollup.query.getAttestAddress(certAlice, {});
-        let ready = !result.output.toJSON().ok.err;
-        if (ready)
-          console.log(`>>>>> ActionOffchainRollup identity: ${JSON.stringify(result.output.toJSON().ok.ok)} <<<<<`);
-        return ready;
-      }, 1000 * 10);
-      console.log("ActionOffchainRollup configured");
 
       await checkUntil(async () => {
         const resultJsRunner = await brickProfile.query.getJsRunner(certAlice, {});
@@ -225,7 +222,7 @@ describe("Run lego actions", () => {
         return JSON.stringify(o);
       }
 
-      // STEP 4: assume user has deployed the smart contract client
+      // STEP 3: assume user has deployed the smart contract client
       // config ActionOffchainRollup client
       let transform_js = `
         function transform(arg) {
@@ -235,22 +232,30 @@ describe("Run lego actions", () => {
         transform(scriptArgs[0])
       `;
       await TxHandler.handle(
-        offchainRollup.tx.configClient({ gasLimit: "10000000000000" },
-          rpc,
-          [...Uint8Array.from(Buffer.from(anchorAddr, 'hex'))],
-          lensApi,
-          transform_js),
+        offchainRollup.tx.configClient({ gasLimit: "10000000000000" }, rpc, anchorAddr),
         alice,
         true,
       );
       await checkUntil(async () => {
-        const result = await offchainRollup.query.getTransformJs(certAlice, {});
-        // console.log(`${JSON.stringify(result)}`);
-        return !result.output.toJSON().ok.err;
+        const { output } = await offchainRollup.query.getClient(certAlice, {});
+        // console.log(`ActionOffchainRollup client ${JSON.stringify(output)}`);
+        return !output.toJSON().ok.err;
       }, 1000 * 10);
       console.log("ActionOffchainRollup client configured");
 
-      // STEP 5: add the workflow, the WorkflowId increases from 0
+      await TxHandler.handle(
+        offchainRollup.tx.configDataSource({ gasLimit: "10000000000000" }, lensApi, transform_js),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const { output } = await offchainRollup.query.getDataSource(certAlice, {});
+        // console.log(`ActionOffchainRollup data source ${JSON.stringify(output)}`);
+        return !output.toJSON().ok.err;
+      }, 1000 * 10);
+      console.log("ActionOffchainRollup data source configured");
+
+      // STEP 4: add the workflow, the WorkflowId increases from 0
       // pub fn answer_request(&self) -> Result<Option<Vec<u8>>>
       // this return EVM tx id
       const selectorAnswerRequest = 0x2a5bcd75
@@ -263,7 +268,7 @@ describe("Run lego actions", () => {
         alice,
         true,
       );
-      // STEP 6: authorize the workflow to ask for the ETH account signing
+      // STEP 5: authorize the workflow to ask for the ETH account signing
       await TxHandler.handle(
         brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 0, 0),
         alice,

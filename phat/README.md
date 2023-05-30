@@ -12,18 +12,18 @@ cargo contract --version
 Prepare your EVM RPC and account, this repo use Polygon Mumbai testnet as an example.
 
   const rpc = process.env.RPC ?? "http://localhost:8545";
-  const ethSecretKey = process.env.PRIVKEY ?? "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+  const ethSecretKey = process.env.PRIVKEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
   const lensApi = process.env.LENS ?? "https://api-mumbai.lens.dev/";
-  const anchorAddr = process.env.ANCHOR ?? "93891cb936B62806300aC687e12d112813b483C1";
+  const anchorAddr = process.env.ANCHOR ?? "0x93891cb936B62806300aC687e12d112813b483C1";
 
 ```bash
 # EVM rpc
 export RPC=https://polygon-mumbai.g.alchemy.com/v2/<your-api-key>
-# Account private key, without the "0x" prefix
+# Account private key, with the "0x" prefix
 export PRIVKEY=<you-polygon-account-privkey>
 # Optional: data source of Lens api Oracle
 export LENS=https://api-mumbai.lens.dev/
-# The smart contract to receive the Oracle data, without the "0x" prefix
+# The smart contract to receive the Oracle data, with the "0x" prefix
 export ANCHOR=<you-client-smart-contract-address>
 ```
 
