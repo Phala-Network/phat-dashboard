@@ -301,7 +301,7 @@ mod brick_profile {
 
         /// Called by a scheduler periodically with Query
         #[ink(message)]
-        pub fn poll(&mut self) -> Result<()> {
+        pub fn poll(&mut self, workflow_id: WorkflowId) -> Result<bool> {
             use ink::env::call::{build_call, ExecutionInput, Selector};
 
             // Trick here: We only allow Query the `poll()` function, so the following `workflow_session` change only
@@ -310,46 +310,37 @@ mod brick_profile {
                 return Err(Error::NoPollForTransaction);
             }
 
-            // TODO: support workflow interval
-            for workflow_id in 0..self.next_workflow_id {
-                let now_workflow = match self.ensure_enabled_workflow(workflow_id) {
-                    Ok(workflow) => workflow,
-                    Err(_) => {
-                        pink::info!("Skip disabled workflow {}", workflow_id);
-                        continue;
-                    }
-                };
-                // call `this.set_workflow_session()` in a cross-contract manner to let the `self.workflow_session` value
-                // change take effect
-                // this value change only lives in this execution since `poll()` is called with query
-                let _ = build_call::<pink::PinkEnvironment>()
-                    .call(self.env().account_id())
-                    .transferred_value(0)
-                    .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
-                    .exec_input(
-                        ExecutionInput::new(Selector::new(ink::selector_bytes!(
-                            "set_workflow_session"
-                        )))
-                        .push_arg(now_workflow.id),
-                    )
-                    .returns::<Result<()>>()
-                    .invoke();
+            let now_workflow = self.ensure_enabled_workflow(workflow_id)?;
+            // call `this.set_workflow_session()` in a cross-contract manner to let the `self.workflow_session` value
+            // change take effect
+            // this value change only lives in this execution since `poll()` is called with query
+            let _ = build_call::<pink::PinkEnvironment>()
+                .call(self.env().account_id())
+                .transferred_value(0)
+                .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
+                .exec_input(
+                    ExecutionInput::new(Selector::new(ink::selector_bytes!(
+                        "set_workflow_session"
+                    )))
+                    .push_arg(now_workflow.id),
+                )
+                .returns::<Result<()>>()
+                .invoke();
 
-                let js_runner = self.get_js_runner()?;
-                let _call_result = build_call::<pink::PinkEnvironment>()
-                    .call(js_runner)
-                    // .gas_limit(5000)
-                    .transferred_value(0)
-                    .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
-                    .exec_input(
-                        // pub fn run(&self, actions: String) -> bool, 0xb95b5eb3
-                        ExecutionInput::new(Selector::new(ink::selector_bytes!("run")))
-                            .push_arg(now_workflow.commandline),
-                    )
-                    .returns::<bool>()
-                    .invoke();
-            }
-            Ok(())
+            let js_runner = self.get_js_runner()?;
+            let call_result = build_call::<pink::PinkEnvironment>()
+                .call(js_runner)
+                // .gas_limit(5000)
+                .transferred_value(0)
+                .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
+                .exec_input(
+                    // pub fn run(&self, actions: String) -> bool, 0xb95b5eb3
+                    ExecutionInput::new(Selector::new(ink::selector_bytes!("run")))
+                        .push_arg(now_workflow.commandline),
+                )
+                .returns::<bool>()
+                .invoke();
+            Ok(call_result)
         }
 
         /// Only self-initiated call is allowed

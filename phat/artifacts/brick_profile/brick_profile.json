@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x1fad0d532dcabdf8a2473702430e847af7fa39a5c67306ab04238b8ec30165f4",
+    "hash": "0x95e3c2c4d024d154c8dda183921be8526f8cff5cdd33127f3143af2cc5b8b10d",
     "language": "ink! 4.0.1",
     "compiler": "rustc 1.69.0",
     "build_info": {
@@ -508,7 +508,17 @@
         "selector": "0xf5ad3222"
       },
       {
-        "args": [],
+        "args": [
+          {
+            "label": "workflow_id",
+            "type": {
+              "displayName": [
+                "WorkflowId"
+              ],
+              "type": 3
+            }
+          }
+        ],
         "docs": [
           " Called by a scheduler periodically with Query"
         ],
@@ -520,7 +530,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 16
+          "type": 31
         },
         "selector": "0x1e44dfc6"
       },
@@ -564,7 +574,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 33
         },
         "selector": "0xad848771"
       }
@@ -1800,6 +1810,90 @@
     },
     {
       "id": 32,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 5
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 5
+          },
+          {
+            "name": "E",
+            "type": 15
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 33,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 34
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 8
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 34
+          },
+          {
+            "name": "E",
+            "type": 8
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 34,
       "type": {
         "def": {
           "variant": {

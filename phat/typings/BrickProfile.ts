@@ -93,11 +93,19 @@ export namespace BrickProfile {
         Err? : InkPrimitives_LangError$4
         };
     type Result$25 = {
-        Ok? : number[] | string,
+        Ok? : boolean,
         Err? : BrickProfile_BrickProfile_Error$10
         };
     type Result$24 = {
         Ok? : Result$25,
+        Err? : InkPrimitives_LangError$4
+        };
+    type Result$27 = {
+        Ok? : number[] | string,
+        Err? : BrickProfile_BrickProfile_Error$10
+        };
+    type Result$26 = {
+        Ok? : Result$27,
         Err? : InkPrimitives_LangError$4
         };
 
@@ -142,7 +150,7 @@ export namespace BrickProfile {
         }
 
         export interface SignEvmTransaction extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, tx: number[] | string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$24>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, tx: number[] | string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$26>>>;
         }
     }
 
@@ -200,7 +208,7 @@ export namespace BrickProfile {
         }
 
         export interface Poll extends DPT.ContractTx {
-            (options: ContractOptions): DPT.SubmittableExtrinsic;
+            (options: ContractOptions, workflow_id: number): DPT.SubmittableExtrinsic;
         }
     }
 

@@ -287,9 +287,12 @@ describe("Run lego actions", () => {
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
       // ATTENTION: the oralce is on-demand so it will only respond when there is request from EVM client
       while (true) {
-        const result = await brickProfile.query.poll(certAlice, {});
-        console.log(`Workflow trigger: ${JSON.stringify(result.output)}`);
-        // expect(!result.output.toJSON().ok.err).to.be.true;
+        let { output: outputWorkflowCount } = await brickProfile.query.workflowCount(certAlice, {});
+        for (let i = 0; i < outputWorkflowCount.asOk; i++) {
+          const result = await brickProfile.query.poll(certAlice, {}, i);
+          console.log(`Workflow ${i} triggerred: ${JSON.stringify(result.output)}`);
+          // expect(!result.output.toJSON().ok.err).to.be.true;
+        }
 
         sleep(5_000);
       }
@@ -394,7 +397,7 @@ describe("Run lego actions", () => {
       }, 1000 * 10);
 
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
-      const result = await brickProfile.query.poll(certAlice, {});
+      const result = await brickProfile.query.poll(certAlice, {}, 0);
       console.log(`brickProfile poll: ${JSON.stringify(result)}`);
       expect(!result.output.toJSON().ok.err).to.be.true;
     });
