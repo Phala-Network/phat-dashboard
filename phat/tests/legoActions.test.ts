@@ -64,7 +64,7 @@ describe("Run lego actions", () => {
   const anchorAddr = process.env.ANCHOR ?? "0x2a6a5d59564C470f6aC3E93C4c197251F31EBCf8";
 
   before(async function () {
-    this.timeout(20_000);
+    this.timeout(500_000_000);
 
     currentStack = (await RuntimeContext.getSingleton()).paths.currentStack;
     console.log("clusterId:", this.devPhase.mainClusterId);

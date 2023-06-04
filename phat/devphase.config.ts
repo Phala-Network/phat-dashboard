@@ -61,8 +61,12 @@ const config: ProjectConfigOptions = {
         local: {
             nodeUrl: 'ws://localhost:{{stack.node.port}}',
             workerUrl: 'http://localhost:{{stack.pruntime.port}}',
-            blockTime: 100,
-        }
+        },
+        poc5: {
+            nodeUrl: 'wss://poc5.phala.network/ws',
+            workerUrl: 'https://poc5.phala.network/tee-api-1',
+            blockTime: 3000, // network block time (may be overriden in testing mode)
+        },
     },
     /**
      * Testing configuration

@@ -16,12 +16,12 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@devphase/cli@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@devphase/cli/-/cli-0.2.0.tgz#63d0935937bd2702f7c17934c3f9efed95754b91"
-  integrity sha512-JN9IaE2oMs19Y3FMxd/APmgYSo5HFpXZvZDIrYI0vV5zZ4qAAYiP6od0xZwT8Zde3CwcnvK4BEmEzdEJ6qhM0w==
+"@devphase/cli@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@devphase/cli/-/cli-0.2.1.tgz#e843ec5460d6e6c097fc39d7d5065f439dfc33ab"
+  integrity sha512-VFuhVomQC393Px5XaQIO55Fm7AzZuiUnsP/bnIFMBBq2stL73fUoj3ycXf30UZdmLnz7u60oj0kMINkUO7zSWQ==
   dependencies:
-    "@devphase/service" "^0.2.0"
+    "@devphase/service" "^0.2.1"
     "@oclif/core" "^2.0.7"
     "@oclif/plugin-help" "^5.2.2"
     "@oclif/plugin-not-found" "^2.3.22"
@@ -30,10 +30,10 @@
     listr "^0.14.3"
     lodash "^4.17.21"
 
-"@devphase/service@^0.2.0":
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/@devphase/service/-/service-0.2.0.tgz#c41660e4eb0aaf3439e18a0a041ee2d8ba6bbc56"
-  integrity sha512-QShoGVgEgu11rrUQOWVezvBdO4TEt59QiMb7t6CDZUF+z96Jn3G5elWYBDHz1tzkitVhTnhOTTL6IXSEvfjmcw==
+"@devphase/service@^0.2.1":
+  version "0.2.1"
+  resolved "https://registry.yarnpkg.com/@devphase/service/-/service-0.2.1.tgz#0af4017a2dce6659ed5ed70c329e0f13f2f20847"
+  integrity sha512-LOy8Ogsn032HNA4vl8R127S1guX/H4jYx6GCrwrpld3KUkf16Yr0CEgop2wZRsItD0tp7a4R2mHFMm9gsCj9kQ==
   dependencies:
     "@phala/ink-validator" "^0.1.0"
     "@phala/sdk" "^0.4.0"
