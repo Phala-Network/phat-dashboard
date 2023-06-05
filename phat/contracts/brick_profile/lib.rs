@@ -236,6 +236,9 @@ mod brick_profile {
             rpc: String,
             sk: Vec<u8>,
         ) -> Result<ExternalAccountId> {
+            // Deprecated in first release
+            return Err(Error::Deprecated);
+
             self.ensure_owner()?;
 
             let id = self.next_external_account_id;
@@ -531,10 +534,10 @@ mod brick_profile {
             let _address = profile.get_evm_account_address(ea1_id).unwrap();
 
             // Deprecated for first release
-            // assert!(matches!(
-            //     profile.import_evm_account(rpc.clone(), key.clone()),
-            //     Err(Error::Deprecated)
-            // ));
+            assert!(matches!(
+                profile.import_evm_account(rpc.clone(), key.clone()),
+                Err(Error::Deprecated)
+            ));
             assert!(matches!(
                 profile.dump_evm_account(ea1_id),
                 Err(Error::Deprecated)
