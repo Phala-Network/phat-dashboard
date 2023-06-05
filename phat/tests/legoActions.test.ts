@@ -183,17 +183,17 @@ describe("Run lego actions", () => {
 
       // STEP 2: generate the external ETH account, the ExternalAccountId increases from 0
       // importEvmAccount is only available for debug, will be disabled in first release
-      await TxHandler.handle(
-        brickProfile.tx.importEvmAccount({ gasLimit: "10000000000000" }, rpc, ethSecretKey),
-        alice,
-        true,
-      );
       // await TxHandler.handle(
-      //   brickProfile.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
+      //   brickProfile.tx.importEvmAccount({ gasLimit: "10000000000000" }, rpc, ethSecretKey),
       //   alice,
       //   true,
       // );
-      console.log("BrickProfile account imported");
+      await TxHandler.handle(
+        brickProfile.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
+        alice,
+        true,
+      );
+      console.log("BrickProfile account generated");
 
       await TxHandler.handle(
         evmTransaction.tx.config({ gasLimit: "10000000000000" }, rpc),
