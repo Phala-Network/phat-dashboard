@@ -1,0 +1,55 @@
+name: Build contracts - Witnessed
+
+on:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  emit-source-info:
+    name: Source information
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+          path: source
+
+      - name: Remove the git objects
+        run: rm -rf source/.git
+
+      - name: Archive the source
+        run: zip -r source.zip source
+
+      - name: Show the hash of the source as notation
+        run: echo "::notice title=witness.sourceCodeHash::0x$(sha256sum source.zip | cut -d ' ' -f 1)"
+
+      - name: Uplaod source code
+        uses: actions/upload-artifact@v2
+        with:
+          name: Source
+          path: source.zip
+
+  build-contracts:
+    name: Build contracts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Rust toolchain
+        run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+      - name: Install cargo-contract
+        run: cargo install cargo-contract --version=^3
+
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Build contracts
+        run: ./witnessed-build
+
+      - name: Upload the contract
+        uses: actions/upload-artifact@v2
+        with:
+          name: Contracts
+          path: .witness/*.zip
