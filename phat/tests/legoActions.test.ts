@@ -7,14 +7,15 @@ import {
   ContractFactory,
   RuntimeContext,
   TxHandler,
-  ContractType
+  ContractType,
 } from "@devphase/service";
-import { PinkSystem } from "@/typings/PinkSystem";
+import { System } from "@/typings/System";
 import { Lego } from "@/typings/Lego";
 import { BrickProfileFactory } from "@/typings/BrickProfileFactory"
 import { BrickProfile } from '@/typings/BrickProfile';
 import { ActionEvmTransaction } from "@/typings/ActionEvmTransaction";
 import { ActionOffchainRollup } from '@/typings/ActionOffchainRollup';
+import { hex, loadInkAbi, callCfg } from "./utils";
 
 import "dotenv/config";
 
@@ -37,8 +38,7 @@ async function checkUntil(async_fn, timeout) {
 }
 
 describe("Run lego actions", () => {
-  let systemFactory: PinkSystem.Factory;
-  let system: PinkSystem.Contract;
+  let system: System.Contract;
   let qjsFactory: ContractFactory;
   let legoFactory: Lego.Factory;
   let lego: Lego.Contract;
@@ -54,9 +54,8 @@ describe("Run lego actions", () => {
   let api: ApiPromise;
   let alice: KeyringPair;
   let certAlice: PhalaSdk.CertificateData;
-  const txConf = { gasLimit: "10000000000000", storageDepositLimit: null };
   let currentStack: string;
-  let systemContract: string;
+  let nextWorkflowId = 0;
 
   const rpc = process.env.RPC ?? "http://localhost:8545";
   const ethSecretKey = process.env.PRIVKEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
@@ -67,7 +66,9 @@ describe("Run lego actions", () => {
     this.timeout(500_000_000);
 
     currentStack = this.devPhase.runtimeContext.paths.currentStack;
+    system = await this.devPhase.getSystemContract(this.devPhase.mainClusterId) as any;
     console.log("clusterId:", this.devPhase.mainClusterId);
+    console.log("system contract:", system.contractId);
     console.log(`currentStack: ${currentStack}`);
 
     api = this.api;
@@ -75,10 +76,6 @@ describe("Run lego actions", () => {
       await api.query.phalaPhatContracts.clusters(
         this.devPhase.mainClusterId
       );
-    systemContract = clusterInfo.unwrap().systemContract.toString();
-    console.log("system contract:", systemContract);
-
-    systemFactory = await this.devPhase.getFactory(`${currentStack}/system.contract`, { contractType: ContractType.InkCode });
     qjsFactory = await this.devPhase.getFactory('qjs', {
       clusterId: this.devPhase.mainClusterId,
       contractType: ContractType.IndeterministicInkCode,
@@ -103,7 +100,6 @@ describe("Run lego actions", () => {
     });
     console.log("Signer:", alice.address.toString());
 
-    system = (await systemFactory.attach(systemContract)) as any;
 
     // Upgrade pink runtime to latest, so that we can store larger values to the storage
     await TxHandler.handle(
@@ -114,6 +110,7 @@ describe("Run lego actions", () => {
       alice,
       true,
     );
+
     // register the qjs to JsDelegate driver
     await TxHandler.handle(
       system.tx["system::setDriver"](
@@ -303,46 +300,53 @@ describe("Run lego actions", () => {
       // STEP 4: add the workflow, the WorkflowId increases from 0
       // pub fn answer_request(&self) -> Result<Option<Vec<u8>>>
       // this return EVM tx id
-      const selectorGetRawAnswer = 0x2e8fc0a7;
-      const selectorAnswerRequest = 0x2a5bcd75;
-      const selectorGetAnswer = 0x9d27bc00;
-      const input = "0x010200000000000000000000000000000000000000000000000000000000000004d2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000043078303100000000000000000000000000000000000000000000000000000000";
-      const actions_lens_api = JSON.stringify([
-          // { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorGetAnswer }, input },
-          { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorAnswerRequest } },
-          { cmd: "log" }
-      ]);
+      const inkAbi = await loadInkAbi({
+        contracts: [
+          "./artifacts/action_offchain_rollup/action_offchain_rollup.contract",
+        ],
+        exports: [
+          "answer_request",
+        ],
+      });
+      console.log(`inkAbi:\n${JSON.stringify(inkAbi)}`);
+
+      const workflow = JSON.stringify({
+        version: 1,
+        debug: true,
+        types: inkAbi.typeRegistry,
+        actions: [
+          {
+            cmd: "call",
+            config: callCfg(
+              offchainRollup.address.toHex(),
+              inkAbi.contracts.action_offchain_rollup.answer_request
+            )
+          },
+          {cmd: "log"},
+        ],
+      });
+
+      const workflowId = nextWorkflowId++;
+
       await TxHandler.handle(
-        brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
-        alice,
-        true,
-      );
-      await TxHandler.handle(
-        brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
+        brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", workflow),
         alice,
         true,
       );
       // STEP 5: authorize the workflow to ask for the ETH account signing
       await TxHandler.handle(
-        brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 0, 0),
-        alice,
-        true,
-      );
-      await TxHandler.handle(
-        brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 1, 1),
+        brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, workflowId, 0),
         alice,
         true,
       );
       await checkUntil(async () => {
-        const { output: outputWorkflow0 } = await brickProfile.query.getWorkflow(certAlice, {}, 0); // 0 for WorkflowId
-        const { output: outputWorkflow1 } = await brickProfile.query.getWorkflow(certAlice, {}, 1); // 1 for WorkflowId
-        const { output: outputWorkflowCount } = await brickProfile.query.workflowCount(certAlice, {});
-        const { output: outputAuthorized0 } = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 0); // 0 for WorkflowId
-        const { output: outputAuthorized1 } = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 1); // 1 for WorkflowId
+        const resultWorkflow = await brickProfile.query.getWorkflow(certAlice, {}, workflowId);
+        // console.log(`brickProfile workflow: ${JSON.stringify(resultWorkflow)}`);
+        const resultWorkflowCount = await brickProfile.query.workflowCount(certAlice, {});
+        const resultAuthorized = await brickProfile.query.getAuthorizedAccount(certAlice, {}, workflowId); // 0 for WorkflowId
         // console.log(`brickProfile authorize: ${JSON.stringify(resultAuthorized)}`);
-        return outputWorkflowCount.asOk.toPrimitive() === 2
-          && outputWorkflow0.asOk.isOk && outputAuthorized0.asOk.toPrimitive() === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
-          && outputWorkflow1.asOk.isOk && outputAuthorized1.asOk.toPrimitive() === 1
+        return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === workflowId + 1
+          && resultAuthorized.output.toJSON().ok === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
       }, 1000 * 10);
 
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
@@ -354,15 +358,11 @@ describe("Run lego actions", () => {
           console.log(`Workflow ${i} triggerred: ${JSON.stringify(output)}`);
         }
 
-        sleep(5_000);
+        await sleep(5_000);
       }
     });
 
     it.skip("can run raw-tx-based Oracle", async function () {
-      function cfg(o: object) {
-        return JSON.stringify(o);
-      }
-
       function toHexString(o: object) {
         return Buffer.from(JSON.stringify(o)).toString('hex')
       }
@@ -387,11 +387,25 @@ describe("Run lego actions", () => {
       // build EVM transaction to call `onPhatRollupReceived(address from, bytes calldata price)`
       let abi_file = fs.readFileSync(path.join(__dirname, '../res/receiver.abi.json'));
       const arg_to = '0xabd257f376acab89e077650bfcb4ff89081a9ec1';
-      const arg_abi = [...abi_file];
+      const arg_abi = hex(abi_file);
       const arg_function = 'onPhatRollupReceived';
       // 20-byte `address from`, in this case we don't care about this
-      const arg_param_0 = Array(20).fill(0);
+      const arg_param_0 = hex(Array(20).fill(0));
       // 32 byte `bytes calldata price`, this should be consturcted from the output of last step
+
+      console.log("loading ink abi...");
+      const inkAbi = await loadInkAbi({
+        contracts: [
+          "./artifacts/action_evm_transaction/action_evm_transaction.json",
+          "./artifacts/brick_profile/brick_profile.json",
+        ],
+        exports: [
+          "build_transaction",
+          "sign_evm_transaction",
+          "maybe_send_transaction",
+        ],
+      });
+      console.log(`abi:\n${JSON.stringify(inkAbi)}`);
 
       const lensApiRequest = {
         url: 'https://api-mumbai.lens.dev/',
@@ -419,40 +433,70 @@ describe("Run lego actions", () => {
         returnTextBody: true,
       };
 
-      const actions_lens_api = `[
-        {"cmd": "fetch", "config": ${cfg(lensApiRequest)}},
-        {"cmd": "eval", "config": "JSON.parse(input.body).data.profile.stats.totalFollowers"},
-        {"cmd": "eval", "config": "numToUint8Array32(input)"},
-        {"cmd": "eval", "config": "scale.encode(['${arg_to}', [${arg_abi}], '${arg_function}', [[${arg_param_0}], input]], scale.encodeBuildTx)"},
-        {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorBuildTransaction })}},
-        {"cmd": "eval", "config": "scale.decode(input, scale.decodeResultVecU8)"},
-        {"cmd": "eval", "config": "scale.encode(input.content, scale.encodeVecU8)"},
-        {"cmd": "call", "config": ${cfg({ "callee": calleeWallet, "selector": selectorSignEvmTransaction })}},
-        {"cmd": "eval", "config": "scale.decode(input, scale.decodeResultVecU8)"},
-        {"cmd": "eval", "config": "scale.encode(input.content, scale.encodeVecU8)"},
-        {"cmd": "call", "config": ${cfg({ "callee": calleeEvmTransaction, "selector": selectorMaybeSendTransaction })}},
-        {"cmd": "log"}
-      ]`;
+      const workflow = JSON.stringify({
+        version: 1,
+        debug: true,
+        types: inkAbi.typeRegistry,
+        actions: [
+          { cmd: "fetch", config: lensApiRequest },
+          {
+            cmd: "eval",
+            config:
+              "numToUint8Array32(JSON.parse(input.body).data.profile.stats.totalFollowers)",
+          },
+          {
+            cmd: "eval",
+            config: `['${arg_to}', '${arg_abi}', '${arg_function}', ['${arg_param_0}', input]]`,
+          },
+          {
+            cmd: "call",
+            config: callCfg(
+              calleeEvmTransaction,
+              inkAbi.contracts.action_evm_transaction.build_transaction
+            ),
+          },
+          { cmd: "eval", config: "[input.Ok.Ok]" },
+          {
+            cmd: "call",
+            config: callCfg(
+              calleeWallet,
+              inkAbi.contracts.brick_profile.sign_evm_transaction
+            ),
+          },
+          { cmd: "eval", config: "[input.Ok.Ok]" },
+          {
+            cmd: "call",
+            config: callCfg(
+              calleeEvmTransaction,
+              inkAbi.contracts.action_evm_transaction.maybe_send_transaction
+            ),
+          },
+          { cmd: "log" },
+        ],
+      });
 
+      console.log(`workflow:\n${workflow}`);
+
+      const workflowId = nextWorkflowId++;
       // STEP 3: add the workflow
       await TxHandler.handle(
-        brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRawTxOracle", actions_lens_api),
+        brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRawTxOracle", workflow),
         alice,
         true,
       );
       // STEP 4: authorize the workflow to ask for the ETH account signing
       await TxHandler.handle(
-        brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 1, 0),
+        brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, workflowId, 0),
         alice,
         true,
       );
       await checkUntil(async () => {
-        const resultWorkflow = await brickProfile.query.getWorkflow(certAlice, {}, 1); // 1 for WorkflowId
+        const resultWorkflow = await brickProfile.query.getWorkflow(certAlice, {}, workflowId); // 1 for WorkflowId
         // console.log(`brickProfile workflow: ${JSON.stringify(resultWorkflow)}`);
         const resultWorkflowCount = await brickProfile.query.workflowCount(certAlice, {});
-        const resultAuthorized = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 1); // 1 for WorkflowId
+        const resultAuthorized = await brickProfile.query.getAuthorizedAccount(certAlice, {}, workflowId); // 1 for WorkflowId
         // console.log(`brickProfile authorize: ${JSON.stringify(resultAuthorized)}`);
-        return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === 2
+        return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === workflowId + 1
           && resultAuthorized.output.toJSON().ok === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
       }, 1000 * 10);
 

@@ -26,6 +26,7 @@ mod lego {
         #[ink(message)]
         pub fn run(&self, actions: String) -> bool {
             let script = include_str!("./js/dist/index.js");
+            // TODO.kevin: propagate the error
             js::eval(script, &[actions])
                 .log_err("Failed to run actions")
                 .is_ok()
