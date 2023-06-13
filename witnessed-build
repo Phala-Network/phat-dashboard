@@ -5,6 +5,16 @@ if [ -z "$WITNESS_DIST_DIR" ]; then
   export WITNESS_DIST_DIR=$(pwd)/.witness/dist
 fi
 
+install_toolchain() {
+  echo "::group::Installing Rust"
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+  echo "::endgroup::"
+  PATH="$HOME/.cargo/bin:$PATH"
+  echo "::group::Installing cargo-contract"
+  cargo install cargo-contract --version=^3
+  echo "::endgroup::"
+}
+
 install() {
     echo "Installing $1 to $2"
     cp $1 $2
@@ -27,6 +37,10 @@ build_contract() {
     mkdir -p $WITNESS_DIST_DIR
     install $contract_name.zip $WITNESS_DIST_DIR/
 }
+
+if [ "$1" = "-i" ]; then
+  install_toolchain
+fi
 
 for contract in phat/contracts/*; do
   echo "::group::Building $contract"
