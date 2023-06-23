@@ -234,11 +234,9 @@ mod action_offchain_rollup {
             pink::info!("Request received for profile {profile_id}");
 
             // Get the Lens stats and respond as a rollup action.
-            let result = Self::fetch_lens_api_stats(
-                data_source.url.clone(),
-                data_source.transform_js.clone(),
-                String::from(profile_id),
-            );
+            let resp_data =
+                Self::fetch_lens_api_stats(data_source.url.clone(), String::from(profile_id))?;
+            let result = Self::transform_data(resp_data, data_source.transform_js.clone());
             match result {
                 Ok(res) => {
                     // Respond
@@ -252,18 +250,17 @@ mod action_offchain_rollup {
             }
         }
 
-        pub fn fetch_lens_api_stats(
-            lens_api: String,
-            transform_js: String,
-            profile_id: String,
-        ) -> Result<u128> {
+        pub fn fetch_lens_api_stats(lens_api: String, profile_id: String) -> Result<String> {
             // profile_id should be like 0x0001
             let is_hex_digit = |n| char::is_digit(n, 16);
             if !profile_id.starts_with("0x") || !profile_id[2..].chars().all(is_hex_digit) {
                 return Err(Error::BadLensProfileId);
             }
 
-            let headers = vec![("Content-Type".into(), "application/json".into())];
+            let headers = vec![
+                ("Content-Type".into(), "application/json".into()),
+                ("User-Agent".into(), "phat-contract".into()),
+            ];
             let body = format!("{{\"query\":\"\\n          query Profile {{\\n            profile(request: {{ profileId: \\\"{profile_id}\\\" }}) {{\\n              stats {{\\n                totalFollowers\\n                totalFollowing\\n                totalPosts\\n                totalComments\\n                totalMirrors\\n                totalPublications\\n                totalCollects\\n              }}\\n            }}\\n          }}\\n          \"}}");
 
             let resp = pink::http_post!(lens_api, body.as_bytes(), headers);
@@ -278,7 +275,11 @@ mod action_offchain_rollup {
             }
 
             let resp_body = String::from_utf8(resp.body).or(Err(Error::FailedToDecode))?;
-            let result = js::eval(transform_js.as_str(), &[resp_body])
+            Ok(resp_body)
+        }
+
+        pub fn transform_data(data: String, transform_js: String) -> Result<u128> {
+            let result = js::eval(transform_js.as_str(), &[data])
                 .map_err(|_| Error::FailedToTransformData)?;
 
             let result_num: u128 = match result {
@@ -289,7 +290,6 @@ mod action_offchain_rollup {
                     return Err(Error::BadTransformedData);
                 }
             };
-
             Ok(result_num)
         }
 
@@ -383,8 +383,8 @@ mod action_offchain_rollup {
     mod tests {
         use super::*;
 
-        const LENS_API: &str = "https://api-mumbai.lens.dev/";
-        const TRANSFORM_JS: &str = "function transform(arg) { let input = JSON.parse(arg); return input.data.profile.stats.totalCollects; } transform(scriptArgs[0])";
+        const LENS_TESTNET_API: &str = "https://api-mumbai.lens.dev/";
+        const LENS_MAINNET_API: &str = "https://api.lens.dev/";
 
         struct EnvVars {
             rpc: String,
@@ -406,42 +406,44 @@ mod action_offchain_rollup {
             let _ = env_logger::try_init();
             pink_extension_runtime::mock_ext::mock_all_ext();
 
-            let lens_api = String::from(LENS_API);
-            let transform_js = String::from(TRANSFORM_JS);
+            let lens_testnet_api = String::from(LENS_TESTNET_API);
+            let lens_mainnet_api = String::from(LENS_MAINNET_API);
 
             assert_eq!(
                 ActionOffchainRollup::fetch_lens_api_stats(
-                    lens_api.clone(),
-                    transform_js.clone(),
+                    lens_testnet_api.clone(),
                     String::from("01")
                 ),
                 Err(Error::BadLensProfileId)
             );
             assert_eq!(
                 ActionOffchainRollup::fetch_lens_api_stats(
-                    lens_api.clone(),
-                    transform_js.clone(),
+                    lens_testnet_api.clone(),
                     String::from("0x01 \\\"")
                 ),
                 Err(Error::BadLensProfileId)
             );
             assert_eq!(
                 ActionOffchainRollup::fetch_lens_api_stats(
-                    lens_api.clone(),
-                    transform_js.clone(),
+                    lens_testnet_api.clone(),
                     String::from("0xg")
                 ),
                 Err(Error::BadLensProfileId)
             );
 
-            // This will fail since there is no JS engine in unittest
-            // let stats = ActionOffchainRollup::fetch_lens_api_stats(
-            //     lens_api.clone(),
-            //     transform_js.clone(),
-            //     String::from("0x01"),
-            // )
-            // .unwrap();
-            // pink::warn!("TotalCollects: {stats:?}");
+            let stats = ActionOffchainRollup::fetch_lens_api_stats(
+                lens_testnet_api.clone(),
+                String::from("0x01"),
+            )
+            .unwrap();
+            pink::warn!("TotalCollects on testnet: {stats:?}");
+
+            let stats = ActionOffchainRollup::fetch_lens_api_stats(
+                lens_mainnet_api.clone(),
+                String::from("0x01"),
+            )
+            .unwrap();
+            pink::warn!("TotalCollects on mainnet: {stats:?}");
         }
     }
 }
