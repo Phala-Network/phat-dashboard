@@ -1,11 +1,11 @@
 {
   "source": {
-    "hash": "0x5bbb7ecf20cc5c5fa77f47b77c8ca1f6e6bc428b71f5c02c0a6ab4dd0569ec67",
-    "language": "ink! 4.1.0",
+    "hash": "0x8087d7f4beacee49a055e74aefd984d5422786a4d577a36088ca38bf5a485efe",
+    "language": "ink! 4.2.0",
     "compiler": "rustc 1.69.0",
     "build_info": {
       "build_mode": "Debug",
-      "cargo_contract_version": "2.2.1",
+      "cargo_contract_version": "3.0.1",
       "rust_toolchain": "stable-x86_64-unknown-linux-gnu",
       "wasm_opt_settings": {
         "keep_debug_symbols": false,
@@ -15,7 +15,7 @@
   },
   "contract": {
     "name": "action_offchain_rollup",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "authors": [
       "[your_name] <[your_email]>"
     ]
@@ -34,6 +34,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [],
         "label": "new",
         "payable": false,
@@ -48,6 +49,45 @@
       }
     ],
     "docs": [],
+    "environment": {
+      "accountId": {
+        "displayName": [
+          "AccountId"
+        ],
+        "type": 0
+      },
+      "balance": {
+        "displayName": [
+          "Balance"
+        ],
+        "type": 27
+      },
+      "blockNumber": {
+        "displayName": [
+          "BlockNumber"
+        ],
+        "type": 30
+      },
+      "chainExtension": {
+        "displayName": [
+          "ChainExtension"
+        ],
+        "type": 31
+      },
+      "hash": {
+        "displayName": [
+          "Hash"
+        ],
+        "type": 28
+      },
+      "maxEventTopics": 4,
+      "timestamp": {
+        "displayName": [
+          "Timestamp"
+        ],
+        "type": 29
+      }
+    },
     "events": [],
     "lang_error": {
       "displayName": [
@@ -59,6 +99,7 @@
     "messages": [
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "version",
         "mutates": false,
@@ -74,6 +115,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [
           " Gets the owner of the contract"
         ],
@@ -91,6 +133,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [
           " Get the identity of offchain rollup"
         ],
@@ -108,6 +151,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "get_brick_profile_address",
         "mutates": false,
@@ -123,6 +167,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "get_client",
         "mutates": false,
@@ -138,6 +183,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "get_data_source",
         "mutates": false,
@@ -172,6 +218,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Configures the rollup target (admin only)"
         ],
@@ -208,6 +255,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Configures the data source and transform js (admin only)"
         ],
@@ -235,6 +283,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Transfers the ownership of the contract (admin only)",
           "",
@@ -254,6 +303,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [
           " Processes a Lens Api stat request by a rollup transaction"
         ],
@@ -1235,6 +1285,63 @@
         ],
         "path": [
           "Option"
+        ]
+      }
+    },
+    {
+      "id": 27,
+      "type": {
+        "def": {
+          "primitive": "u128"
+        }
+      }
+    },
+    {
+      "id": 28,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 1,
+                "typeName": "[u8; 32]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "types",
+          "Hash"
+        ]
+      }
+    },
+    {
+      "id": 29,
+      "type": {
+        "def": {
+          "primitive": "u64"
+        }
+      }
+    },
+    {
+      "id": 30,
+      "type": {
+        "def": {
+          "primitive": "u32"
+        }
+      }
+    },
+    {
+      "id": 31,
+      "type": {
+        "def": {
+          "variant": {}
+        },
+        "path": [
+          "pink_extension",
+          "chain_extension",
+          "PinkExt"
         ]
       }
     }

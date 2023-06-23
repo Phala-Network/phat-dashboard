@@ -87,6 +87,10 @@ export namespace ActionOffchainRollup {
         Ok? : Result$20,
         Err? : InkPrimitives_LangError$4
         };
+    type InkPrimitives_Types_Hash$22 = any;
+    type PinkExtension_ChainExtension_PinkExt$23 = {
+
+        };
 
     /** */
     /** Queries */
