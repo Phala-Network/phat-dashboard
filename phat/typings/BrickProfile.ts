@@ -35,6 +35,7 @@ export namespace BrickProfile {
         NoAuthorizedExternalAccount? : null,
         ExternalAccountNotFound? : null,
         ExternalAccountDisabled? : null,
+        OnlyDumpedAccount? : null,
         FailedToGetEthAccounts? : string,
         FailedToSignTransaction? : string
         };
@@ -84,29 +85,49 @@ export namespace BrickProfile {
         Ok? : Result$20,
         Err? : InkPrimitives_LangError$4
         };
-    type Option$23 = {
-        None? : null,
-        Some? : number
+    type Result$23 = {
+        Ok? : string,
+        Err? : BrickProfile_BrickProfile_Error$10
         };
     type Result$22 = {
-        Ok? : Option$23,
+        Ok? : Result$23,
         Err? : InkPrimitives_LangError$4
         };
     type Result$25 = {
-        Ok? : boolean,
+        Ok? : DPT.FixedArray<number, 32>,
         Err? : BrickProfile_BrickProfile_Error$10
         };
     type Result$24 = {
         Ok? : Result$25,
         Err? : InkPrimitives_LangError$4
         };
-    type Result$27 = {
+    type Option$27 = {
+        None? : null,
+        Some? : number
+        };
+    type Result$26 = {
+        Ok? : Option$27,
+        Err? : InkPrimitives_LangError$4
+        };
+    type Result$29 = {
+        Ok? : boolean,
+        Err? : BrickProfile_BrickProfile_Error$10
+        };
+    type Result$28 = {
+        Ok? : Result$29,
+        Err? : InkPrimitives_LangError$4
+        };
+    type Result$31 = {
         Ok? : number[] | string,
         Err? : BrickProfile_BrickProfile_Error$10
         };
-    type Result$26 = {
-        Ok? : Result$27,
+    type Result$30 = {
+        Ok? : Result$31,
         Err? : InkPrimitives_LangError$4
+        };
+    type InkPrimitives_Types_Hash$32 = any;
+    type PinkExtension_ChainExtension_PinkExt$33 = {
+
         };
 
     /** */
@@ -137,12 +158,20 @@ export namespace BrickProfile {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions, id: number): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$19>>>;
         }
 
+        export interface GetRpcEndpoint extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, id: number): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$22>>>;
+        }
+
         export interface ExternalAccountCount extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$13>>>;
         }
 
+        export interface GetDumpedKey extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, id: number): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$24>>>;
+        }
+
         export interface GetAuthorizedAccount extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, workflow: number): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$22>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, workflow: number): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$26>>>;
         }
 
         export interface GetCurrentEvmAccountAddress extends DPT.ContractQuery {
@@ -150,7 +179,7 @@ export namespace BrickProfile {
         }
 
         export interface SignEvmTransaction extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, tx: number[] | string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$26>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, tx: number[] | string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$30>>>;
         }
     }
 
@@ -161,7 +190,9 @@ export namespace BrickProfile {
         workflowCount: ContractQuery.WorkflowCount;
         getWorkflow: ContractQuery.GetWorkflow;
         getEvmAccountAddress: ContractQuery.GetEvmAccountAddress;
+        getRpcEndpoint: ContractQuery.GetRpcEndpoint;
         externalAccountCount: ContractQuery.ExternalAccountCount;
+        getDumpedKey: ContractQuery.GetDumpedKey;
         getAuthorizedAccount: ContractQuery.GetAuthorizedAccount;
         getCurrentEvmAccountAddress: ContractQuery.GetCurrentEvmAccountAddress;
         signEvmTransaction: ContractQuery.SignEvmTransaction;
@@ -185,6 +216,10 @@ export namespace BrickProfile {
 
         export interface DisableWorkflow extends DPT.ContractTx {
             (options: ContractOptions, id: number): DPT.SubmittableExtrinsic;
+        }
+
+        export interface SetRpcEndpoint extends DPT.ContractTx {
+            (options: ContractOptions, id: number, rpc: string): DPT.SubmittableExtrinsic;
         }
 
         export interface GenerateEvmAccount extends DPT.ContractTx {
@@ -217,6 +252,7 @@ export namespace BrickProfile {
         addWorkflow: ContractTx.AddWorkflow;
         enableWorkflow: ContractTx.EnableWorkflow;
         disableWorkflow: ContractTx.DisableWorkflow;
+        setRpcEndpoint: ContractTx.SetRpcEndpoint;
         generateEvmAccount: ContractTx.GenerateEvmAccount;
         importEvmAccount: ContractTx.ImportEvmAccount;
         dumpEvmAccount: ContractTx.DumpEvmAccount;
