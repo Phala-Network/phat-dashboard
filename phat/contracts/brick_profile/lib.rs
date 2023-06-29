@@ -447,6 +447,7 @@ mod brick_profile {
     #[cfg(test)]
     mod tests {
         use super::*;
+        use alloc::collections::BTreeMap;
 
         struct EnvVars {
             rpc: String,
@@ -489,7 +490,7 @@ mod brick_profile {
                 Err(Error::WorkflowNotFound)
             ));
 
-            // Account enable and disable
+            // Workflow enable and disable
             let _ = profile.disable_workflow(wf1_id);
             let wf1_details = profile.get_workflow(wf1_id).unwrap();
             assert!(!wf1_details.enabled);
@@ -556,10 +557,6 @@ mod brick_profile {
                 profile.generate_evm_account(rpc.clone()),
                 Err(Error::BadOrigin)
             ));
-            assert!(matches!(
-                profile.get_evm_account_address(ea1_id),
-                Err(Error::BadOrigin)
-            ));
         }
 
         #[ink::test]
@@ -577,11 +574,37 @@ mod brick_profile {
                 {\"cmd\": \"eval\", \"config\": \"numToUint8Array32(input)\"},
             ]");
             let name = String::from("TestWorkflow");
-            let wf1_id = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
-            let ea1_id = profile.generate_evm_account(rpc.clone()).unwrap();
 
-            profile.authorize_workflow(wf1_id, ea1_id).unwrap();
-            assert_eq!(profile.get_authorized_account(wf1_id), Some(ea1_id));
+            let wf1_id = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
+            let wf2_id = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
+            let wf3_id = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
+            let ea1_id = profile.generate_evm_account(rpc.clone()).unwrap();
+            let ea2_id = profile.generate_evm_account(rpc.clone()).unwrap();
+
+            let workflow_accounts =
+                BTreeMap::from([(wf1_id, ea1_id), (wf2_id, ea2_id), (wf3_id, ea2_id)]);
+
+            for (wf_id, ea_id) in workflow_accounts.iter() {
+                profile
+                    .authorize_workflow(wf_id.clone(), ea_id.clone())
+                    .unwrap();
+                assert_eq!(
+                    profile.get_authorized_account(wf_id.clone()).unwrap(),
+                    ea_id.clone()
+                );
+            }
+
+            // Test dynamic authorization
+            let contract = ink::env::account_id::<pink::PinkEnvironment>();
+            ink::env::test::set_callee::<pink::PinkEnvironment>(contract);
+            ink::env::test::set_caller::<pink::PinkEnvironment>(contract);
+
+            for (wf_id, ea_id) in workflow_accounts.iter() {
+                profile.set_workflow_session(wf_id.clone()).unwrap();
+                let current_evm_address = profile.get_current_evm_account_address().unwrap();
+                let expected_evm_address = profile.get_evm_account_address(ea_id.clone()).unwrap();
+                assert_eq!(current_evm_address, expected_evm_address);
+            }
         }
     }
 }
