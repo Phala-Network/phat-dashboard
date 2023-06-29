@@ -23,7 +23,7 @@ mod brick_profile {
     pub type ExternalAccountId = u64;
     pub type WorkflowId = u64;
 
-    #[derive(Encode, Decode, Debug)]
+    #[derive(Encode, Decode, PartialEq, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub enum ExternalAccountType {
         Imported,
@@ -86,6 +86,7 @@ mod brick_profile {
         NoAuthorizedExternalAccount,
         ExternalAccountNotFound,
         ExternalAccountDisabled,
+        OnlyDumpedExternalAccount,
         FailedToGetEthAccounts(String),
         FailedToSignTransaction(String),
     }
@@ -275,12 +276,9 @@ mod brick_profile {
             Ok(id)
         }
 
-        /// Dump an EVM account secret key, this will disable the account and zeroize the sk, only owner is allowed
+        /// Dump an EVM account, this will disable the account, only owner is allowed
         #[ink(message)]
         pub fn dump_evm_account(&mut self, id: ExternalAccountId) -> Result<()> {
-            // Deprecated in first release
-            return Err(Error::Deprecated);
-
             self.ensure_owner()?;
 
             let mut account = self.ensure_enabled_external_account(id)?;
@@ -289,6 +287,14 @@ mod brick_profile {
             self.external_accounts.insert(id, &account);
 
             Ok(())
+        }
+
+        /// Dump the secret key of a **dumped** EVM account, only owner is allowed
+        #[ink(message)]
+        pub fn dump_secret_key(&self, id: ExternalAccountId) -> Result<[u8; 32]> {
+            self.ensure_owner()?;
+            let account = self.ensure_dumped_external_account(id)?;
+            Ok(account.sk)
         }
 
         /// Authorize workflow to use account, only owner is allowed
@@ -462,6 +468,15 @@ mod brick_profile {
                 Ok(account)
             }
         }
+
+        fn ensure_dumped_external_account(&self, id: ExternalAccountId) -> Result<ExternalAccount> {
+            let account = self.ensure_external_account(id)?;
+            if account.enabled || account.account_type != ExternalAccountType::Dumped {
+                Err(Error::OnlyDumpedExternalAccount)
+            } else {
+                Ok(account)
+            }
+        }
     }
 
     #[cfg(test)]
@@ -571,10 +586,16 @@ mod brick_profile {
                 profile.import_evm_account(rpc.clone(), key.clone()),
                 Err(Error::Deprecated)
             ));
+
+            // Account dump
+            let ea2_id = profile.generate_evm_account(rpc.clone()).unwrap();
             assert!(matches!(
-                profile.dump_evm_account(ea1_id),
-                Err(Error::Deprecated)
+                profile.dump_secret_key(ea2_id),
+                Err(Error::OnlyDumpedExternalAccount)
             ));
+            profile.dump_evm_account(ea2_id).unwrap();
+            let sk = profile.dump_secret_key(ea2_id).unwrap();
+            pink::warn!("Dumped sk: 0x{}", hex::encode(sk));
 
             // Access control
             let accounts = ink::env::test::default_accounts::<pink::PinkEnvironment>();
