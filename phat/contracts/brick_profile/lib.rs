@@ -86,7 +86,7 @@ mod brick_profile {
         NoAuthorizedExternalAccount,
         ExternalAccountNotFound,
         ExternalAccountDisabled,
-        OnlyDumpedExternalAccount,
+        OnlyDumpedAccount,
         FailedToGetEthAccounts(String),
         FailedToSignTransaction(String),
     }
@@ -289,9 +289,9 @@ mod brick_profile {
             Ok(())
         }
 
-        /// Dump the secret key of a **dumped** EVM account, only owner is allowed
+        /// Get the secret key of a dumped EVM account, only owner is allowed
         #[ink(message)]
-        pub fn dump_secret_key(&self, id: ExternalAccountId) -> Result<[u8; 32]> {
+        pub fn get_dumped_key(&self, id: ExternalAccountId) -> Result<[u8; 32]> {
             self.ensure_owner()?;
             let account = self.ensure_dumped_external_account(id)?;
             Ok(account.sk)
@@ -471,8 +471,8 @@ mod brick_profile {
 
         fn ensure_dumped_external_account(&self, id: ExternalAccountId) -> Result<ExternalAccount> {
             let account = self.ensure_external_account(id)?;
-            if account.enabled || account.account_type != ExternalAccountType::Dumped {
-                Err(Error::OnlyDumpedExternalAccount)
+            if account.account_type != ExternalAccountType::Dumped {
+                Err(Error::OnlyDumpedAccount)
             } else {
                 Ok(account)
             }
@@ -590,11 +590,11 @@ mod brick_profile {
             // Account dump
             let ea2_id = profile.generate_evm_account(rpc.clone()).unwrap();
             assert!(matches!(
-                profile.dump_secret_key(ea2_id),
-                Err(Error::OnlyDumpedExternalAccount)
+                profile.get_dumped_key(ea2_id),
+                Err(Error::OnlyDumpedAccount)
             ));
             profile.dump_evm_account(ea2_id).unwrap();
-            let sk = profile.dump_secret_key(ea2_id).unwrap();
+            let sk = profile.get_dumped_key(ea2_id).unwrap();
             pink::warn!("Dumped sk: 0x{}", hex::encode(sk));
 
             // Access control
