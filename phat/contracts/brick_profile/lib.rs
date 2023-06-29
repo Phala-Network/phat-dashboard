@@ -350,7 +350,11 @@ mod brick_profile {
         #[ink(message)]
         pub fn get_current_evm_account_address(&self) -> Result<H160> {
             let now_workflow_id = self.ensure_workflow_session()?;
-            self.get_evm_account_address(now_workflow_id)
+            let account_id = self
+                .authorized_account
+                .get(now_workflow_id)
+                .ok_or(Error::NoAuthorizedExternalAccount)?;
+            self.get_evm_account_address(account_id)
         }
 
         /// Only self-initiated call is allowed
