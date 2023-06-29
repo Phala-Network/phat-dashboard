@@ -86,9 +86,9 @@ mod brick_profile {
         NoAuthorizedExternalAccount,
         ExternalAccountNotFound,
         ExternalAccountDisabled,
-        OnlyDumpedAccount,
         FailedToGetEthAccounts(String),
         FailedToSignTransaction(String),
+        OnlyDumpedAccount,
     }
     pub type Result<T> = core::result::Result<T, Error>;
 
