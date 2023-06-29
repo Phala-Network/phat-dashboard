@@ -9,6 +9,7 @@ import {
   TxHandler,
   ContractType
 } from "@devphase/service";
+import assert from 'node:assert/strict';
 import { PinkSystem } from "@/typings/PinkSystem";
 import { Lego } from "@/typings/Lego";
 import { BrickProfileFactory } from "@/typings/BrickProfileFactory"
@@ -219,6 +220,45 @@ describe("Run lego actions", () => {
         // console.log(`brickProfile account_0: ${JSON.stringify(resultAccount)}`);
         return !resultJsRunner.output.toJSON().ok.err
           && !resultAccount.output.toJSON().ok.err && resultAccountCount.output.toJSON().ok === 2;
+      }, 1000 * 10);
+    });
+
+    it("can update rpc endpoint", async function () {
+      await TxHandler.handle(
+        brickProfile.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const resultAccountCount = await brickProfile.query.externalAccountCount(certAlice, {});
+        return resultAccountCount.output.asOk.toPrimitive() === 3;
+      }, 1000 * 10);
+
+      let mockRpc = "https://mock-rpc.com";
+      await TxHandler.handle(
+        brickProfile.tx.setRpcEndpoint({ gasLimit: "10000000000000" }, 2, mockRpc),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const resultRpc = await brickProfile.query.getRpcEndpoint(certAlice, {}, 2);
+        return resultRpc.output.asOk.asOk.toString() === mockRpc;
+      }, 1000 * 10);
+    });
+
+    it("can dump secret key", async function () {
+      {
+        const { output } = await brickProfile.query.getDumpedKey(certAlice, {}, 2);
+        assert.equal(output.asOk.isErr, true);
+      };
+      await TxHandler.handle(
+        brickProfile.tx.dumpEvmAccount({ gasLimit: "10000000000000" }, 2),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const { output } = await brickProfile.query.getDumpedKey(certAlice, {}, 2);
+        return output.asOk.isOk;
       }, 1000 * 10);
     });
 
