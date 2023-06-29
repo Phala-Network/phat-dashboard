@@ -193,12 +193,32 @@ mod brick_profile {
             Ok(())
         }
 
+        // TODO.shelven: merge the following two functions in next major version
+
         /// Get the EVM account address of given id
         #[ink(message)]
         pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
             let account = self.ensure_enabled_external_account(id)?;
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
             Ok(sk.address())
+        }
+
+        /// Get the EVM rpc endpoint of given id, only owner is allowed
+        #[ink(message)]
+        pub fn get_rpc_endpoint(&self, id: ExternalAccountId) -> Result<String> {
+            self.ensure_owner()?;
+            let account = self.ensure_enabled_external_account(id)?;
+            Ok(account.rpc.clone())
+        }
+
+        /// Set the EVM rpc endpoint of given id, only owner is allowed
+        #[ink(message)]
+        pub fn set_rpc_endpoint(&mut self, id: ExternalAccountId, rpc: String) -> Result<()> {
+            self.ensure_owner()?;
+            let mut account = self.ensure_enabled_external_account(id)?;
+            account.rpc = rpc;
+            self.external_accounts.insert(id, &account);
+            Ok(())
         }
 
         /// Gets the total number of external accounts
@@ -538,6 +558,14 @@ mod brick_profile {
             assert_eq!(profile.external_account_count(), 2);
             let _address = profile.get_evm_account_address(ea1_id).unwrap();
 
+            // RPC update
+            let new_rpc = String::from("https://testrpc.com");
+            let ea1_rpc = profile.get_rpc_endpoint(ea1_id).unwrap();
+            assert_eq!(ea1_rpc, rpc);
+            profile.set_rpc_endpoint(ea1_id, new_rpc.clone()).unwrap();
+            let ea1_new_rpc = profile.get_rpc_endpoint(ea1_id).unwrap();
+            assert_eq!(ea1_new_rpc, new_rpc);
+
             // Deprecated for first release
             assert!(matches!(
                 profile.import_evm_account(rpc.clone(), key.clone()),
@@ -555,6 +583,14 @@ mod brick_profile {
             ink::env::test::set_caller::<pink::PinkEnvironment>(accounts.bob);
             assert!(matches!(
                 profile.generate_evm_account(rpc.clone()),
+                Err(Error::BadOrigin)
+            ));
+            assert!(matches!(
+                profile.get_rpc_endpoint(ea1_id),
+                Err(Error::BadOrigin)
+            ));
+            assert!(matches!(
+                profile.set_rpc_endpoint(ea1_id, new_rpc.clone()),
                 Err(Error::BadOrigin)
             ));
         }
