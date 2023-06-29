@@ -1,11 +1,11 @@
 {
   "source": {
-    "hash": "0xdffe5496e9e48d444cad5d2bc37ce8098e0080e90d871dd5b03ec2a6aada49c5",
-    "language": "ink! 4.0.1",
+    "hash": "0x3b3d35f92494fe60d9f9f6139ea83964dc4bca84d7ac66e985024358c9c62969",
+    "language": "ink! 4.2.0",
     "compiler": "rustc 1.69.0",
     "build_info": {
       "build_mode": "Debug",
-      "cargo_contract_version": "2.2.1",
+      "cargo_contract_version": "3.0.1",
       "rust_toolchain": "stable-x86_64-unknown-linux-gnu",
       "wasm_opt_settings": {
         "keep_debug_symbols": false,
@@ -15,7 +15,7 @@
   },
   "contract": {
     "name": "brick_profile",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "authors": [
       "Shelven Zhou <favoring.zhou49@gmail.com>"
     ]
@@ -34,6 +34,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [],
         "label": "new",
         "payable": false,
@@ -48,6 +49,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "default",
         "payable": false,
@@ -62,6 +64,45 @@
       }
     ],
     "docs": [],
+    "environment": {
+      "accountId": {
+        "displayName": [
+          "AccountId"
+        ],
+        "type": 0
+      },
+      "balance": {
+        "displayName": [
+          "Balance"
+        ],
+        "type": 39
+      },
+      "blockNumber": {
+        "displayName": [
+          "BlockNumber"
+        ],
+        "type": 41
+      },
+      "chainExtension": {
+        "displayName": [
+          "ChainExtension"
+        ],
+        "type": 42
+      },
+      "hash": {
+        "displayName": [
+          "Hash"
+        ],
+        "type": 40
+      },
+      "maxEventTopics": 4,
+      "timestamp": {
+        "displayName": [
+          "Timestamp"
+        ],
+        "type": 3
+      }
+    },
     "events": [],
     "lang_error": {
       "displayName": [
@@ -73,6 +114,7 @@
     "messages": [
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "version",
         "mutates": false,
@@ -88,6 +130,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [
           " Gets the owner of the contract"
         ],
@@ -105,6 +148,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [
           " Gets the contract address of Js runner contract"
         ],
@@ -132,6 +176,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Configures the workflow executor"
         ],
@@ -149,6 +194,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [
           " Gets the total number of workerflows"
         ],
@@ -185,6 +231,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Adds a new workflow, only owner is allowed"
         ],
@@ -212,6 +259,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Gets workflow details, only owner is allowed"
         ],
@@ -239,6 +287,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Enable a workflow, only owner is allowed"
         ],
@@ -266,6 +315,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Disable a workflow, only owner is allowed"
         ],
@@ -293,6 +343,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Get the EVM account address of given id"
         ],
@@ -309,7 +360,73 @@
         "selector": "0x35e81598"
       },
       {
+        "args": [
+          {
+            "label": "id",
+            "type": {
+              "displayName": [
+                "ExternalAccountId"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Get the EVM rpc endpoint of given id, only owner is allowed"
+        ],
+        "label": "get_rpc_endpoint",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 28
+        },
+        "selector": "0xe7e47d60"
+      },
+      {
+        "args": [
+          {
+            "label": "id",
+            "type": {
+              "displayName": [
+                "ExternalAccountId"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "label": "rpc",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 4
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Set the EVM rpc endpoint of given id, only owner is allowed"
+        ],
+        "label": "set_rpc_endpoint",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 16
+        },
+        "selector": "0xb00291f7"
+      },
+      {
         "args": [],
+        "default": false,
         "docs": [
           " Gets the total number of external accounts",
           " The external account ids increase from 0 to current count"
@@ -338,6 +455,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Generates a new EVM account, only owner is allowed"
         ],
@@ -370,10 +488,11 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 28
+              "type": 30
             }
           }
         ],
+        "default": false,
         "docs": [
           " Adds an existing EVM account, only owner is allowed",
           " This is only used for dev and will be removed in release"
@@ -402,8 +521,9 @@
             }
           }
         ],
+        "default": false,
         "docs": [
-          " Dump an EVM account secret key, this will disable the account and zeroize the sk, only owner is allowed"
+          " Dump an EVM account, this will disable the account, only owner is allowed"
         ],
         "label": "dump_evm_account",
         "mutates": true,
@@ -416,6 +536,34 @@
           "type": 16
         },
         "selector": "0xa14412c3"
+      },
+      {
+        "args": [
+          {
+            "label": "id",
+            "type": {
+              "displayName": [
+                "ExternalAccountId"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Get the secret key of a dumped EVM account, only owner is allowed"
+        ],
+        "label": "get_dumped_key",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 31
+        },
+        "selector": "0x1893b87d"
       },
       {
         "args": [
@@ -438,6 +586,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Authorize workflow to use account, only owner is allowed"
         ],
@@ -465,6 +614,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Get the authorized external account id of given workflow"
         ],
@@ -476,7 +626,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 29
+          "type": 33
         },
         "selector": "0x844c3aa0"
       },
@@ -492,6 +642,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " This is an internal function which can only be called by `this.poll()` in a cross-contract manner"
         ],
@@ -519,6 +670,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Called by a scheduler periodically with Query"
         ],
@@ -530,12 +682,13 @@
             "ink",
             "MessageResult"
           ],
-          "type": 31
+          "type": 35
         },
         "selector": "0x1e44dfc6"
       },
       {
         "args": [],
+        "default": false,
         "docs": [
           " Only self-initiated call is allowed"
         ],
@@ -559,10 +712,11 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 28
+              "type": 30
             }
           }
         ],
+        "default": false,
         "docs": [
           " Only self-initiated call is allowed"
         ],
@@ -574,7 +728,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 33
+          "type": 37
         },
         "selector": "0xad848771"
       }
@@ -1226,6 +1380,10 @@
                 ],
                 "index": 13,
                 "name": "FailedToSignTransaction"
+              },
+              {
+                "index": 14,
+                "name": "OnlyDumpedAccount"
               }
             ]
           }
@@ -1685,22 +1843,12 @@
       "id": 28,
       "type": {
         "def": {
-          "sequence": {
-            "type": 2
-          }
-        }
-      }
-    },
-    {
-      "id": 29,
-      "type": {
-        "def": {
           "variant": {
             "variants": [
               {
                 "fields": [
                   {
-                    "type": 30
+                    "type": 29
                   }
                 ],
                 "index": 0,
@@ -1721,7 +1869,7 @@
         "params": [
           {
             "name": "T",
-            "type": 30
+            "type": 29
           },
           {
             "name": "E",
@@ -1734,23 +1882,28 @@
       }
     },
     {
-      "id": 30,
+      "id": 29,
       "type": {
         "def": {
           "variant": {
             "variants": [
               {
+                "fields": [
+                  {
+                    "type": 4
+                  }
+                ],
                 "index": 0,
-                "name": "None"
+                "name": "Ok"
               },
               {
                 "fields": [
                   {
-                    "type": 3
+                    "type": 15
                   }
                 ],
                 "index": 1,
-                "name": "Some"
+                "name": "Err"
               }
             ]
           }
@@ -1758,12 +1911,26 @@
         "params": [
           {
             "name": "T",
-            "type": 3
+            "type": 4
+          },
+          {
+            "name": "E",
+            "type": 15
           }
         ],
         "path": [
-          "Option"
+          "Result"
         ]
+      }
+    },
+    {
+      "id": 30,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 2
+          }
+        }
       }
     },
     {
@@ -1817,7 +1984,7 @@
               {
                 "fields": [
                   {
-                    "type": 5
+                    "type": 1
                   }
                 ],
                 "index": 0,
@@ -1838,7 +2005,7 @@
         "params": [
           {
             "name": "T",
-            "type": 5
+            "type": 1
           },
           {
             "name": "E",
@@ -1899,9 +2066,84 @@
           "variant": {
             "variants": [
               {
+                "index": 0,
+                "name": "None"
+              },
+              {
                 "fields": [
                   {
-                    "type": 28
+                    "type": 3
+                  }
+                ],
+                "index": 1,
+                "name": "Some"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 3
+          }
+        ],
+        "path": [
+          "Option"
+        ]
+      }
+    },
+    {
+      "id": 35,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 36
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 8
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 36
+          },
+          {
+            "name": "E",
+            "type": 8
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 36,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 5
                   }
                 ],
                 "index": 0,
@@ -1922,7 +2164,7 @@
         "params": [
           {
             "name": "T",
-            "type": 28
+            "type": 5
           },
           {
             "name": "E",
@@ -1931,6 +2173,139 @@
         ],
         "path": [
           "Result"
+        ]
+      }
+    },
+    {
+      "id": 37,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 38
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 8
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 38
+          },
+          {
+            "name": "E",
+            "type": 8
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 38,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 30
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 30
+          },
+          {
+            "name": "E",
+            "type": 15
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 39,
+      "type": {
+        "def": {
+          "primitive": "u128"
+        }
+      }
+    },
+    {
+      "id": 40,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 1,
+                "typeName": "[u8; 32]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "types",
+          "Hash"
+        ]
+      }
+    },
+    {
+      "id": 41,
+      "type": {
+        "def": {
+          "primitive": "u32"
+        }
+      }
+    },
+    {
+      "id": 42,
+      "type": {
+        "def": {
+          "variant": {}
+        },
+        "path": [
+          "pink_extension",
+          "chain_extension",
+          "PinkExt"
         ]
       }
     }

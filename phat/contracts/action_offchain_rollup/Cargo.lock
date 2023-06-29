@@ -14,7 +14,7 @@ dependencies = [
 
 [[package]]
 name = "action_offchain_rollup"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "brick_profile",
  "dotenvy",
@@ -219,7 +219,7 @@ dependencies = [
 
 [[package]]
 name = "brick_profile"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "ink",
  "parity-scale-codec",

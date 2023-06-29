@@ -35,9 +35,9 @@ export namespace BrickProfile {
         NoAuthorizedExternalAccount? : null,
         ExternalAccountNotFound? : null,
         ExternalAccountDisabled? : null,
-        OnlyDumpedAccount? : null,
         FailedToGetEthAccounts? : string,
-        FailedToSignTransaction? : string
+        FailedToSignTransaction? : string,
+        OnlyDumpedAccount? : null
         };
     type Result$9 = {
         Ok? : InkPrimitives_Types_AccountId$1,
