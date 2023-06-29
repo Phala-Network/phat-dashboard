@@ -27,8 +27,7 @@ export namespace ActionOffchainRollup {
         Ok? : PrimitiveTypes_H160$9,
         Err? : InkPrimitives_LangError$4
         };
-    type ActionOffchainRollup_ActionOffchainRollup_Client$12 = { rpc: string, client_addr: DPT.FixedArray<number, 20> };
-    type ActionOffchainRollup_ActionOffchainRollup_Error$13 = {
+    type ActionOffchainRollup_ActionOffchainRollup_Error$12 = {
         BadOrigin? : null,
         ClientNotConfigured? : null,
         DataSourceNotConfigured? : null,
@@ -51,28 +50,29 @@ export namespace ActionOffchainRollup {
         InvalidRequest? : null
         };
     type Result$11 = {
-        Ok? : ActionOffchainRollup_ActionOffchainRollup_Client$12,
-        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$13
+        Ok? : never[],
+        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$12
         };
     type Result$10 = {
         Ok? : Result$11,
         Err? : InkPrimitives_LangError$4
         };
-    type ActionOffchainRollup_ActionOffchainRollup_DataSource$16 = { url: string, transform_js: string };
-    type Result$15 = {
-        Ok? : ActionOffchainRollup_ActionOffchainRollup_DataSource$16,
-        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$13
-        };
+    type ActionOffchainRollup_ActionOffchainRollup_Client$15 = { rpc: string, client_addr: DPT.FixedArray<number, 20> };
     type Result$14 = {
-        Ok? : Result$15,
+        Ok? : ActionOffchainRollup_ActionOffchainRollup_Client$15,
+        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$12
+        };
+    type Result$13 = {
+        Ok? : Result$14,
         Err? : InkPrimitives_LangError$4
         };
-    type Result$18 = {
-        Ok? : never[],
-        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$13
-        };
+    type ActionOffchainRollup_ActionOffchainRollup_DataSource$18 = { url: string, transform_js: string };
     type Result$17 = {
-        Ok? : Result$18,
+        Ok? : ActionOffchainRollup_ActionOffchainRollup_DataSource$18,
+        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$12
+        };
+    type Result$16 = {
+        Ok? : Result$17,
         Err? : InkPrimitives_LangError$4
         };
     type Option$21 = {
@@ -81,7 +81,7 @@ export namespace ActionOffchainRollup {
         };
     type Result$20 = {
         Ok? : Option$21,
-        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$13
+        Err? : ActionOffchainRollup_ActionOffchainRollup_Error$12
         };
     type Result$19 = {
         Ok? : Result$20,
@@ -113,11 +113,11 @@ export namespace ActionOffchainRollup {
         }
 
         export interface GetClient extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$10>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$13>>>;
         }
 
         export interface GetDataSource extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$14>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$16>>>;
         }
 
         export interface AnswerRequest extends DPT.ContractQuery {
@@ -139,6 +139,10 @@ export namespace ActionOffchainRollup {
     /** Transactions */
     /** */
     namespace ContractTx {
+        export interface SetBrickProfileAddress extends DPT.ContractTx {
+            (options: ContractOptions, brick_profile: InkPrimitives_Types_AccountId$1): DPT.SubmittableExtrinsic;
+        }
+
         export interface ConfigClient extends DPT.ContractTx {
             (options: ContractOptions, rpc: string, client_addr: number[] | string): DPT.SubmittableExtrinsic;
         }
@@ -153,6 +157,7 @@ export namespace ActionOffchainRollup {
     }
 
     export interface MapMessageTx extends DPT.MapMessageTx {
+        setBrickProfileAddress: ContractTx.SetBrickProfileAddress;
         configClient: ContractTx.ConfigClient;
         configDataSource: ContractTx.ConfigDataSource;
         transferOwnership: ContractTx.TransferOwnership;

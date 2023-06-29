@@ -23,7 +23,7 @@ mod brick_profile {
     pub type ExternalAccountId = u64;
     pub type WorkflowId = u64;
 
-    #[derive(Encode, Decode, Debug)]
+    #[derive(Encode, Decode, PartialEq, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub enum ExternalAccountType {
         Imported,
@@ -88,6 +88,7 @@ mod brick_profile {
         ExternalAccountDisabled,
         FailedToGetEthAccounts(String),
         FailedToSignTransaction(String),
+        OnlyDumpedAccount,
     }
     pub type Result<T> = core::result::Result<T, Error>;
 
@@ -193,12 +194,32 @@ mod brick_profile {
             Ok(())
         }
 
+        // TODO.shelven: merge the following two functions in next major version
+
         /// Get the EVM account address of given id
         #[ink(message)]
         pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
             let account = self.ensure_enabled_external_account(id)?;
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
             Ok(sk.address())
+        }
+
+        /// Get the EVM rpc endpoint of given id, only owner is allowed
+        #[ink(message)]
+        pub fn get_rpc_endpoint(&self, id: ExternalAccountId) -> Result<String> {
+            self.ensure_owner()?;
+            let account = self.ensure_enabled_external_account(id)?;
+            Ok(account.rpc.clone())
+        }
+
+        /// Set the EVM rpc endpoint of given id, only owner is allowed
+        #[ink(message)]
+        pub fn set_rpc_endpoint(&mut self, id: ExternalAccountId, rpc: String) -> Result<()> {
+            self.ensure_owner()?;
+            let mut account = self.ensure_enabled_external_account(id)?;
+            account.rpc = rpc;
+            self.external_accounts.insert(id, &account);
+            Ok(())
         }
 
         /// Gets the total number of external accounts
@@ -255,12 +276,9 @@ mod brick_profile {
             Ok(id)
         }
 
-        /// Dump an EVM account secret key, this will disable the account and zeroize the sk, only owner is allowed
+        /// Dump an EVM account, this will disable the account, only owner is allowed
         #[ink(message)]
         pub fn dump_evm_account(&mut self, id: ExternalAccountId) -> Result<()> {
-            // Deprecated in first release
-            return Err(Error::Deprecated);
-
             self.ensure_owner()?;
 
             let mut account = self.ensure_enabled_external_account(id)?;
@@ -269,6 +287,14 @@ mod brick_profile {
             self.external_accounts.insert(id, &account);
 
             Ok(())
+        }
+
+        /// Get the secret key of a dumped EVM account, only owner is allowed
+        #[ink(message)]
+        pub fn get_dumped_key(&self, id: ExternalAccountId) -> Result<[u8; 32]> {
+            self.ensure_owner()?;
+            let account = self.ensure_dumped_external_account(id)?;
+            Ok(account.sk)
         }
 
         /// Authorize workflow to use account, only owner is allowed
@@ -350,7 +376,11 @@ mod brick_profile {
         #[ink(message)]
         pub fn get_current_evm_account_address(&self) -> Result<H160> {
             let now_workflow_id = self.ensure_workflow_session()?;
-            self.get_evm_account_address(now_workflow_id)
+            let account_id = self
+                .authorized_account
+                .get(now_workflow_id)
+                .ok_or(Error::NoAuthorizedExternalAccount)?;
+            self.get_evm_account_address(account_id)
         }
 
         /// Only self-initiated call is allowed
@@ -438,11 +468,21 @@ mod brick_profile {
                 Ok(account)
             }
         }
+
+        fn ensure_dumped_external_account(&self, id: ExternalAccountId) -> Result<ExternalAccount> {
+            let account = self.ensure_external_account(id)?;
+            if account.account_type != ExternalAccountType::Dumped {
+                Err(Error::OnlyDumpedAccount)
+            } else {
+                Ok(account)
+            }
+        }
     }
 
     #[cfg(test)]
     mod tests {
         use super::*;
+        use alloc::collections::BTreeMap;
 
         struct EnvVars {
             rpc: String,
@@ -485,7 +525,7 @@ mod brick_profile {
                 Err(Error::WorkflowNotFound)
             ));
 
-            // Account enable and disable
+            // Workflow enable and disable
             let _ = profile.disable_workflow(wf1_id);
             let wf1_details = profile.get_workflow(wf1_id).unwrap();
             assert!(!wf1_details.enabled);
@@ -533,15 +573,29 @@ mod brick_profile {
             assert_eq!(profile.external_account_count(), 2);
             let _address = profile.get_evm_account_address(ea1_id).unwrap();
 
+            // RPC update
+            let new_rpc = String::from("https://testrpc.com");
+            let ea1_rpc = profile.get_rpc_endpoint(ea1_id).unwrap();
+            assert_eq!(ea1_rpc, rpc);
+            profile.set_rpc_endpoint(ea1_id, new_rpc.clone()).unwrap();
+            let ea1_new_rpc = profile.get_rpc_endpoint(ea1_id).unwrap();
+            assert_eq!(ea1_new_rpc, new_rpc);
+
             // Deprecated for first release
             assert!(matches!(
                 profile.import_evm_account(rpc.clone(), key.clone()),
                 Err(Error::Deprecated)
             ));
+
+            // Account dump
+            let ea2_id = profile.generate_evm_account(rpc.clone()).unwrap();
             assert!(matches!(
-                profile.dump_evm_account(ea1_id),
-                Err(Error::Deprecated)
+                profile.get_dumped_key(ea2_id),
+                Err(Error::OnlyDumpedAccount)
             ));
+            profile.dump_evm_account(ea2_id).unwrap();
+            let sk = profile.get_dumped_key(ea2_id).unwrap();
+            pink::warn!("Dumped sk: 0x{}", hex::encode(sk));
 
             // Access control
             let accounts = ink::env::test::default_accounts::<pink::PinkEnvironment>();
@@ -553,7 +607,11 @@ mod brick_profile {
                 Err(Error::BadOrigin)
             ));
             assert!(matches!(
-                profile.get_evm_account_address(ea1_id),
+                profile.get_rpc_endpoint(ea1_id),
+                Err(Error::BadOrigin)
+            ));
+            assert!(matches!(
+                profile.set_rpc_endpoint(ea1_id, new_rpc.clone()),
                 Err(Error::BadOrigin)
             ));
         }
@@ -573,11 +631,37 @@ mod brick_profile {
                 {\"cmd\": \"eval\", \"config\": \"numToUint8Array32(input)\"},
             ]");
             let name = String::from("TestWorkflow");
-            let wf1_id = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
-            let ea1_id = profile.generate_evm_account(rpc.clone()).unwrap();
 
-            profile.authorize_workflow(wf1_id, ea1_id).unwrap();
-            assert_eq!(profile.get_authorized_account(wf1_id), Some(ea1_id));
+            let wf1_id = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
+            let wf2_id = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
+            let wf3_id = profile.add_workflow(name.clone(), cmd.clone()).unwrap();
+            let ea1_id = profile.generate_evm_account(rpc.clone()).unwrap();
+            let ea2_id = profile.generate_evm_account(rpc.clone()).unwrap();
+
+            let workflow_accounts =
+                BTreeMap::from([(wf1_id, ea1_id), (wf2_id, ea2_id), (wf3_id, ea2_id)]);
+
+            for (wf_id, ea_id) in workflow_accounts.iter() {
+                profile
+                    .authorize_workflow(wf_id.clone(), ea_id.clone())
+                    .unwrap();
+                assert_eq!(
+                    profile.get_authorized_account(wf_id.clone()).unwrap(),
+                    ea_id.clone()
+                );
+            }
+
+            // Test dynamic authorization
+            let contract = ink::env::account_id::<pink::PinkEnvironment>();
+            ink::env::test::set_callee::<pink::PinkEnvironment>(contract);
+            ink::env::test::set_caller::<pink::PinkEnvironment>(contract);
+
+            for (wf_id, ea_id) in workflow_accounts.iter() {
+                profile.set_workflow_session(wf_id.clone()).unwrap();
+                let current_evm_address = profile.get_current_evm_account_address().unwrap();
+                let expected_evm_address = profile.get_evm_account_address(ea_id.clone()).unwrap();
+                assert_eq!(current_evm_address, expected_evm_address);
+            }
         }
     }
 }

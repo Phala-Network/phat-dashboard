@@ -61,7 +61,7 @@ describe("Run lego actions", () => {
   const rpc = process.env.RPC ?? "http://localhost:8545";
   const ethSecretKey = process.env.PRIVKEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
   const lensApi = process.env.LENS ?? "https://api-mumbai.lens.dev/";
-  const anchorAddr = process.env.ANCHOR ?? "0x2a6a5d59564C470f6aC3E93C4c197251F31EBCf8";
+  const anchorAddr = process.env.ANCHOR ?? "0xb037f1EDD1474D028984D6594F7E848CDD3FAdE3";
 
   before(async function () {
     this.timeout(500_000_000);
@@ -145,8 +145,7 @@ describe("Run lego actions", () => {
       await sleep(1_000);
       await checkUntil(async () => {
         const { output } = await profileFactory.query.getUserProfileAddress(certAlice, {});
-        let ready = !output.toJSON().ok.err;
-        if (ready) {
+        if (output.asOk.isOk) {
           let profileAddress = output.asOk.asOk.toHex();
           brickProfile = await brickProfileFactory.attach(profileAddress);
           console.log(`BrickProfile deployed to ${profileAddress}`);
@@ -193,7 +192,12 @@ describe("Run lego actions", () => {
         alice,
         true,
       );
-      console.log("BrickProfile account generated");
+      await TxHandler.handle(
+        brickProfile.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
+        alice,
+        true,
+      );
+      console.log("Two BrickProfile accounts generated");
 
       await TxHandler.handle(
         evmTransaction.tx.config({ gasLimit: "10000000000000" }, rpc),
@@ -201,19 +205,56 @@ describe("Run lego actions", () => {
         true,
       );
       await checkUntil(async () => {
-        const result = await evmTransaction.query.getRpc(certAlice, {});
-        return !result.output.toJSON().ok.err;
+        const { output } = await evmTransaction.query.getRpc(certAlice, {});
+        return output.asOk.isOk;
       }, 1000 * 10);
       console.log("ActionEvmTransaction configured");
 
       await checkUntil(async () => {
-        const resultJsRunner = await brickProfile.query.getJsRunner(certAlice, {});
-        // console.log(`brickProfile js_runner: ${JSON.stringify(resultJsRunner)}`);
-        const resultAccountCount = await brickProfile.query.externalAccountCount(certAlice, {});
-        const resultAccount = await brickProfile.query.getEvmAccountAddress(certAlice, {}, 0); // 0 for ExternalAccountId
-        // console.log(`brickProfile account_0: ${JSON.stringify(resultAccount)}`);
-        return !resultJsRunner.output.toJSON().ok.err
-          && !resultAccount.output.toJSON().ok.err && resultAccountCount.output.toJSON().ok === 1;
+        const { output: outputJsRunner } = await brickProfile.query.getJsRunner(certAlice, {});
+        const { output: outputAccountCount } = await brickProfile.query.externalAccountCount(certAlice, {});
+        const { output: outputAccount } = await brickProfile.query.getEvmAccountAddress(certAlice, {}, 0); // 0 for ExternalAccountId
+        return outputAccountCount.asOk.toPrimitive() === 2
+          && outputJsRunner.asOk.isOk && outputAccount.asOk.isOk;
+      }, 1000 * 10);
+    });
+
+    it("can update rpc endpoint", async function () {
+      await TxHandler.handle(
+        brickProfile.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const { output: outputAccountCount } = await brickProfile.query.externalAccountCount(certAlice, {});
+        return outputAccountCount.asOk.toPrimitive() === 3;
+      }, 1000 * 10);
+
+      let mockRpc = "https://mock-rpc.com";
+      await TxHandler.handle(
+        brickProfile.tx.setRpcEndpoint({ gasLimit: "10000000000000" }, 2, mockRpc),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const { output } = await brickProfile.query.getRpcEndpoint(certAlice, {}, 2);
+        return output.asOk.asOk.toString() === mockRpc;
+      }, 1000 * 10);
+    });
+
+    it("can dump secret key", async function () {
+      {
+        const { output } = await brickProfile.query.getDumpedKey(certAlice, {}, 2);
+        expect(output.asOk.isErr).to.be.true;
+      };
+      await TxHandler.handle(
+        brickProfile.tx.dumpEvmAccount({ gasLimit: "10000000000000" }, 2),
+        alice,
+        true,
+      );
+      await checkUntil(async () => {
+        const { output } = await brickProfile.query.getDumpedKey(certAlice, {}, 2);
+        return output.asOk.isOk;
       }, 1000 * 10);
     });
 
@@ -239,7 +280,7 @@ describe("Run lego actions", () => {
       await checkUntil(async () => {
         const { output } = await offchainRollup.query.getClient(certAlice, {});
         // console.log(`ActionOffchainRollup client ${JSON.stringify(output)}`);
-        return !output.toJSON().ok.err;
+        return output.asOk.isOk;
       }, 1000 * 10);
       console.log("ActionOffchainRollup client configured");
 
@@ -268,20 +309,32 @@ describe("Run lego actions", () => {
         alice,
         true,
       );
+      await TxHandler.handle(
+        brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
+        alice,
+        true,
+      );
       // STEP 5: authorize the workflow to ask for the ETH account signing
       await TxHandler.handle(
         brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 0, 0),
         alice,
         true,
       );
+      await TxHandler.handle(
+        brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 1, 1),
+        alice,
+        true,
+      );
       await checkUntil(async () => {
-        const resultWorkflow = await brickProfile.query.getWorkflow(certAlice, {}, 0); // 0 for WorkflowId
-        // console.log(`brickProfile workflow: ${JSON.stringify(resultWorkflow)}`);
-        const resultWorkflowCount = await brickProfile.query.workflowCount(certAlice, {});
-        const resultAuthorized = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 0); // 0 for WorkflowId
+        const { output: outputWorkflow0 } = await brickProfile.query.getWorkflow(certAlice, {}, 0); // 0 for WorkflowId
+        const { output: outputWorkflow1 } = await brickProfile.query.getWorkflow(certAlice, {}, 1); // 1 for WorkflowId
+        const { output: outputWorkflowCount } = await brickProfile.query.workflowCount(certAlice, {});
+        const { output: outputAuthorized0 } = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 0); // 0 for WorkflowId
+        const { output: outputAuthorized1 } = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 1); // 1 for WorkflowId
         // console.log(`brickProfile authorize: ${JSON.stringify(resultAuthorized)}`);
-        return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === 1
-          && resultAuthorized.output.toJSON().ok === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
+        return outputWorkflowCount.asOk.toPrimitive() === 2
+          && outputWorkflow0.asOk.isOk && outputAuthorized0.asOk.toPrimitive() === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
+          && outputWorkflow1.asOk.isOk && outputAuthorized1.asOk.toPrimitive() === 1
       }, 1000 * 10);
 
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
@@ -289,9 +342,8 @@ describe("Run lego actions", () => {
       while (true) {
         let { output: outputWorkflowCount } = await brickProfile.query.workflowCount(certAlice, {});
         for (let i = 0; i < outputWorkflowCount.asOk; i++) {
-          const result = await brickProfile.query.poll(certAlice, {}, i);
-          console.log(`Workflow ${i} triggerred: ${JSON.stringify(result.output)}`);
-          // expect(!result.output.toJSON().ok.err).to.be.true;
+          const { output } = await brickProfile.query.poll(certAlice, {}, i);
+          console.log(`Workflow ${i} triggerred: ${JSON.stringify(output)}`);
         }
 
         sleep(5_000);
