@@ -1,0 +1,55 @@
+name: Witnessed build
+
+on:
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  emit-source-info:
+    name: Source information
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the source
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          path: source
+
+      - name: Remove the git objects
+        run: rm -rf source/.git
+
+      - name: Archive the source
+        run: zip -r source.zip source
+
+      - name: Show the hash of the source as notation
+        run: echo "::notice title=witness.sourceCodeHash::0x$(sha256sum source.zip | cut -d ' ' -f 1)"
+
+      - name: Uplaod source code
+        uses: actions/upload-artifact@v2
+        with:
+          name: Source
+          path: source.zip
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      WITNESS_DIST_DIR: ${{ github.workspace }}/.witness/dist
+    steps:
+      - name: Checkout the source
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Witnessed build
+        run: |
+          mkdir -p "$WITNESS_DIST_DIR"
+          ./witnessed-build -i
+
+      - name: Upload the outputs
+        uses: actions/upload-artifact@v2
+        with:
+          name: Outputs
+          path: "${{ env.WITNESS_DIST_DIR }}/*"

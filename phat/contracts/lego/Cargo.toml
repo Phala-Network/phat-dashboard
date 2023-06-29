@@ -3,6 +3,7 @@ name = "lego"
 version = "0.1.0"
 authors = ["[your_name] <[your_email]>"]
 edition = "2021"
+build = "build.rs"
 
 [dependencies]
 ink = { version = "4", default-features = false }
