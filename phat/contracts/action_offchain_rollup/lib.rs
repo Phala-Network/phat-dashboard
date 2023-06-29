@@ -137,6 +137,13 @@ mod action_offchain_rollup {
         }
 
         #[ink(message)]
+        pub fn set_brick_profile_address(&mut self, brick_profile: AccountId) -> Result<()> {
+            self.ensure_owner()?;
+            self.brick_profile = brick_profile;
+            Ok(())
+        }
+
+        #[ink(message)]
         pub fn get_client(&self) -> Result<Client> {
             let client = self.ensure_client_configured()?;
             Ok(client.clone())
