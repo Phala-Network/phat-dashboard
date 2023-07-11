@@ -6,7 +6,7 @@ pub use crate::action_offchain_rollup::*;
 
 #[ink::contract(env = pink_extension::PinkEnvironment)]
 mod action_offchain_rollup {
-    use alloc::{format, string::String, vec, vec::Vec};
+    use alloc::{string::String, vec::Vec};
     use ink::env::call::{build_call, ExecutionInput, Selector};
     use ink::storage::traits::StorageLayout;
     use pink_extension as pink;
@@ -15,7 +15,7 @@ mod action_offchain_rollup {
         api::{Eth, Namespace},
         signing::Key,
         transports::{resolve_ready, PinkHttp},
-        types::{H160, U256},
+        types::H160,
     };
     use scale::{Decode, Encode};
     use this_crate::{version_tuple, VersionTuple};
@@ -26,10 +26,6 @@ mod action_offchain_rollup {
     use phat_js as js;
     use phat_offchain_rollup::{clients::evm::EvmRollupClient, Action};
 
-    // Defined in TestLensOracle.sol
-    const TYPE_RESPONSE: u32 = 0;
-    const TYPE_ERROR: u32 = 2;
-
     #[ink(storage)]
     pub struct ActionOffchainRollup {
         owner: AccountId,
@@ -38,7 +34,10 @@ mod action_offchain_rollup {
         /// BrickProfile address to ask for tx signing (to pay gas fee)
         brick_profile: AccountId,
         client: Option<Client>,
-        data_source: Option<DataSource>,
+        /// The JS code that processes the rollup queue request
+        handler_js: Option<String>,
+        /// The configuration that would be passed to the handler
+        handler_settings: Option<String>,
     }
 
     #[derive(Clone, Encode, Decode, Debug)]
@@ -50,49 +49,26 @@ mod action_offchain_rollup {
         client_addr: [u8; 20],
     }
 
-    #[derive(Clone, Encode, Decode, Debug)]
-    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
-    pub struct DataSource {
-        /// Data source url
-        url: String,
-        /// Data transform function in Javascript
-        transform_js: String,
-    }
-
     #[derive(Encode, Decode, Debug, PartialEq)]
     #[repr(u8)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         BadOrigin,
         ClientNotConfigured,
-        DataSourceNotConfigured,
+        HandlerNotConfigured,
         BadBrickProfile,
 
-        InvalidKeyLength,
         InvalidAddressLength,
         NoRequestInQueue,
         FailedToCreateClient,
         FailedToCommitTx,
 
-        BadLensProfileId,
-
-        FailedToFetchData,
-        FailedToTransformData,
-        BadTransformedData,
-
         FailedToGetStorage,
         FailedToCreateTransaction,
         FailedToSignTransaction,
         FailedToSendTransaction,
-        FailedToGetBlockHash,
-        FailedToDecode,
-        InvalidRequest,
-    }
 
-    impl From<Error> for U256 {
-        fn from(err: Error) -> U256 {
-            (err as u8).into()
-        }
+        JsError(String),
     }
 
     type Result<T> = core::result::Result<T, Error>;
@@ -109,7 +85,8 @@ mod action_offchain_rollup {
                     .expect("random is long enough; qed."),
                 brick_profile,
                 client: None,
-                data_source: None,
+                handler_js: None,
+                handler_settings: None,
             }
         }
 
@@ -150,9 +127,34 @@ mod action_offchain_rollup {
         }
 
         #[ink(message)]
-        pub fn get_data_source(&self) -> Result<DataSource> {
-            let data_source = self.ensure_data_source_configured()?;
-            Ok(data_source.clone())
+        pub fn get_handler(&self) -> Option<String> {
+            self.handler_js.clone()
+        }
+
+        /// Configures the handler (admin only)
+        #[ink(message)]
+        pub fn config_handler(
+            &mut self,
+            handler_js: String,
+            settings: Option<String>,
+        ) -> Result<()> {
+            self.ensure_owner()?;
+            self.handler_js = Some(handler_js);
+            self.handler_settings = settings;
+            Ok(())
+        }
+
+        #[ink(message)]
+        pub fn get_handler_settings(&self) -> Option<String> {
+            self.handler_settings.clone()
+        }
+
+        /// Set the handler configuration (admin only)
+        #[ink(message)]
+        pub fn config_handler_settings(&mut self, settings: Option<String>) -> Result<()> {
+            self.ensure_owner()?;
+            self.handler_settings = settings;
+            Ok(())
         }
 
         /// Configures the rollup target (admin only)
@@ -168,14 +170,6 @@ mod action_offchain_rollup {
             Ok(())
         }
 
-        /// Configures the data source and transform js (admin only)
-        #[ink(message)]
-        pub fn config_data_source(&mut self, url: String, transform_js: String) -> Result<()> {
-            self.ensure_owner()?;
-            self.data_source = Some(DataSource { url, transform_js });
-            Ok(())
-        }
-
         /// Transfers the ownership of the contract (admin only)
         ///
         /// transfer this to non-existent owner to renounce ownership and lock the configuration
@@ -186,27 +180,22 @@ mod action_offchain_rollup {
             Ok(())
         }
 
-        /// Processes a Lens Api stat request by a rollup transaction
+        /// Pop an element from the rollup queue if any and process it
         #[ink(message)]
         pub fn answer_request(&self) -> Result<Option<Vec<u8>>> {
-            use ethabi::Token;
+            use pink_kv_session::traits::QueueSession;
             let client = self.ensure_client_configured()?;
-            let data_source = self.ensure_data_source_configured()?;
 
             let mut rollup_client = connect(&client)?;
-            let action = match self.answer_request_inner(&mut rollup_client, data_source)? {
-                LensResponse::Response(rid, res) => ethabi::encode(&[
-                    Token::Uint(TYPE_RESPONSE.into()),
-                    Token::Uint(rid),
-                    Token::Uint(res.into()),
-                ]),
-                LensResponse::Error(rid, error) => ethabi::encode(&[
-                    Token::Uint(TYPE_ERROR.into()),
-                    Token::Uint(rid.unwrap_or_default()),
-                    Token::Uint(error.into()),
-                ]),
-            };
-            rollup_client.action(Action::Reply(action));
+            // Get a request if presents
+            let request = rollup_client
+                .session()
+                .pop()
+                .log_err("answer_request: failed to read queue")
+                .or(Err(Error::FailedToGetStorage))?
+                .ok_or(Error::NoRequestInQueue)?;
+            let reply = self.handle_request(&request)?;
+            rollup_client.action(Action::Reply(reply));
             maybe_submit_tx(
                 rollup_client,
                 self.attest_key,
@@ -215,89 +204,23 @@ mod action_offchain_rollup {
             )
         }
 
-        fn answer_request_inner(
-            &self,
-            rollup_client: &mut EvmRollupClient,
-            data_source: &DataSource,
-        ) -> Result<LensResponse> {
-            use ethabi::{ParamType, Token};
-            use pink_kv_session::traits::QueueSession;
-            // Get a request if presents
-            let raw_req = rollup_client
-                .session()
-                .pop()
-                .log_err("answer_request: failed to read queue")
-                .or(Err(Error::FailedToGetStorage))?
-                .ok_or(Error::NoRequestInQueue)?;
-            // Decode the queue data by ethabi (u256, bytes)
-            let Ok(decoded) = ethabi::decode(&[ParamType::Uint(32), ParamType::Bytes], &raw_req) else {
-                pink::info!("Malformed request received");
-                return Ok(LensResponse::Error(None, Error::FailedToDecode));
+        /// Performs a rollup queue element handling via the js handler
+        fn handle_request(&self, request: &[u8]) -> Result<Vec<u8>> {
+            let Some(handler_js) = &self.handler_js else {
+                return Err(Error::HandlerNotConfigured);
             };
-            let [Token::Uint(rid), Token::Bytes(profile_id)] = decoded.as_slice() else {
-                return Err(Error::FailedToDecode);
-            };
-            let profile_id = String::from_utf8_lossy(&profile_id);
-            pink::info!("Request received for profile {profile_id}");
-
-            // Get the Lens stats and respond as a rollup action.
-            let resp_data =
-                Self::fetch_lens_api_stats(data_source.url.clone(), String::from(profile_id))?;
-            let result = Self::transform_data(resp_data, data_source.transform_js.clone());
-            match result {
-                Ok(res) => {
-                    // Respond
-                    pink::info!("Processed result: {res}");
-                    Ok(LensResponse::Response(*rid, res))
-                }
-                // Network issue, should retry
-                Err(Error::FailedToFetchData) => Err(Error::FailedToFetchData),
-                // otherwise tell client we cannot process it
-                Err(e) => Ok(LensResponse::Error(Some(*rid), e)),
+            let mut args = vec![hex::encode(request)];
+            if let Some(settings) = &self.handler_settings {
+                args.push(settings.clone());
             }
-        }
-
-        pub fn fetch_lens_api_stats(lens_api: String, profile_id: String) -> Result<String> {
-            // profile_id should be like 0x0001
-            let is_hex_digit = |n| char::is_digit(n, 16);
-            if !profile_id.starts_with("0x") || !profile_id[2..].chars().all(is_hex_digit) {
-                return Err(Error::BadLensProfileId);
-            }
-
-            let headers = vec![
-                ("Content-Type".into(), "application/json".into()),
-                ("User-Agent".into(), "phat-contract".into()),
-            ];
-            let body = format!("{{\"query\":\"\\n          query Profile {{\\n            profile(request: {{ profileId: \\\"{profile_id}\\\" }}) {{\\n              stats {{\\n                totalFollowers\\n                totalFollowing\\n                totalPosts\\n                totalComments\\n                totalMirrors\\n                totalPublications\\n                totalCollects\\n              }}\\n            }}\\n          }}\\n          \"}}");
-
-            let resp = pink::http_post!(lens_api, body.as_bytes(), headers);
-            if resp.status_code != 200 {
-                pink::warn!(
-                    "Fail to read Lens api withstatus code: {}, reason: {}, body: {:?}",
-                    resp.status_code,
-                    resp.reason_phrase,
-                    resp.body
-                );
-                return Err(Error::FailedToFetchData);
-            }
-
-            let resp_body = String::from_utf8(resp.body).or(Err(Error::FailedToDecode))?;
-            Ok(resp_body)
-        }
-
-        pub fn transform_data(data: String, transform_js: String) -> Result<u128> {
-            let result = js::eval(transform_js.as_str(), &[data])
-                .map_err(|_| Error::FailedToTransformData)?;
-
-            let result_num: u128 = match result {
-                phat_js::Output::String(result_str) => {
-                    result_str.parse().map_err(|_| Error::BadTransformedData)?
+            let output = js::eval(&handler_js, &args).map_err(Error::JsError)?;
+            match output {
+                js::Output::String(e) => {
+                    pink::warn!("Invalid handler output: {}", e);
+                    Err(Error::JsError(e))
                 }
-                phat_js::Output::Bytes(_) => {
-                    return Err(Error::BadTransformedData);
-                }
-            };
-            Ok(result_num)
+                js::Output::Bytes(b) => Ok(b),
+            }
         }
 
         /// Returns BadOrigin error if the caller is not the owner
@@ -313,18 +236,6 @@ mod action_offchain_rollup {
         fn ensure_client_configured(&self) -> Result<&Client> {
             self.client.as_ref().ok_or(Error::ClientNotConfigured)
         }
-
-        /// Returns the data source reference or raise the error `DataSourceNotConfigured`
-        fn ensure_data_source_configured(&self) -> Result<&DataSource> {
-            self.data_source
-                .as_ref()
-                .ok_or(Error::DataSourceNotConfigured)
-        }
-    }
-
-    enum LensResponse {
-        Response(U256, u128),
-        Error(Option<U256>, Error),
     }
 
     fn connect(client: &Client) -> Result<EvmRollupClient> {
@@ -384,73 +295,5 @@ mod action_offchain_rollup {
             return Ok(Some(tx_id.encode()));
         }
         Ok(None)
-    }
-
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-
-        const LENS_TESTNET_API: &str = "https://api-mumbai.lens.dev/";
-        const LENS_MAINNET_API: &str = "https://api.lens.dev/";
-
-        struct EnvVars {
-            rpc: String,
-            anchor: Vec<u8>,
-        }
-
-        fn get_env(key: &str) -> String {
-            std::env::var(key).expect("env not found")
-        }
-        fn config() -> EnvVars {
-            dotenvy::dotenv().ok();
-            let rpc = get_env("RPC");
-            let anchor = hex::decode(get_env("ANCHOR")).expect("hex decode failed");
-            EnvVars { rpc, anchor }
-        }
-
-        #[ink::test]
-        fn fixed_parse() {
-            let _ = env_logger::try_init();
-            pink_extension_runtime::mock_ext::mock_all_ext();
-
-            let lens_testnet_api = String::from(LENS_TESTNET_API);
-            let lens_mainnet_api = String::from(LENS_MAINNET_API);
-
-            assert_eq!(
-                ActionOffchainRollup::fetch_lens_api_stats(
-                    lens_testnet_api.clone(),
-                    String::from("01")
-                ),
-                Err(Error::BadLensProfileId)
-            );
-            assert_eq!(
-                ActionOffchainRollup::fetch_lens_api_stats(
-                    lens_testnet_api.clone(),
-                    String::from("0x01 \\\"")
-                ),
-                Err(Error::BadLensProfileId)
-            );
-            assert_eq!(
-                ActionOffchainRollup::fetch_lens_api_stats(
-                    lens_testnet_api.clone(),
-                    String::from("0xg")
-                ),
-                Err(Error::BadLensProfileId)
-            );
-
-            let stats = ActionOffchainRollup::fetch_lens_api_stats(
-                lens_testnet_api.clone(),
-                String::from("0x01"),
-            )
-            .unwrap();
-            pink::warn!("TotalCollects on testnet: {stats:?}");
-
-            let stats = ActionOffchainRollup::fetch_lens_api_stats(
-                lens_mainnet_api.clone(),
-                String::from("0x01"),
-            )
-            .unwrap();
-            pink::warn!("TotalCollects on mainnet: {stats:?}");
-        }
     }
 }
