@@ -9,8 +9,7 @@ edition = "2021"
 overflow-checks = false
 
 [dependencies]
-ink_env = { version = "4.0.1", default-features = false }
-ink = { version = "4.0.1", default-features = false }
+ink = { version = "4.0.1", default-features = false, features = ["static-buffer-256K"] }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
@@ -33,6 +32,7 @@ phat_js = { path = "../../crates/js", default-features = false }
 brick_profile = { path = "../../contracts/brick_profile", default-features = false, features = ["ink-as-dependency"] }
 
 hex = { version = "0.4", default-features = false }
+hex_fmt = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 dotenvy = "0.15"
@@ -48,7 +48,6 @@ path = "lib.rs"
 [features]
 default = ["std"]
 std = [
-    "ink_env/std",
     "ink/std",
     "scale/std",
     "scale-info/std",
@@ -65,3 +64,5 @@ ink-as-dependency = [ "brick_profile/ink-as-dependency" ]
 # Leave for `cargo contract` build.
 [patch.crates-io]
 serde = { git = "https://github.com/kvinwang/serde.git", branch = "pink" }
+ink = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer" }
+ink_env = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer" }

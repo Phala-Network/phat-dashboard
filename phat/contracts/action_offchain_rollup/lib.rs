@@ -8,11 +8,13 @@ pub use crate::action_offchain_rollup::*;
 mod action_offchain_rollup {
     use alloc::{string::String, vec::Vec};
     use ink::env::call::{build_call, ExecutionInput, Selector};
+    #[cfg(feature = "std")]
     use ink::storage::traits::StorageLayout;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
     use pink_web3::{
         api::{Eth, Namespace},
+        keys::pink::KeyPair,
         signing::Key,
         transports::{resolve_ready, PinkHttp},
         types::H160,
@@ -23,8 +25,13 @@ mod action_offchain_rollup {
     // To enable `(result).log_err("Reason")?`
     use pink::ResultExt;
 
+    use ethabi::Token;
     use phat_js as js;
-    use phat_offchain_rollup::{clients::evm::EvmRollupClient, Action};
+    use phat_offchain_rollup::{
+        clients::evm::{sign_meta_tx, EvmRollupClient},
+        Action,
+    };
+    type CodeHash = [u8; 32];
 
     #[ink(storage)]
     pub struct ActionOffchainRollup {
@@ -35,7 +42,7 @@ mod action_offchain_rollup {
         brick_profile: AccountId,
         client: Option<Client>,
         /// The JS code that processes the rollup queue request
-        handler_js: Option<String>,
+        handler_js: Option<(String, CodeHash)>,
         /// The configuration that would be passed to the handler
         handler_settings: Option<String>,
     }
@@ -68,6 +75,7 @@ mod action_offchain_rollup {
         FailedToSignTransaction,
         FailedToSendTransaction,
 
+        InvalidJsOutput,
         JsError(String),
     }
 
@@ -104,8 +112,7 @@ mod action_offchain_rollup {
         /// Get the identity of offchain rollup
         #[ink(message)]
         pub fn get_attest_address(&self) -> H160 {
-            let sk = pink_web3::keys::pink::KeyPair::from(self.attest_key);
-            sk.address()
+            KeyPair::from(self.attest_key).address()
         }
 
         #[ink(message)]
@@ -127,7 +134,7 @@ mod action_offchain_rollup {
         }
 
         #[ink(message)]
-        pub fn get_handler(&self) -> Option<String> {
+        pub fn get_handler(&self) -> Option<(String, CodeHash)> {
             self.handler_js.clone()
         }
 
@@ -139,7 +146,10 @@ mod action_offchain_rollup {
             settings: Option<String>,
         ) -> Result<()> {
             self.ensure_owner()?;
-            self.handler_js = Some(handler_js);
+            let js_hash = self
+                .env()
+                .hash_bytes::<ink::env::hash::Sha2x256>(handler_js.as_bytes());
+            self.handler_js = Some((handler_js, js_hash.into()));
             self.handler_settings = settings;
             Ok(())
         }
@@ -180,7 +190,7 @@ mod action_offchain_rollup {
             Ok(())
         }
 
-        /// Pop an element from the rollup queue if any and process it
+        /// Pop an element from the rollup queue if any and process it, then submit the answer.
         #[ink(message)]
         pub fn answer_request(&self) -> Result<Option<Vec<u8>>> {
             use pink_kv_session::traits::QueueSession;
@@ -194,7 +204,8 @@ mod action_offchain_rollup {
                 .log_err("answer_request: failed to read queue")
                 .or(Err(Error::FailedToGetStorage))?
                 .ok_or(Error::NoRequestInQueue)?;
-            let reply = self.handle_request(&request)?;
+            let (reply, _hash) = self.handle_request(&request)?;
+            // TODO: submit tx with code hash
             rollup_client.action(Action::Reply(reply));
             maybe_submit_tx(
                 rollup_client,
@@ -204,23 +215,53 @@ mod action_offchain_rollup {
             )
         }
 
-        /// Performs a rollup queue element handling via the js handler
-        fn handle_request(&self, request: &[u8]) -> Result<Vec<u8>> {
-            let Some(handler_js) = &self.handler_js else {
+        /// Processes a request with the the js handler and returns the output wrapped in a signed meta tx.
+        ///
+        /// The output is a tuple of the reply and the sha256 hash of the js handler.
+        #[ink(message)]
+        pub fn get_answer(&self, request: Vec<u8>) -> Result<Vec<u8>> {
+            let client = self.ensure_client_configured()?;
+            let (reply, js_hash) = self.handle_request(&request)?;
+            let data = ethabi::encode(&[Token::Bytes(reply), Token::FixedBytes(js_hash.to_vec())]);
+            let (tx, sig) = sign_meta_tx(
+                &client.rpc,
+                client.client_addr.into(),
+                &data,
+                &KeyPair::from(self.attest_key),
+            )
+            .log_err("failed to sign transaction")
+            .or(Err(Error::FailedToSignTransaction))?;
+            Ok(ethabi::encode(&[tx, Token::Bytes(sig.0)]))
+        }
+
+        /// Processes a request with the the js handler and returns the output.
+        ///
+        /// The output is a tuple of the reply and the sha256 hash of the js handler.
+        #[ink(message)]
+        pub fn get_raw_answer(&self, request: Vec<u8>) -> Result<(Vec<u8>, CodeHash)> {
+            pink::info!("enter get_raw_answer");
+            self.handle_request(&request)
+        }
+
+        /// Processes a request with the the js handler and returns the output.
+        fn handle_request(&self, request: &[u8]) -> Result<(Vec<u8>, CodeHash)> {
+            let Some((handler_js, js_hash)) = &self.handler_js else {
+                pink::error!("HandlerNotConfigured");
                 return Err(Error::HandlerNotConfigured);
             };
-            let mut args = vec![hex::encode(request)];
+            let mut args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request))];
             if let Some(settings) = &self.handler_settings {
                 args.push(settings.clone());
             }
             let output = js::eval(&handler_js, &args).map_err(Error::JsError)?;
-            match output {
-                js::Output::String(e) => {
-                    pink::warn!("Invalid handler output: {}", e);
-                    Err(Error::JsError(e))
-                }
-                js::Output::Bytes(b) => Ok(b),
-            }
+            let output = match output {
+                js::Output::String(bytes) => hex::decode(bytes.as_str().trim_start_matches("0x"))
+                    .map_err(|_| Error::InvalidJsOutput)?,
+                js::Output::Bytes(b) => b,
+            };
+            pink::info!("js output: {:?}", hex::encode(&output));
+            pink::info!("js hash: {:?}", hex::encode(&js_hash));
+            Ok((output, js_hash.clone()))
         }
 
         /// Returns BadOrigin error if the caller is not the owner
@@ -251,7 +292,6 @@ mod action_offchain_rollup {
         brick_profile: AccountId,
         rpc: String,
     ) -> Result<Option<Vec<u8>>> {
-        use pink_web3::keys::pink::KeyPair;
         let maybe_submittable = rollup_client
             .commit()
             .log_err("failed to commit")

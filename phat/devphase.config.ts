@@ -3,7 +3,7 @@ import type { ProjectConfigOptions } from '@devphase/service';
 const config: ProjectConfigOptions = {
     stack: {
         blockTime: 100,
-        version: 'nightly-2023-05-26',
+        version: 'monthly-2023-06',
         node: {
             port: 39944,
             binary: '{{directories.stacks}}/{{stack.version}}/phala-node',

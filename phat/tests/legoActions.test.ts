@@ -66,7 +66,7 @@ describe("Run lego actions", () => {
   before(async function () {
     this.timeout(500_000_000);
 
-    currentStack = (await RuntimeContext.getSingleton()).paths.currentStack;
+    currentStack = this.devPhase.runtimeContext.paths.currentStack;
     console.log("clusterId:", this.devPhase.mainClusterId);
     console.log(`currentStack: ${currentStack}`);
 
@@ -103,8 +103,18 @@ describe("Run lego actions", () => {
     });
     console.log("Signer:", alice.address.toString());
 
-    // register the qjs to JsDelegate driver
     system = (await systemFactory.attach(systemContract)) as any;
+
+    // Upgrade pink runtime to latest, so that we can store larger values to the storage
+    await TxHandler.handle(
+      system.tx["system::upgradeRuntime"](
+        { gasLimit: "10000000000000" },
+        [1, 1],
+      ),
+      alice,
+      true,
+    );
+    // register the qjs to JsDelegate driver
     await TxHandler.handle(
       system.tx["system::setDriver"](
         { gasLimit: "10000000000000" },
@@ -265,13 +275,6 @@ describe("Run lego actions", () => {
 
       // STEP 3: assume user has deployed the smart contract client
       // config ActionOffchainRollup client
-      let transform_js = `
-        function transform(arg) {
-            let input = JSON.parse(arg);
-            return input.data.profile.stats.totalCollects;
-        }
-        transform(scriptArgs[0])
-      `;
       await TxHandler.handle(
         offchainRollup.tx.configClient({ gasLimit: "10000000000000" }, rpc, anchorAddr),
         alice,
@@ -284,26 +287,31 @@ describe("Run lego actions", () => {
       }, 1000 * 10);
       console.log("ActionOffchainRollup client configured");
 
+      let handlerJs = fs.readFileSync("./example-oracles/lens_stats/dist/index.js", "utf8");
       await TxHandler.handle(
-        offchainRollup.tx.configDataSource({ gasLimit: "10000000000000" }, lensApi, transform_js),
+        offchainRollup.tx.configHandler({ gasLimit: "10000000000000" }, handlerJs, lensApi as any),
         alice,
         true,
       );
       await checkUntil(async () => {
-        const { output } = await offchainRollup.query.getDataSource(certAlice, {});
-        // console.log(`ActionOffchainRollup data source ${JSON.stringify(output)}`);
-        return !output.toJSON().ok.err;
+        const { output } = await offchainRollup.query.getHandler(certAlice, {});
+        console.log(`ActionOffchainRollup handler ${JSON.stringify(output)}`);
+        return !output.toJSON().ok;
       }, 1000 * 10);
-      console.log("ActionOffchainRollup data source configured");
+      console.log("ActionOffchainRollup handler configured");
 
       // STEP 4: add the workflow, the WorkflowId increases from 0
       // pub fn answer_request(&self) -> Result<Option<Vec<u8>>>
       // this return EVM tx id
-      const selectorAnswerRequest = 0x2a5bcd75
-      const actions_lens_api = `[
-        {"cmd": "call", "config": ${cfg({ "callee": offchainRollup.address.toHex(), "selector": selectorAnswerRequest, "input": [] })}},
-        {"cmd": "log"}
-      ]`;
+      const selectorGetAnswer = 0x2e8fc0a7;
+      const selectorAnswerRequest = 0x2a5bcd75;
+      const input = "0x010200000000000000000000000000000000000000000000000000000000000004d2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000043078303100000000000000000000000000000000000000000000000000000000";
+      const actions_lens_api = JSON.stringify([
+          { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorGetAnswer }, input },
+          { cmd: "log" },
+          // { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorAnswerRequest } },
+          // { cmd: "log" }
+      ]);
       await TxHandler.handle(
         brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
         alice,
