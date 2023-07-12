@@ -42,9 +42,9 @@ mod action_offchain_rollup {
         brick_profile: AccountId,
         client: Option<Client>,
         /// The JS code that processes the rollup queue request
-        handler_js: Option<(String, CodeHash)>,
-        /// The configuration that would be passed to the handler
-        handler_settings: Option<String>,
+        core_js: Option<(String, CodeHash)>,
+        /// The configuration that would be passed to the core js
+        core_settings: Option<String>,
     }
 
     #[derive(Clone, Encode, Decode, Debug)]
@@ -93,9 +93,16 @@ mod action_offchain_rollup {
                     .expect("random is long enough; qed."),
                 brick_profile,
                 client: None,
-                handler_js: None,
-                handler_settings: None,
+                core_js: None,
+                core_settings: None,
             }
+        }
+
+        #[ink(constructor)]
+        pub fn with_core(core_js: String, core_settings: String, brick_profile: AccountId) -> Self {
+            let mut this = Self::new(brick_profile);
+            this.config_core_inner(core_js, Some(core_settings));
+            this
         }
 
         #[ink(message)]
@@ -134,36 +141,28 @@ mod action_offchain_rollup {
         }
 
         #[ink(message)]
-        pub fn get_handler(&self) -> Option<(String, CodeHash)> {
-            self.handler_js.clone()
+        pub fn get_core(&self) -> Option<(String, CodeHash)> {
+            self.core_js.clone()
         }
 
-        /// Configures the handler (admin only)
+        /// Configures the core script (admin only)
         #[ink(message)]
-        pub fn config_handler(
-            &mut self,
-            handler_js: String,
-            settings: Option<String>,
-        ) -> Result<()> {
+        pub fn config_core(&mut self, core_js: String, settings: Option<String>) -> Result<()> {
             self.ensure_owner()?;
-            let js_hash = self
-                .env()
-                .hash_bytes::<ink::env::hash::Sha2x256>(handler_js.as_bytes());
-            self.handler_js = Some((handler_js, js_hash.into()));
-            self.handler_settings = settings;
+            self.config_core_inner(core_js, settings);
             Ok(())
         }
 
         #[ink(message)]
-        pub fn get_handler_settings(&self) -> Option<String> {
-            self.handler_settings.clone()
+        pub fn get_core_settings(&self) -> Option<String> {
+            self.core_settings.clone()
         }
 
-        /// Set the handler configuration (admin only)
+        /// Set the configuration (admin only)
         #[ink(message)]
-        pub fn config_handler_settings(&mut self, settings: Option<String>) -> Result<()> {
+        pub fn config_core_settings(&mut self, settings: Option<String>) -> Result<()> {
             self.ensure_owner()?;
-            self.handler_settings = settings;
+            self.core_settings = settings;
             Ok(())
         }
 
@@ -215,9 +214,9 @@ mod action_offchain_rollup {
             )
         }
 
-        /// Processes a request with the the js handler and returns the output wrapped in a signed meta tx.
+        /// Processes a request with the the core js and returns the output wrapped in a signed meta tx.
         ///
-        /// The output is a tuple of the reply and the sha256 hash of the js handler.
+        /// The output is a tuple of the reply and the sha256 hash of the core js.
         #[ink(message)]
         pub fn get_answer(&self, request: Vec<u8>) -> Result<Vec<u8>> {
             let client = self.ensure_client_configured()?;
@@ -234,26 +233,26 @@ mod action_offchain_rollup {
             Ok(ethabi::encode(&[tx, Token::Bytes(sig.0)]))
         }
 
-        /// Processes a request with the the js handler and returns the output.
+        /// Processes a request with the the core js and returns the output.
         ///
-        /// The output is a tuple of the reply and the sha256 hash of the js handler.
+        /// The output is a tuple of the reply and the sha256 hash of the core js.
         #[ink(message)]
         pub fn get_raw_answer(&self, request: Vec<u8>) -> Result<(Vec<u8>, CodeHash)> {
             pink::info!("enter get_raw_answer");
             self.handle_request(&request)
         }
 
-        /// Processes a request with the the js handler and returns the output.
+        /// Processes a request with the the core js and returns the output.
         fn handle_request(&self, request: &[u8]) -> Result<(Vec<u8>, CodeHash)> {
-            let Some((handler_js, js_hash)) = &self.handler_js else {
+            let Some((core_js, js_hash)) = &self.core_js else {
                 pink::error!("HandlerNotConfigured");
                 return Err(Error::HandlerNotConfigured);
             };
             let mut args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request))];
-            if let Some(settings) = &self.handler_settings {
+            if let Some(settings) = &self.core_settings {
                 args.push(settings.clone());
             }
-            let output = js::eval(&handler_js, &args).map_err(Error::JsError)?;
+            let output = js::eval(&core_js, &args).map_err(Error::JsError)?;
             let output = match output {
                 js::Output::String(bytes) => hex::decode(bytes.as_str().trim_start_matches("0x"))
                     .map_err(|_| Error::InvalidJsOutput)?,
@@ -276,6 +275,14 @@ mod action_offchain_rollup {
         /// Returns the client config reference or raise the error `ClientNotConfigured`
         fn ensure_client_configured(&self) -> Result<&Client> {
             self.client.as_ref().ok_or(Error::ClientNotConfigured)
+        }
+
+        fn config_core_inner(&mut self, core_js: String, settings: Option<String>) {
+            let js_hash = self
+                .env()
+                .hash_bytes::<ink::env::hash::Sha2x256>(core_js.as_bytes());
+            self.core_js = Some((core_js, js_hash.into()));
+            self.core_settings = settings;
         }
     }
 
