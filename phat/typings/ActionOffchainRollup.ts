@@ -20,7 +20,7 @@ export namespace ActionOffchainRollup {
         None? : null,
         Some? : string
         };
-    type ActionOffchainRollup_ActionOffchainRollup_ActionOffchainRollup$2 = { owner: InkPrimitives_Types_AccountId$1, attest_key: DPT.FixedArray<number, 32>, brick_profile: InkPrimitives_Types_AccountId$1, client: Option$3, handler_js: Option$5, handler_settings: Option$7 };
+    type ActionOffchainRollup_ActionOffchainRollup_ActionOffchainRollup$2 = { owner: InkPrimitives_Types_AccountId$1, attest_key: DPT.FixedArray<number, 32>, brick_profile: InkPrimitives_Types_AccountId$1, client: Option$3, core_js: Option$5, core_settings: Option$7 };
     type InkPrimitives_LangError$10 = {
         CouldNotReadInput? : null
         };
@@ -138,11 +138,11 @@ export namespace ActionOffchainRollup {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$19>>>;
         }
 
-        export interface GetHandler extends DPT.ContractQuery {
+        export interface GetCore extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$21>>>;
         }
 
-        export interface GetHandlerSettings extends DPT.ContractQuery {
+        export interface GetCoreSettings extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$22>>>;
         }
 
@@ -165,8 +165,8 @@ export namespace ActionOffchainRollup {
         getAttestAddress: ContractQuery.GetAttestAddress;
         getBrickProfileAddress: ContractQuery.GetBrickProfileAddress;
         getClient: ContractQuery.GetClient;
-        getHandler: ContractQuery.GetHandler;
-        getHandlerSettings: ContractQuery.GetHandlerSettings;
+        getCore: ContractQuery.GetCore;
+        getCoreSettings: ContractQuery.GetCoreSettings;
         answerRequest: ContractQuery.AnswerRequest;
         getAnswer: ContractQuery.GetAnswer;
         getRawAnswer: ContractQuery.GetRawAnswer;
@@ -180,11 +180,11 @@ export namespace ActionOffchainRollup {
             (options: ContractOptions, brick_profile: InkPrimitives_Types_AccountId$1): DPT.SubmittableExtrinsic;
         }
 
-        export interface ConfigHandler extends DPT.ContractTx {
-            (options: ContractOptions, handler_js: string, settings: Option$7): DPT.SubmittableExtrinsic;
+        export interface ConfigCore extends DPT.ContractTx {
+            (options: ContractOptions, core_js: string, settings: Option$7): DPT.SubmittableExtrinsic;
         }
 
-        export interface ConfigHandlerSettings extends DPT.ContractTx {
+        export interface ConfigCoreSettings extends DPT.ContractTx {
             (options: ContractOptions, settings: Option$7): DPT.SubmittableExtrinsic;
         }
 
@@ -199,8 +199,8 @@ export namespace ActionOffchainRollup {
 
     export interface MapMessageTx extends DPT.MapMessageTx {
         setBrickProfileAddress: ContractTx.SetBrickProfileAddress;
-        configHandler: ContractTx.ConfigHandler;
-        configHandlerSettings: ContractTx.ConfigHandlerSettings;
+        configCore: ContractTx.ConfigCore;
+        configCoreSettings: ContractTx.ConfigCoreSettings;
         configClient: ContractTx.ConfigClient;
         transferOwnership: ContractTx.TransferOwnership;
     }
@@ -218,5 +218,6 @@ export namespace ActionOffchainRollup {
     /** */
     export declare class Factory extends DevPhase.ContractFactory {
         instantiate<T = Contract>(constructor: "new", params: [InkPrimitives_Types_AccountId$1], options?: DevPhase.InstantiateOptions): Promise<T>;
+        instantiate<T = Contract>(constructor: "with_core", params: [string, string, InkPrimitives_Types_AccountId$1], options?: DevPhase.InstantiateOptions): Promise<T>;
     }
 }

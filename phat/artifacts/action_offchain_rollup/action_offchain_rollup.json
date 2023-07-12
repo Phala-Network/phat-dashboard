@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x2eaeeda49919732b0ec235fe1fc7ba629e7036e92748d3ac3b16fecaaa86184d",
+    "hash": "0x7c3bd34496581dadd2fb17b52778585030828c70604c478c44e15056a77a90f2",
     "language": "ink! 4.2.0",
     "compiler": "rustc 1.69.0",
     "build_info": {
@@ -46,6 +46,49 @@
           "type": 11
         },
         "selector": "0x9bae9d5e"
+      },
+      {
+        "args": [
+          {
+            "label": "core_js",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "label": "core_settings",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "label": "brick_profile",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "with_core",
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink_primitives",
+            "ConstructorResult"
+          ],
+          "type": 11
+        },
+        "selector": "0x9f2a780b"
       }
     ],
     "docs": [],
@@ -211,7 +254,7 @@
         "args": [],
         "default": false,
         "docs": [],
-        "label": "get_handler",
+        "label": "get_core",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -221,12 +264,12 @@
           ],
           "type": 25
         },
-        "selector": "0xadd1491d"
+        "selector": "0x28948399"
       },
       {
         "args": [
           {
-            "label": "handler_js",
+            "label": "core_js",
             "type": {
               "displayName": [
                 "String"
@@ -246,9 +289,9 @@
         ],
         "default": false,
         "docs": [
-          " Configures the handler (admin only)"
+          " Configures the core script (admin only)"
         ],
-        "label": "config_handler",
+        "label": "config_core",
         "mutates": true,
         "payable": false,
         "returnType": {
@@ -258,13 +301,13 @@
           ],
           "type": 20
         },
-        "selector": "0xfe8f05b6"
+        "selector": "0xb300407e"
       },
       {
         "args": [],
         "default": false,
         "docs": [],
-        "label": "get_handler_settings",
+        "label": "get_core_settings",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -274,7 +317,7 @@
           ],
           "type": 26
         },
-        "selector": "0xe67849bd"
+        "selector": "0x995504ac"
       },
       {
         "args": [
@@ -290,9 +333,9 @@
         ],
         "default": false,
         "docs": [
-          " Set the handler configuration (admin only)"
+          " Set the configuration (admin only)"
         ],
-        "label": "config_handler_settings",
+        "label": "config_core_settings",
         "mutates": true,
         "payable": false,
         "returnType": {
@@ -302,7 +345,7 @@
           ],
           "type": 20
         },
-        "selector": "0x27397867"
+        "selector": "0x1c86a18c"
       },
       {
         "args": [
@@ -403,9 +446,9 @@
         ],
         "default": false,
         "docs": [
-          " Processes a request with the the js handler and returns the output wrapped in a signed meta tx.",
+          " Processes a request with the the core js and returns the output wrapped in a signed meta tx.",
           "",
-          " The output is a tuple of the reply and the sha256 hash of the js handler."
+          " The output is a tuple of the reply and the sha256 hash of the core js."
         ],
         "label": "get_answer",
         "mutates": false,
@@ -433,9 +476,9 @@
         ],
         "default": false,
         "docs": [
-          " Processes a request with the the js handler and returns the output.",
+          " Processes a request with the the core js and returns the output.",
           "",
-          " The output is a tuple of the reply and the sha256 hash of the js handler."
+          " The output is a tuple of the reply and the sha256 hash of the core js."
         ],
         "label": "get_raw_answer",
         "mutates": false,
@@ -595,7 +638,7 @@
                   }
                 }
               },
-              "name": "handler_js"
+              "name": "core_js"
             },
             {
               "layout": {
@@ -624,7 +667,7 @@
                   }
                 }
               },
-              "name": "handler_settings"
+              "name": "core_settings"
             }
           ],
           "name": "ActionOffchainRollup"
@@ -709,14 +752,14 @@
                 "typeName": "<Option<Client> as::ink::storage::traits::AutoStorableHint<::\nink::storage::traits::ManualKey<634690880u32, ()>,>>::Type"
               },
               {
-                "name": "handler_js",
+                "name": "core_js",
                 "type": 8,
-                "typeName": "<Option<(String, CodeHash)> as::ink::storage::traits::\nAutoStorableHint<::ink::storage::traits::ManualKey<936992203u32, ()\n>,>>::Type"
+                "typeName": "<Option<(String, CodeHash)> as::ink::storage::traits::\nAutoStorableHint<::ink::storage::traits::ManualKey<986844895u32, ()\n>,>>::Type"
               },
               {
-                "name": "handler_settings",
+                "name": "core_settings",
                 "type": 10,
-                "typeName": "<Option<String> as::ink::storage::traits::AutoStorableHint<::\nink::storage::traits::ManualKey<3452304778u32, ()>,>>::Type"
+                "typeName": "<Option<String> as::ink::storage::traits::AutoStorableHint<::\nink::storage::traits::ManualKey<3994606371u32, ()>,>>::Type"
               }
             ]
           }

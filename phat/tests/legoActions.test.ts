@@ -287,14 +287,14 @@ describe("Run lego actions", () => {
       }, 1000 * 10);
       console.log("ActionOffchainRollup client configured");
 
-      let handlerJs = fs.readFileSync("./example-oracles/lens_stats/dist/index.js", "utf8");
+      let coreJs = fs.readFileSync("./example-oracles/lens_stats/dist/index.js", "utf8");
       await TxHandler.handle(
-        offchainRollup.tx.configHandler({ gasLimit: "10000000000000" }, handlerJs, lensApi as any),
+        offchainRollup.tx.configCore({ gasLimit: "10000000000000" }, coreJs, lensApi as any),
         alice,
         true,
       );
       await checkUntil(async () => {
-        const { output } = await offchainRollup.query.getHandler(certAlice, {});
+        const { output } = await offchainRollup.query.getCore(certAlice, {});
         console.log(`ActionOffchainRollup handler ${JSON.stringify(output)}`);
         return !output.toJSON().ok;
       }, 1000 * 10);
@@ -303,14 +303,14 @@ describe("Run lego actions", () => {
       // STEP 4: add the workflow, the WorkflowId increases from 0
       // pub fn answer_request(&self) -> Result<Option<Vec<u8>>>
       // this return EVM tx id
-      const selectorGetAnswer = 0x2e8fc0a7;
+      const selectorGetRawAnswer = 0x2e8fc0a7;
       const selectorAnswerRequest = 0x2a5bcd75;
+      const selectorGetAnswer = 0x9d27bc00;
       const input = "0x010200000000000000000000000000000000000000000000000000000000000004d2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000043078303100000000000000000000000000000000000000000000000000000000";
       const actions_lens_api = JSON.stringify([
-          { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorGetAnswer }, input },
-          { cmd: "log" },
-          // { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorAnswerRequest } },
-          // { cmd: "log" }
+          // { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorGetAnswer }, input },
+          { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorAnswerRequest } },
+          { cmd: "log" }
       ]);
       await TxHandler.handle(
         brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
