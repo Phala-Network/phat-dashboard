@@ -64,6 +64,10 @@ export namespace ActionEvmTransaction {
         Ok? : Result$16,
         Err? : InkPrimitives_LangError$4
         };
+    type InkPrimitives_Types_Hash$18 = any;
+    type PinkExtension_ChainExtension_PinkExt$19 = {
+
+        };
 
     /** */
     /** Queries */

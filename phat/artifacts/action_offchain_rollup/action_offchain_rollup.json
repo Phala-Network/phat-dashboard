@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x4c02fa94c7704df5d908537beeb8897dd002c9c5b9ec2693f911d1dda98da2c7",
+    "hash": "0x2eaeeda49919732b0ec235fe1fc7ba629e7036e92748d3ac3b16fecaaa86184d",
     "language": "ink! 4.2.0",
     "compiler": "rustc 1.69.0",
     "build_info": {
@@ -43,7 +43,7 @@
             "ink_primitives",
             "ConstructorResult"
           ],
-          "type": 4
+          "type": 11
         },
         "selector": "0x9bae9d5e"
       }
@@ -60,32 +60,32 @@
         "displayName": [
           "Balance"
         ],
-        "type": 27
+        "type": 36
       },
       "blockNumber": {
         "displayName": [
           "BlockNumber"
         ],
-        "type": 30
+        "type": 39
       },
       "chainExtension": {
         "displayName": [
           "ChainExtension"
         ],
-        "type": 31
+        "type": 40
       },
       "hash": {
         "displayName": [
           "Hash"
         ],
-        "type": 28
+        "type": 37
       },
       "maxEventTopics": 4,
       "timestamp": {
         "displayName": [
           "Timestamp"
         ],
-        "type": 29
+        "type": 38
       }
     },
     "events": [],
@@ -94,7 +94,7 @@
         "ink",
         "LangError"
       ],
-      "type": 6
+      "type": 13
     },
     "messages": [
       {
@@ -109,7 +109,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 7
+          "type": 14
         },
         "selector": "0xec6d41e1"
       },
@@ -127,7 +127,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 10
+          "type": 17
         },
         "selector": "0xfeaea4fa"
       },
@@ -145,7 +145,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 11
+          "type": 18
         },
         "selector": "0xa29595ff"
       },
@@ -161,7 +161,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 10
+          "type": 17
         },
         "selector": "0x0f2392a4"
       },
@@ -187,7 +187,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 14
+          "type": 20
         },
         "selector": "0x76dc445a"
       },
@@ -203,7 +203,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 17
+          "type": 23
         },
         "selector": "0xbb27d5c4"
       },
@@ -211,8 +211,45 @@
         "args": [],
         "default": false,
         "docs": [],
-        "label": "get_data_source",
+        "label": "get_handler",
         "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 25
+        },
+        "selector": "0xadd1491d"
+      },
+      {
+        "args": [
+          {
+            "label": "handler_js",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "label": "settings",
+            "type": {
+              "displayName": [
+                "Option"
+              ],
+              "type": 10
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Configures the handler (admin only)"
+        ],
+        "label": "config_handler",
+        "mutates": true,
         "payable": false,
         "returnType": {
           "displayName": [
@@ -221,7 +258,51 @@
           ],
           "type": 20
         },
-        "selector": "0x0fa12e05"
+        "selector": "0xfe8f05b6"
+      },
+      {
+        "args": [],
+        "default": false,
+        "docs": [],
+        "label": "get_handler_settings",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 26
+        },
+        "selector": "0xe67849bd"
+      },
+      {
+        "args": [
+          {
+            "label": "settings",
+            "type": {
+              "displayName": [
+                "Option"
+              ],
+              "type": 10
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Set the handler configuration (admin only)"
+        ],
+        "label": "config_handler_settings",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 20
+        },
+        "selector": "0x27397867"
       },
       {
         "args": [
@@ -240,7 +321,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 23
+              "type": 27
             }
           }
         ],
@@ -256,46 +337,9 @@
             "ink",
             "MessageResult"
           ],
-          "type": 14
+          "type": 20
         },
         "selector": "0x35be49eb"
-      },
-      {
-        "args": [
-          {
-            "label": "url",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 3
-            }
-          },
-          {
-            "label": "transform_js",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 3
-            }
-          }
-        ],
-        "default": false,
-        "docs": [
-          " Configures the data source and transform js (admin only)"
-        ],
-        "label": "config_data_source",
-        "mutates": true,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 14
-        },
-        "selector": "0xb33f9392"
       },
       {
         "args": [
@@ -323,7 +367,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 14
+          "type": 20
         },
         "selector": "0x107e33ea"
       },
@@ -331,7 +375,7 @@
         "args": [],
         "default": false,
         "docs": [
-          " Processes a Lens Api stat request by a rollup transaction"
+          " Pop an element from the rollup queue if any and process it, then submit the answer."
         ],
         "label": "answer_request",
         "mutates": false,
@@ -341,9 +385,69 @@
             "ink",
             "MessageResult"
           ],
-          "type": 24
+          "type": 28
         },
         "selector": "0x2a5bcd75"
+      },
+      {
+        "args": [
+          {
+            "label": "request",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 27
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Processes a request with the the js handler and returns the output wrapped in a signed meta tx.",
+          "",
+          " The output is a tuple of the reply and the sha256 hash of the js handler."
+        ],
+        "label": "get_answer",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 31
+        },
+        "selector": "0x9d27bc00"
+      },
+      {
+        "args": [
+          {
+            "label": "request",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 27
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Processes a request with the the js handler and returns the output.",
+          "",
+          " The output is a tuple of the reply and the sha256 hash of the js handler."
+        ],
+        "label": "get_raw_answer",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0x2e8fc0a7"
       }
     ]
   },
@@ -462,19 +566,25 @@
                                       "ty": 3
                                     }
                                   },
-                                  "name": "url"
+                                  "name": "0"
                                 },
                                 {
                                   "layout": {
-                                    "leaf": {
-                                      "key": "0x00000000",
-                                      "ty": 3
+                                    "array": {
+                                      "layout": {
+                                        "leaf": {
+                                          "key": "0x00000000",
+                                          "ty": 2
+                                        }
+                                      },
+                                      "len": 32,
+                                      "offset": "0x00000000"
                                     }
                                   },
-                                  "name": "transform_js"
+                                  "name": "1"
                                 }
                               ],
-                              "name": "DataSource"
+                              "name": "(A, B)"
                             }
                           },
                           "name": "0"
@@ -485,13 +595,43 @@
                   }
                 }
               },
-              "name": "data_source"
+              "name": "handler_js"
+            },
+            {
+              "layout": {
+                "enum": {
+                  "dispatchKey": "0x00000000",
+                  "name": "Option",
+                  "variants": {
+                    "0": {
+                      "fields": [],
+                      "name": "None"
+                    },
+                    "1": {
+                      "fields": [
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0x00000000",
+                              "ty": 3
+                            }
+                          },
+                          "name": "0"
+                        }
+                      ],
+                      "name": "Some"
+                    }
+                  }
+                }
+              },
+              "name": "handler_settings"
             }
           ],
           "name": "ActionOffchainRollup"
         }
       },
-      "root_key": "0x00000000"
+      "root_key": "0x00000000",
+      "ty": 4
     }
   },
   "types": [
@@ -546,41 +686,45 @@
       "id": 4,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
+          "composite": {
+            "fields": [
               {
-                "fields": [
-                  {
-                    "type": 5
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
+                "name": "owner",
+                "type": 0,
+                "typeName": "<AccountId as::ink::storage::traits::AutoStorableHint<::ink::\nstorage::traits::ManualKey<1268528939u32, ()>,>>::Type"
               },
               {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
+                "name": "attest_key",
+                "type": 1,
+                "typeName": "<[u8; 32] as::ink::storage::traits::AutoStorableHint<::ink::\nstorage::traits::ManualKey<1799049813u32, ()>,>>::Type"
+              },
+              {
+                "name": "brick_profile",
+                "type": 0,
+                "typeName": "<AccountId as::ink::storage::traits::AutoStorableHint<::ink::\nstorage::traits::ManualKey<4270123080u32, ()>,>>::Type"
+              },
+              {
+                "name": "client",
+                "type": 5,
+                "typeName": "<Option<Client> as::ink::storage::traits::AutoStorableHint<::\nink::storage::traits::ManualKey<634690880u32, ()>,>>::Type"
+              },
+              {
+                "name": "handler_js",
+                "type": 8,
+                "typeName": "<Option<(String, CodeHash)> as::ink::storage::traits::\nAutoStorableHint<::ink::storage::traits::ManualKey<936992203u32, ()\n>,>>::Type"
+              },
+              {
+                "name": "handler_settings",
+                "type": 10,
+                "typeName": "<Option<String> as::ink::storage::traits::AutoStorableHint<::\nink::storage::traits::ManualKey<3452304778u32, ()>,>>::Type"
               }
             ]
           }
         },
-        "params": [
-          {
-            "name": "T",
-            "type": 5
-          },
-          {
-            "name": "E",
-            "type": 6
-          }
-        ],
         "path": [
-          "Result"
+          "action_offchain_rollup",
+          "action_offchain_rollup",
+          "ActionOffchainRollup"
         ]
       }
     },
@@ -588,43 +732,11 @@
       "id": 5,
       "type": {
         "def": {
-          "tuple": []
-        }
-      }
-    },
-    {
-      "id": 6,
-      "type": {
-        "def": {
           "variant": {
             "variants": [
               {
-                "index": 1,
-                "name": "CouldNotReadInput"
-              }
-            ]
-          }
-        },
-        "path": [
-          "ink_primitives",
-          "LangError"
-        ]
-      }
-    },
-    {
-      "id": 7,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 8
-                  }
-                ],
                 "index": 0,
-                "name": "Ok"
+                "name": "None"
               },
               {
                 "fields": [
@@ -633,7 +745,7 @@
                   }
                 ],
                 "index": 1,
-                "name": "Err"
+                "name": "Some"
               }
             ]
           }
@@ -641,35 +753,92 @@
         "params": [
           {
             "name": "T",
-            "type": 8
-          },
-          {
-            "name": "E",
             "type": 6
           }
         ],
         "path": [
-          "Result"
+          "Option"
         ]
+      }
+    },
+    {
+      "id": 6,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "name": "rpc",
+                "type": 3,
+                "typeName": "String"
+              },
+              {
+                "name": "client_addr",
+                "type": 7,
+                "typeName": "[u8; 20]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "action_offchain_rollup",
+          "action_offchain_rollup",
+          "Client"
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "type": {
+        "def": {
+          "array": {
+            "len": 20,
+            "type": 2
+          }
+        }
       }
     },
     {
       "id": 8,
       "type": {
         "def": {
-          "tuple": [
-            9,
-            9,
-            9
-          ]
-        }
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "None"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 9
+                  }
+                ],
+                "index": 1,
+                "name": "Some"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 9
+          }
+        ],
+        "path": [
+          "Option"
+        ]
       }
     },
     {
       "id": 9,
       "type": {
         "def": {
-          "primitive": "u16"
+          "tuple": [
+            3,
+            1
+          ]
         }
       }
     },
@@ -680,22 +849,17 @@
           "variant": {
             "variants": [
               {
-                "fields": [
-                  {
-                    "type": 0
-                  }
-                ],
                 "index": 0,
-                "name": "Ok"
+                "name": "None"
               },
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 3
                   }
                 ],
                 "index": 1,
-                "name": "Err"
+                "name": "Some"
               }
             ]
           }
@@ -703,15 +867,11 @@
         "params": [
           {
             "name": "T",
-            "type": 0
-          },
-          {
-            "name": "E",
-            "type": 6
+            "type": 3
           }
         ],
         "path": [
-          "Result"
+          "Option"
         ]
       }
     },
@@ -733,7 +893,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 13
                   }
                 ],
                 "index": 1,
@@ -749,7 +909,7 @@
           },
           {
             "name": "E",
-            "type": 6
+            "type": 13
           }
         ],
         "path": [
@@ -761,30 +921,27 @@
       "id": 12,
       "type": {
         "def": {
-          "composite": {
-            "fields": [
-              {
-                "type": 13,
-                "typeName": "[u8; 20]"
-              }
-            ]
-          }
-        },
-        "path": [
-          "primitive_types",
-          "H160"
-        ]
+          "tuple": []
+        }
       }
     },
     {
       "id": 13,
       "type": {
         "def": {
-          "array": {
-            "len": 20,
-            "type": 2
+          "variant": {
+            "variants": [
+              {
+                "index": 1,
+                "name": "CouldNotReadInput"
+              }
+            ]
           }
-        }
+        },
+        "path": [
+          "ink_primitives",
+          "LangError"
+        ]
       }
     },
     {
@@ -805,7 +962,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 13
                   }
                 ],
                 "index": 1,
@@ -821,7 +978,7 @@
           },
           {
             "name": "E",
-            "type": 6
+            "type": 13
           }
         ],
         "path": [
@@ -833,138 +990,20 @@
       "id": 15,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 5
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 16
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 5
-          },
-          {
-            "name": "E",
-            "type": 16
-          }
-        ],
-        "path": [
-          "Result"
-        ]
+          "tuple": [
+            16,
+            16,
+            16
+          ]
+        }
       }
     },
     {
       "id": 16,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
-              {
-                "index": 0,
-                "name": "BadOrigin"
-              },
-              {
-                "index": 1,
-                "name": "ClientNotConfigured"
-              },
-              {
-                "index": 2,
-                "name": "DataSourceNotConfigured"
-              },
-              {
-                "index": 3,
-                "name": "BadBrickProfile"
-              },
-              {
-                "index": 4,
-                "name": "InvalidKeyLength"
-              },
-              {
-                "index": 5,
-                "name": "InvalidAddressLength"
-              },
-              {
-                "index": 6,
-                "name": "NoRequestInQueue"
-              },
-              {
-                "index": 7,
-                "name": "FailedToCreateClient"
-              },
-              {
-                "index": 8,
-                "name": "FailedToCommitTx"
-              },
-              {
-                "index": 9,
-                "name": "BadLensProfileId"
-              },
-              {
-                "index": 10,
-                "name": "FailedToFetchData"
-              },
-              {
-                "index": 11,
-                "name": "FailedToTransformData"
-              },
-              {
-                "index": 12,
-                "name": "BadTransformedData"
-              },
-              {
-                "index": 13,
-                "name": "FailedToGetStorage"
-              },
-              {
-                "index": 14,
-                "name": "FailedToCreateTransaction"
-              },
-              {
-                "index": 15,
-                "name": "FailedToSignTransaction"
-              },
-              {
-                "index": 16,
-                "name": "FailedToSendTransaction"
-              },
-              {
-                "index": 17,
-                "name": "FailedToGetBlockHash"
-              },
-              {
-                "index": 18,
-                "name": "FailedToDecode"
-              },
-              {
-                "index": 19,
-                "name": "InvalidRequest"
-              }
-            ]
-          }
-        },
-        "path": [
-          "action_offchain_rollup",
-          "action_offchain_rollup",
-          "Error"
-        ]
+          "primitive": "u16"
+        }
       }
     },
     {
@@ -976,7 +1015,7 @@
               {
                 "fields": [
                   {
-                    "type": 18
+                    "type": 0
                   }
                 ],
                 "index": 0,
@@ -985,7 +1024,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 13
                   }
                 ],
                 "index": 1,
@@ -997,11 +1036,11 @@
         "params": [
           {
             "name": "T",
-            "type": 18
+            "type": 0
           },
           {
             "name": "E",
-            "type": 6
+            "type": 13
           }
         ],
         "path": [
@@ -1027,7 +1066,7 @@
               {
                 "fields": [
                   {
-                    "type": 16
+                    "type": 13
                   }
                 ],
                 "index": 1,
@@ -1043,7 +1082,7 @@
           },
           {
             "name": "E",
-            "type": 16
+            "type": 13
           }
         ],
         "path": [
@@ -1058,22 +1097,15 @@
           "composite": {
             "fields": [
               {
-                "name": "rpc",
-                "type": 3,
-                "typeName": "String"
-              },
-              {
-                "name": "client_addr",
-                "type": 13,
+                "type": 7,
                 "typeName": "[u8; 20]"
               }
             ]
           }
         },
         "path": [
-          "action_offchain_rollup",
-          "action_offchain_rollup",
-          "Client"
+          "primitive_types",
+          "H160"
         ]
       }
     },
@@ -1095,7 +1127,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 13
                   }
                 ],
                 "index": 1,
@@ -1111,7 +1143,7 @@
           },
           {
             "name": "E",
-            "type": 6
+            "type": 13
           }
         ],
         "path": [
@@ -1128,7 +1160,7 @@
               {
                 "fields": [
                   {
-                    "type": 22
+                    "type": 12
                   }
                 ],
                 "index": 0,
@@ -1137,7 +1169,7 @@
               {
                 "fields": [
                   {
-                    "type": 16
+                    "type": 22
                   }
                 ],
                 "index": 1,
@@ -1149,11 +1181,11 @@
         "params": [
           {
             "name": "T",
-            "type": 22
+            "type": 12
           },
           {
             "name": "E",
-            "type": 16
+            "type": 22
           }
         ],
         "path": [
@@ -1165,17 +1197,69 @@
       "id": 22,
       "type": {
         "def": {
-          "composite": {
-            "fields": [
+          "variant": {
+            "variants": [
               {
-                "name": "url",
-                "type": 3,
-                "typeName": "String"
+                "index": 0,
+                "name": "BadOrigin"
               },
               {
-                "name": "transform_js",
-                "type": 3,
-                "typeName": "String"
+                "index": 1,
+                "name": "ClientNotConfigured"
+              },
+              {
+                "index": 2,
+                "name": "HandlerNotConfigured"
+              },
+              {
+                "index": 3,
+                "name": "BadBrickProfile"
+              },
+              {
+                "index": 4,
+                "name": "InvalidAddressLength"
+              },
+              {
+                "index": 5,
+                "name": "NoRequestInQueue"
+              },
+              {
+                "index": 6,
+                "name": "FailedToCreateClient"
+              },
+              {
+                "index": 7,
+                "name": "FailedToCommitTx"
+              },
+              {
+                "index": 8,
+                "name": "FailedToGetStorage"
+              },
+              {
+                "index": 9,
+                "name": "FailedToCreateTransaction"
+              },
+              {
+                "index": 10,
+                "name": "FailedToSignTransaction"
+              },
+              {
+                "index": 11,
+                "name": "FailedToSendTransaction"
+              },
+              {
+                "index": 12,
+                "name": "InvalidJsOutput"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 3,
+                    "typeName": "String"
+                  }
+                ],
+                "index": 13,
+                "name": "JsError"
               }
             ]
           }
@@ -1183,7 +1267,7 @@
         "path": [
           "action_offchain_rollup",
           "action_offchain_rollup",
-          "DataSource"
+          "Error"
         ]
       }
     },
@@ -1191,22 +1275,12 @@
       "id": 23,
       "type": {
         "def": {
-          "sequence": {
-            "type": 2
-          }
-        }
-      }
-    },
-    {
-      "id": 24,
-      "type": {
-        "def": {
           "variant": {
             "variants": [
               {
                 "fields": [
                   {
-                    "type": 25
+                    "type": 24
                   }
                 ],
                 "index": 0,
@@ -1215,7 +1289,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 13
                   }
                 ],
                 "index": 1,
@@ -1227,11 +1301,53 @@
         "params": [
           {
             "name": "T",
-            "type": 25
+            "type": 24
           },
           {
             "name": "E",
+            "type": 13
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 24,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 6
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 22
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
             "type": 6
+          },
+          {
+            "name": "E",
+            "type": 22
           }
         ],
         "path": [
@@ -1248,7 +1364,7 @@
               {
                 "fields": [
                   {
-                    "type": 26
+                    "type": 8
                   }
                 ],
                 "index": 0,
@@ -1257,7 +1373,7 @@
               {
                 "fields": [
                   {
-                    "type": 16
+                    "type": 13
                   }
                 ],
                 "index": 1,
@@ -1269,11 +1385,11 @@
         "params": [
           {
             "name": "T",
-            "type": 26
+            "type": 8
           },
           {
             "name": "E",
-            "type": 16
+            "type": 13
           }
         ],
         "path": [
@@ -1288,13 +1404,149 @@
           "variant": {
             "variants": [
               {
+                "fields": [
+                  {
+                    "type": 10
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 13
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 10
+          },
+          {
+            "name": "E",
+            "type": 13
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 27,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 2
+          }
+        }
+      }
+    },
+    {
+      "id": 28,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 29
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 13
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 29
+          },
+          {
+            "name": "E",
+            "type": 13
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 29,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 30
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 22
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 30
+          },
+          {
+            "name": "E",
+            "type": 22
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 30,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
                 "index": 0,
                 "name": "None"
               },
               {
                 "fields": [
                   {
-                    "type": 23
+                    "type": 27
                   }
                 ],
                 "index": 1,
@@ -1306,7 +1558,7 @@
         "params": [
           {
             "name": "T",
-            "type": 23
+            "type": 27
           }
         ],
         "path": [
@@ -1315,7 +1567,186 @@
       }
     },
     {
-      "id": 27,
+      "id": 31,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 32
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 13
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 32
+          },
+          {
+            "name": "E",
+            "type": 13
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 32,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 27
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 22
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 27
+          },
+          {
+            "name": "E",
+            "type": 22
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 33,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 34
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 13
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 34
+          },
+          {
+            "name": "E",
+            "type": 13
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 34,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 35
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 22
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 35
+          },
+          {
+            "name": "E",
+            "type": 22
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 35,
+      "type": {
+        "def": {
+          "tuple": [
+            27,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "id": 36,
       "type": {
         "def": {
           "primitive": "u128"
@@ -1323,7 +1754,7 @@
       }
     },
     {
-      "id": 28,
+      "id": 37,
       "type": {
         "def": {
           "composite": {
@@ -1343,7 +1774,7 @@
       }
     },
     {
-      "id": 29,
+      "id": 38,
       "type": {
         "def": {
           "primitive": "u64"
@@ -1351,7 +1782,7 @@
       }
     },
     {
-      "id": 30,
+      "id": 39,
       "type": {
         "def": {
           "primitive": "u32"
@@ -1359,7 +1790,7 @@
       }
     },
     {
-      "id": 31,
+      "id": 40,
       "type": {
         "def": {
           "variant": {}

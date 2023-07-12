@@ -21,6 +21,11 @@ export namespace Lego {
         Ok? : boolean,
         Err? : InkPrimitives_LangError$3
         };
+    type InkPrimitives_Types_AccountId$7 = any;
+    type InkPrimitives_Types_Hash$8 = any;
+    type InkEnv_Types_NoChainExtension$9 = {
+
+        };
 
     /** */
     /** Queries */

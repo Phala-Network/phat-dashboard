@@ -1,11 +1,11 @@
 {
   "source": {
-    "hash": "0xeb19e186532ad3a78ef853757dde79807b6e79ab9426dfb6f47917bce61b3bd5",
-    "language": "ink! 4.0.1",
+    "hash": "0xc451c5b21d2186234c36fb87d5c554397e3adda4fe15b2e2ed649579a583ae9d",
+    "language": "ink! 4.2.0",
     "compiler": "rustc 1.69.0",
     "build_info": {
       "build_mode": "Debug",
-      "cargo_contract_version": "2.2.1",
+      "cargo_contract_version": "3.0.1",
       "rust_toolchain": "stable-x86_64-unknown-linux-gnu",
       "wasm_opt_settings": {
         "keep_debug_symbols": false,
@@ -24,6 +24,7 @@
     "constructors": [
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "default",
         "payable": false,
@@ -38,6 +39,45 @@
       }
     ],
     "docs": [],
+    "environment": {
+      "accountId": {
+        "displayName": [
+          "AccountId"
+        ],
+        "type": 0
+      },
+      "balance": {
+        "displayName": [
+          "Balance"
+        ],
+        "type": 23
+      },
+      "blockNumber": {
+        "displayName": [
+          "BlockNumber"
+        ],
+        "type": 26
+      },
+      "chainExtension": {
+        "displayName": [
+          "ChainExtension"
+        ],
+        "type": 27
+      },
+      "hash": {
+        "displayName": [
+          "Hash"
+        ],
+        "type": 24
+      },
+      "maxEventTopics": 4,
+      "timestamp": {
+        "displayName": [
+          "Timestamp"
+        ],
+        "type": 25
+      }
+    },
     "events": [],
     "lang_error": {
       "displayName": [
@@ -49,6 +89,7 @@
     "messages": [
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "version",
         "mutates": false,
@@ -64,6 +105,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [
           " Gets the owner of the contract"
         ],
@@ -81,6 +123,7 @@
       },
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "get_rpc",
         "mutates": false,
@@ -106,6 +149,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [
           " Configures the transaction sending target"
         ],
@@ -160,6 +204,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [],
         "label": "build_transaction",
         "mutates": false,
@@ -185,6 +230,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [],
         "label": "maybe_send_transaction",
         "mutates": false,
@@ -903,6 +949,63 @@
         "path": [
           "primitive_types",
           "H256"
+        ]
+      }
+    },
+    {
+      "id": 23,
+      "type": {
+        "def": {
+          "primitive": "u128"
+        }
+      }
+    },
+    {
+      "id": 24,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 1,
+                "typeName": "[u8; 32]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "types",
+          "Hash"
+        ]
+      }
+    },
+    {
+      "id": 25,
+      "type": {
+        "def": {
+          "primitive": "u64"
+        }
+      }
+    },
+    {
+      "id": 26,
+      "type": {
+        "def": {
+          "primitive": "u32"
+        }
+      }
+    },
+    {
+      "id": 27,
+      "type": {
+        "def": {
+          "variant": {}
+        },
+        "path": [
+          "pink_extension",
+          "chain_extension",
+          "PinkExt"
         ]
       }
     }
