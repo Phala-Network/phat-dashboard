@@ -69,8 +69,8 @@ function fetchLensApiStats(lensApi: string, profileId: string): any {
     "Content-Type": "application/json",
     "User-Agent": "phat-contract",
   };
-  let query = `{
-        "query": "query Profile {
+  let query = JSON.stringify({
+        "query": `query Profile {
             profile(request: { profileId: \"${profileId}\" }) {
                 stats {
                     totalFollowers
@@ -82,8 +82,8 @@ function fetchLensApiStats(lensApi: string, profileId: string): any {
                     totalCollects
                 }
             }
-        }"
-    }`;
+        }`
+    });
   let body = stringToHex(query);
   let response = pink.httpRequest({
     url: lensApi,
@@ -92,7 +92,6 @@ function fetchLensApiStats(lensApi: string, profileId: string): any {
     body,
     returnTextBody: true,
   });
-  console.log(`Lens api response`, response);
   if (response.statusCode != 200) {
     console.log(`Fail to read Lens api with status code: ${response.statusCode}, body: ${response.body}`);
     throw Error.FailedToFetchData;
