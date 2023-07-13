@@ -119,7 +119,7 @@ function parseProfileId(hexx: string): string {
 
 function encodeError(rid: number | bigint, error: Error): string {
   return AbiCoder.defaultAbiCoder().encode(
-    ["uint256", "uint256", "uint256"],
+    ["uint", "uint", "uint256"],
     [TYPE_ERROR, rid, errorToCode(error)]
   );
 }
@@ -128,7 +128,7 @@ function handleRequest(rawReq: string, lensApi: string): string {
   console.log(`handle req: ${rawReq}`);
   let decoded;
   try {
-    decoded = AbiCoder.defaultAbiCoder().decode(["uint256", "bytes"], rawReq);
+    decoded = AbiCoder.defaultAbiCoder().decode(["uint", "bytes"], rawReq);
   } catch (error) {
     console.info("Malformed request received");
     // tell client we cannot process it
@@ -146,7 +146,7 @@ function handleRequest(rawReq: string, lensApi: string): string {
     console.log("response:", [TYPE_RESPONSE, rid, stats]);
     // Respond
     const actionData = AbiCoder.defaultAbiCoder().encode(
-      ["uint256", "uint256", "uint256"],
+      ["uint", "uint", "uint256"],
       [TYPE_RESPONSE, rid, stats]
     );
     return actionData;
