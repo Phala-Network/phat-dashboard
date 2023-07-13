@@ -136,6 +136,7 @@ mod action_offchain_rollup {
 
         #[ink(message)]
         pub fn get_client(&self) -> Result<Client> {
+            self.ensure_owner()?;
             let client = self.ensure_client_configured()?;
             Ok(client.clone())
         }
