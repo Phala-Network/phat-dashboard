@@ -195,7 +195,7 @@ mod action_offchain_rollup {
             use pink_kv_session::traits::QueueSession;
             let client = self.ensure_client_configured()?;
 
-            let mut rollup_client = connect(&client)?;
+            let mut rollup_client = connect(client)?;
             // Get a request if presents
             let request = rollup_client
                 .session()
@@ -267,13 +267,13 @@ mod action_offchain_rollup {
             if let Some(settings) = &self.core_settings {
                 args.push(settings.clone());
             }
-            let output = js::eval(&core_js, &args).map_err(Error::JsError)?;
+            let output = js::eval(core_js, &args).map_err(Error::JsError)?;
             let output = match output {
                 js::Output::String(bytes) => hex::decode(bytes.as_str().trim_start_matches("0x"))
                     .map_err(|_| Error::InvalidJsOutput)?,
                 js::Output::Bytes(b) => b,
             };
-            Ok((output, js_hash.clone()))
+            Ok((output, *js_hash))
         }
 
         /// Returns BadOrigin error if the caller is not the owner
@@ -298,7 +298,7 @@ mod action_offchain_rollup {
             // - make a generic contract to store k-v pairs.
             // - use the hash as the key to store the js.
             // - store only hash in the app contract.
-            self.core_js = Some((core_js, js_hash.into()));
+            self.core_js = Some((core_js, js_hash));
             self.core_settings = settings;
         }
     }
