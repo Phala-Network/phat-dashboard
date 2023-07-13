@@ -7,19 +7,21 @@ if (globalThis.pink === undefined) {
     "0x00000000000000000000000000000000000000000000000000000000000004d2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000073078303030303200000000000000000000000000000000000000000000000000",
   ];
   globalThis.pink = {
-    httpRequest(args: any) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          data: {
-            profile: {
-              stats: {
-                totalCollects: 12345,
+    batchHttpRequest(args: any[], timeout_ms?: number) {
+      return [
+        {
+          statusCode: 200,
+          body: JSON.stringify({
+            data: {
+              profile: {
+                stats: {
+                  totalCollects: 12345,
+                },
               },
             },
-          },
-        }),
-      };
+          }),
+        },
+      ];
     },
   } as any;
 }
@@ -82,16 +84,21 @@ function fetchLensApiStats(lensApi: string, profileId: string): any {
                     totalCollects
                 }
             }
-        }`
-    });
-  let body = stringToHex(query);
-  let response = pink.httpRequest({
-    url: lensApi,
-    method: "POST",
-    headers,
-    body,
-    returnTextBody: true,
+        }`,
   });
+  let body = stringToHex(query);
+  let response = pink.batchHttpRequest(
+    [
+      {
+        url: lensApi,
+        method: "POST",
+        headers,
+        body,
+        returnTextBody: true,
+      },
+    ],
+    2000
+  )[0];
   if (response.statusCode != 200) {
     console.log(`Fail to read Lens api with status code: ${response.statusCode}, body: ${response.body}`);
     throw Error.FailedToFetchData;
