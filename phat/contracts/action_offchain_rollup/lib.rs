@@ -238,7 +238,6 @@ mod action_offchain_rollup {
         /// The output is a tuple of the reply and the sha256 hash of the core js.
         #[ink(message)]
         pub fn get_raw_answer(&self, request: Vec<u8>) -> Result<(Vec<u8>, CodeHash)> {
-            pink::info!("enter get_raw_answer");
             self.handle_request(&request)
         }
 
@@ -258,8 +257,6 @@ mod action_offchain_rollup {
                     .map_err(|_| Error::InvalidJsOutput)?,
                 js::Output::Bytes(b) => b,
             };
-            pink::info!("js output: {:?}", hex::encode(&output));
-            pink::info!("js hash: {:?}", hex::encode(&js_hash));
             Ok((output, js_hash.clone()))
         }
 

@@ -82,7 +82,6 @@ function actionFetch(action: ActionFetch, input: any): any {
 
 function actionCall(action: ActionCall, input: Uint8Array): Uint8Array {
   const args = action.config
-  console.log(`calling contract ${args.callee} with selector ${args.selector}, input: ${input}`)
   const output = pink.invokeContract({
     ...args,
     input
