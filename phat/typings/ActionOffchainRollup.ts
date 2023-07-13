@@ -154,6 +154,10 @@ export namespace ActionOffchainRollup {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions, request: number[] | string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$26>>>;
         }
 
+        export interface GetAnswerWithCodeHash extends DPT.ContractQuery {
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, request: number[] | string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$26>>>;
+        }
+
         export interface GetRawAnswer extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions, request: number[] | string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$28>>>;
         }
@@ -169,6 +173,7 @@ export namespace ActionOffchainRollup {
         getCoreSettings: ContractQuery.GetCoreSettings;
         answerRequest: ContractQuery.AnswerRequest;
         getAnswer: ContractQuery.GetAnswer;
+        getAnswerWithCodeHash: ContractQuery.GetAnswerWithCodeHash;
         getRawAnswer: ContractQuery.GetRawAnswer;
     }
 

@@ -215,10 +215,27 @@ mod action_offchain_rollup {
         }
 
         /// Processes a request with the the core js and returns the output wrapped in a signed meta tx.
-        ///
-        /// The output is a tuple of the reply and the sha256 hash of the core js.
         #[ink(message)]
         pub fn get_answer(&self, request: Vec<u8>) -> Result<Vec<u8>> {
+            let client = self.ensure_client_configured()?;
+            let (reply, _js_hash) = self.handle_request(&request)?;
+            let (tx, sig) = sign_meta_tx(
+                &client.rpc,
+                client.client_addr.into(),
+                &reply,
+                &KeyPair::from(self.attest_key),
+            )
+            .log_err("failed to sign transaction")
+            .or(Err(Error::FailedToSignTransaction))?;
+            Ok(ethabi::encode(&[tx, Token::Bytes(sig.0)]))
+        }
+
+        /// Processes a request with the the core js and returns the output wrapped in a signed meta tx.
+        ///
+        /// The output is a tuple of the reply and the sha256 hash of the core js.
+        /// The hash can be used to verify the integrity of the core js.
+        #[ink(message)]
+        pub fn get_answer_with_code_hash(&self, request: Vec<u8>) -> Result<Vec<u8>> {
             let client = self.ensure_client_configured()?;
             let (reply, js_hash) = self.handle_request(&request)?;
             let data = ethabi::encode(&[Token::Bytes(reply), Token::FixedBytes(js_hash.to_vec())]);
@@ -233,9 +250,8 @@ mod action_offchain_rollup {
             Ok(ethabi::encode(&[tx, Token::Bytes(sig.0)]))
         }
 
-        /// Processes a request with the the core js and returns the output.
-        ///
-        /// The output is a tuple of the reply and the sha256 hash of the core js.
+
+        /// Processes a request with the the core js and returns the output without signature.
         #[ink(message)]
         pub fn get_raw_answer(&self, request: Vec<u8>) -> Result<(Vec<u8>, CodeHash)> {
             self.handle_request(&request)

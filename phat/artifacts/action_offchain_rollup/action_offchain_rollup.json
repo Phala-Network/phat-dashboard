@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0xf8c79f056744639b5ca498a27ab523aa2b09c3bff25250c06d12a387f8fc52ab",
+    "hash": "0xf7568264460523eb2c401d31c453edcf83974a4e37b91695b063978a9b8775af",
     "language": "ink! 4.2.0",
     "compiler": "rustc 1.69.0",
     "build_info": {
@@ -446,9 +446,7 @@
         ],
         "default": false,
         "docs": [
-          " Processes a request with the the core js and returns the output wrapped in a signed meta tx.",
-          "",
-          " The output is a tuple of the reply and the sha256 hash of the core js."
+          " Processes a request with the the core js and returns the output wrapped in a signed meta tx."
         ],
         "label": "get_answer",
         "mutates": false,
@@ -476,9 +474,38 @@
         ],
         "default": false,
         "docs": [
-          " Processes a request with the the core js and returns the output.",
+          " Processes a request with the the core js and returns the output wrapped in a signed meta tx.",
           "",
-          " The output is a tuple of the reply and the sha256 hash of the core js."
+          " The output is a tuple of the reply and the sha256 hash of the core js.",
+          " The hash can be used to verify the integrity of the core js."
+        ],
+        "label": "get_answer_with_code_hash",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 31
+        },
+        "selector": "0xcb1538fd"
+      },
+      {
+        "args": [
+          {
+            "label": "request",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 27
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Processes a request with the the core js and returns the output without signature."
         ],
         "label": "get_raw_answer",
         "mutates": false,
