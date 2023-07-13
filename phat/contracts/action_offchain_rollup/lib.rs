@@ -278,6 +278,10 @@ mod action_offchain_rollup {
             let js_hash = self
                 .env()
                 .hash_bytes::<ink::env::hash::Sha2x256>(core_js.as_bytes());
+            // TODO: To avoid wasting storage, we can
+            // - make a generic contract to store k-v pairs.
+            // - use the hash as the key to store the js.
+            // - store only hash in the app contract.
             self.core_js = Some((core_js, js_hash.into()));
             self.core_settings = settings;
         }
