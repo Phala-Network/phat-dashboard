@@ -3,7 +3,7 @@ import type { ProjectConfigOptions } from '@devphase/service';
 const config: ProjectConfigOptions = {
     stack: {
         blockTime: 100,
-        version: 'monthly-2023-06',
+        version: 'manually-2023-07-13-074023',
         node: {
             port: 39944,
             binary: '{{directories.stacks}}/{{stack.version}}/phala-node',
@@ -12,12 +12,11 @@ const config: ProjectConfigOptions = {
             args: {
                 '--dev': true,
                 '--port': 33333,
-                '--rpc-port': 39933,
-                '--ws-external': true,
-                '--unsafe-ws-external': true,
+                '--rpc-port': '{{stack.node.port}}',
+                '--rpc-external': true,
+                '--unsafe-rpc-external': true,
                 '--rpc-methods': 'Unsafe',
                 '--block-millisecs': '{{stack.blockTime}}',
-                '--ws-port': '{{stack.node.port}}',
             },
             timeout: 10000,
         },
