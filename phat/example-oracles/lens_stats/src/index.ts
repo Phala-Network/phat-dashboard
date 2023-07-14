@@ -1,5 +1,5 @@
 import "@phala/pink-env";
-import { AbiCoder } from "ethers";
+import { Coders, Result } from "@phala/ethers";
 
 if (globalThis.pink === undefined) {
   // Mock it to run in nodejs
@@ -24,6 +24,18 @@ if (globalThis.pink === undefined) {
       ];
     },
   } as any;
+}
+
+// eth abi coder
+const uintCoder = new Coders.NumberCoder(32, false, "uint256");
+const bytesCoder = new Coders.BytesCoder("bytes");
+
+function encodeReply(reply: [number, number, number]): string {
+  return Coders.encode([uintCoder, uintCoder, uintCoder], reply);
+}
+
+function decodeRequest(req: string): Result {
+  return Coders.decode([uintCoder, bytesCoder], req);
 }
 
 // Defined in TestLensOracle.sol
@@ -58,11 +70,11 @@ function isHexString(str: string): boolean {
 }
 
 function stringToHex(str: string): string {
-  var hex = '';
+  var hex = "";
   for (var i = 0; i < str.length; i++) {
-      hex += str.charCodeAt(i).toString(16);
+    hex += str.charCodeAt(i).toString(16);
   }
-  return '0x' + hex;
+  return "0x" + hex;
 }
 
 function fetchLensApiStats(lensApi: string, profileId: string): any {
@@ -72,7 +84,7 @@ function fetchLensApiStats(lensApi: string, profileId: string): any {
     "User-Agent": "phat-contract",
   };
   let query = JSON.stringify({
-        "query": `query Profile {
+    query: `query Profile {
             profile(request: { profileId: \"${profileId}\" }) {
                 stats {
                     totalFollowers
@@ -100,7 +112,11 @@ function fetchLensApiStats(lensApi: string, profileId: string): any {
     2000
   )[0];
   if (response.statusCode != 200) {
-    console.log(`Fail to read Lens api with status code: ${response.statusCode}, error: ${response.error || response.body}}`);
+    console.log(
+      `Fail to read Lens api with status code: ${response.statusCode}, error: ${
+        response.error || response.body
+      }}`
+    );
     throw Error.FailedToFetchData;
   }
   let respBody = response.body;
@@ -124,18 +140,15 @@ function parseProfileId(hexx: string): string {
   return str;
 }
 
-function encodeError(rid: number | bigint, error: Error): string {
-  return AbiCoder.defaultAbiCoder().encode(
-    ["uint", "uint", "uint256"],
-    [TYPE_ERROR, rid, errorToCode(error)]
-  );
+function encodeError(rid: number, error: Error): string {
+  return encodeReply([TYPE_ERROR, rid, errorToCode(error)]);
 }
 
 function handleRequest(rawReq: string, lensApi: string): string {
   console.log(`handle req: ${rawReq}`);
   let decoded;
   try {
-    decoded = AbiCoder.defaultAbiCoder().decode(["uint", "bytes"], rawReq);
+    decoded = decodeRequest(rawReq);
   } catch (error) {
     console.info("Malformed request received");
     // tell client we cannot process it
@@ -152,18 +165,14 @@ function handleRequest(rawReq: string, lensApi: string): string {
     let stats = respData.data.profile.stats.totalCollects;
     console.log("response:", [TYPE_RESPONSE, rid, stats]);
     // Respond
-    const actionData = AbiCoder.defaultAbiCoder().encode(
-      ["uint", "uint", "uint256"],
-      [TYPE_RESPONSE, rid, stats]
-    );
-    return actionData;
+    return encodeReply([TYPE_RESPONSE, rid, stats]);
   } catch (error) {
     if (error === Error.FailedToFetchData) {
       throw error;
     } else {
       // otherwise tell client we cannot process it
       console.log("error:", [TYPE_ERROR, rid, error]);
-      return encodeError(rid as number | bigint, error);
+      return encodeError(rid, error);
     }
   }
 }
