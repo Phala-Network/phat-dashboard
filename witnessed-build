@@ -11,7 +11,7 @@ install_toolchain() {
   echo "::endgroup::"
   PATH="$HOME/.cargo/bin:$PATH"
   echo "::group::Installing cargo-contract"
-  cargo install cargo-contract --version=^3
+  cargo install cargo-contract --git https://github.com/paritytech/cargo-contract.git --rev 096e44078e586381748bdbbea96bbb42996e332c
   echo "::endgroup::"
 }
 
@@ -23,7 +23,11 @@ install() {
 build_contract() {
     echo "Building contract in $PWD"
     rm -rf .witness && mkdir -p .witness
-    RUST_LOG=error cargo contract build --release --output-json | tee .witness/output.json
+    if [ -f "witnessed-build" ]; then
+      ./witnessed-build
+    else
+      RUST_LOG=error cargo contract build --release --output-json | tee .witness/output.json
+    fi
     cd .witness
     jq -r '.metadata_result.dest_metadata' output.json | xargs -I % cp % metadata.json
     jq -r '.dest_wasm, .metadata_result.dest_bundle' output.json > contract_files.txt
