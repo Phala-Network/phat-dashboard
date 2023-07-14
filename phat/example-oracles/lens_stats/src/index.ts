@@ -100,7 +100,7 @@ function fetchLensApiStats(lensApi: string, profileId: string): any {
     2000
   )[0];
   if (response.statusCode != 200) {
-    console.log(`Fail to read Lens api with status code: ${response.statusCode}, body: ${response.body}`);
+    console.log(`Fail to read Lens api with status code: ${response.statusCode}, error: ${response.error || response.body}}`);
     throw Error.FailedToFetchData;
   }
   let respBody = response.body;
