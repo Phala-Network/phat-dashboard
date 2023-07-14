@@ -251,7 +251,6 @@ mod action_offchain_rollup {
             Ok(ethabi::encode(&[tx, Token::Bytes(sig.0)]))
         }
 
-
         /// Processes a request with the the core js and returns the output without signature.
         #[ink(message)]
         pub fn get_raw_answer(&self, request: Vec<u8>) -> Result<(Vec<u8>, CodeHash)> {
@@ -268,7 +267,9 @@ mod action_offchain_rollup {
             if let Some(settings) = &self.core_settings {
                 args.push(settings.clone());
             }
-            let output = js::eval(core_js, &args).map_err(Error::JsError)?;
+            let output = js::eval(core_js, &args)
+                .log_err("Failed to eval the core js")
+                .map_err(Error::JsError)?;
             let output = match output {
                 js::Output::String(bytes) => hex::decode(bytes.as_str().trim_start_matches("0x"))
                     .map_err(|_| Error::InvalidJsOutput)?,
