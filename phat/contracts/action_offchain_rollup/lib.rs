@@ -10,6 +10,7 @@ mod action_offchain_rollup {
     use ink::env::call::{build_call, ExecutionInput, Selector};
     #[cfg(feature = "std")]
     use ink::storage::traits::StorageLayout;
+    use ink::storage::Lazy;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
     use pink_web3::{
@@ -31,7 +32,19 @@ mod action_offchain_rollup {
         clients::evm::{sign_meta_tx, EvmRollupClient},
         Action,
     };
+
     type CodeHash = [u8; 32];
+
+    #[derive(Clone, Encode, Decode)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
+    pub struct Core {
+        /// The JS code that processes the rollup queue request
+        script: String,
+        /// The configuration that would be passed to the core js script
+        settings: String,
+        /// The code hash of the core js script
+        code_hash: CodeHash,
+    }
 
     #[ink(storage)]
     pub struct ActionOffchainRollup {
@@ -42,9 +55,7 @@ mod action_offchain_rollup {
         brick_profile: AccountId,
         client: Option<Client>,
         /// The JS code that processes the rollup queue request
-        core_js: Option<(String, CodeHash)>,
-        /// The configuration that would be passed to the core js
-        core_settings: Option<String>,
+        core: Lazy<Core>,
     }
 
     #[derive(Clone, Encode, Decode, Debug)]
@@ -62,7 +73,7 @@ mod action_offchain_rollup {
     pub enum Error {
         BadOrigin,
         ClientNotConfigured,
-        HandlerNotConfigured,
+        CoreNotConfigured,
         BadBrickProfile,
 
         InvalidAddressLength,
@@ -93,15 +104,14 @@ mod action_offchain_rollup {
                     .expect("random is long enough; qed."),
                 brick_profile,
                 client: None,
-                core_js: None,
-                core_settings: None,
+                core: Default::default(),
             }
         }
 
         #[ink(constructor)]
         pub fn with_core(core_js: String, core_settings: String, brick_profile: AccountId) -> Self {
             let mut this = Self::new(brick_profile);
-            this.config_core_inner(core_js, Some(core_settings));
+            this.config_core_inner(core_js, core_settings);
             this
         }
 
@@ -142,28 +152,27 @@ mod action_offchain_rollup {
         }
 
         #[ink(message)]
-        pub fn get_core(&self) -> Option<(String, CodeHash)> {
-            self.core_js.clone()
+        pub fn get_core(&self) -> Option<Core> {
+            self.core.get()
         }
 
         /// Configures the core script (admin only)
         #[ink(message)]
-        pub fn config_core(&mut self, core_js: String, settings: Option<String>) -> Result<()> {
+        pub fn config_core(&mut self, core_js: String, settings: String) -> Result<()> {
             self.ensure_owner()?;
             self.config_core_inner(core_js, settings);
             Ok(())
         }
 
-        #[ink(message)]
-        pub fn get_core_settings(&self) -> Option<String> {
-            self.core_settings.clone()
-        }
-
         /// Set the configuration (admin only)
         #[ink(message)]
-        pub fn config_core_settings(&mut self, settings: Option<String>) -> Result<()> {
+        pub fn config_core_settings(&mut self, settings: String) -> Result<()> {
             self.ensure_owner()?;
-            self.core_settings = settings;
+            let Some(mut core) = self.core.get() else {
+                return Err(Error::CoreNotConfigured);
+            };
+            core.settings = settings;
+            self.core.set(&core);
             Ok(())
         }
 
@@ -259,15 +268,12 @@ mod action_offchain_rollup {
 
         /// Processes a request with the the core js and returns the output.
         fn handle_request(&self, request: &[u8]) -> Result<(Vec<u8>, CodeHash)> {
-            let Some((core_js, js_hash)) = &self.core_js else {
-                pink::error!("HandlerNotConfigured");
-                return Err(Error::HandlerNotConfigured);
+            let Some(Core{ script, settings, code_hash }) = self.core.get() else {
+                pink::error!("CoreNotConfigured");
+                return Err(Error::CoreNotConfigured);
             };
-            let mut args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request))];
-            if let Some(settings) = &self.core_settings {
-                args.push(settings.clone());
-            }
-            let output = js::eval(core_js, &args)
+            let args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request)), settings];
+            let output = js::eval(&script, &args)
                 .log_err("Failed to eval the core js")
                 .map_err(Error::JsError)?;
             let output = match output {
@@ -275,7 +281,7 @@ mod action_offchain_rollup {
                     .map_err(|_| Error::InvalidJsOutput)?,
                 js::Output::Bytes(b) => b,
             };
-            Ok((output, *js_hash))
+            Ok((output, code_hash))
         }
 
         /// Returns BadOrigin error if the caller is not the owner
@@ -292,16 +298,19 @@ mod action_offchain_rollup {
             self.client.as_ref().ok_or(Error::ClientNotConfigured)
         }
 
-        fn config_core_inner(&mut self, core_js: String, settings: Option<String>) {
-            let js_hash = self
+        fn config_core_inner(&mut self, core_js: String, settings: String) {
+            let code_hash = self
                 .env()
                 .hash_bytes::<ink::env::hash::Sha2x256>(core_js.as_bytes());
             // TODO: To avoid wasting storage, we can
             // - make a generic contract to store k-v pairs.
             // - use the hash as the key to store the js.
             // - store only hash in the app contract.
-            self.core_js = Some((core_js, js_hash));
-            self.core_settings = settings;
+            self.core.set(&Core {
+                script: core_js,
+                settings,
+                code_hash,
+            });
         }
     }
 
