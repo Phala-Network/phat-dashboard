@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WITNESS_DIST_DIR: ${{ github.workspace }}/.witness/dist
+    permissions:
+      contents: write
     steps:
       - name: Checkout the source
         uses: actions/checkout@v3
