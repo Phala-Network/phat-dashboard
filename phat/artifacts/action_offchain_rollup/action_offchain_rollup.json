@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0x4c02fa94c7704df5d908537beeb8897dd002c9c5b9ec2693f911d1dda98da2c7",
+    "hash": "0x6afaeb3387dd1821a13a524691bf98d793cbd9a5042710b4f3c215f71265db04",
     "language": "ink! 4.2.0",
     "compiler": "rustc 1.69.0",
     "build_info": {
@@ -43,9 +43,52 @@
             "ink_primitives",
             "ConstructorResult"
           ],
-          "type": 4
+          "type": 14
         },
         "selector": "0x9bae9d5e"
+      },
+      {
+        "args": [
+          {
+            "label": "core_js",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "label": "core_settings",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "label": "brick_profile",
+            "type": {
+              "displayName": [
+                "AccountId"
+              ],
+              "type": 0
+            }
+          }
+        ],
+        "default": false,
+        "docs": [],
+        "label": "with_core",
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink_primitives",
+            "ConstructorResult"
+          ],
+          "type": 14
+        },
+        "selector": "0x9f2a780b"
       }
     ],
     "docs": [],
@@ -60,32 +103,32 @@
         "displayName": [
           "Balance"
         ],
-        "type": 27
+        "type": 38
       },
       "blockNumber": {
         "displayName": [
           "BlockNumber"
         ],
-        "type": 30
+        "type": 41
       },
       "chainExtension": {
         "displayName": [
           "ChainExtension"
         ],
-        "type": 31
+        "type": 42
       },
       "hash": {
         "displayName": [
           "Hash"
         ],
-        "type": 28
+        "type": 39
       },
       "maxEventTopics": 4,
       "timestamp": {
         "displayName": [
           "Timestamp"
         ],
-        "type": 29
+        "type": 40
       }
     },
     "events": [],
@@ -94,7 +137,7 @@
         "ink",
         "LangError"
       ],
-      "type": 6
+      "type": 15
     },
     "messages": [
       {
@@ -109,7 +152,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 7
+          "type": 16
         },
         "selector": "0xec6d41e1"
       },
@@ -127,7 +170,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 10
+          "type": 19
         },
         "selector": "0xfeaea4fa"
       },
@@ -145,7 +188,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 11
+          "type": 20
         },
         "selector": "0xa29595ff"
       },
@@ -161,7 +204,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 10
+          "type": 19
         },
         "selector": "0x0f2392a4"
       },
@@ -187,7 +230,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 14
+          "type": 22
         },
         "selector": "0x76dc445a"
       },
@@ -203,7 +246,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 17
+          "type": 25
         },
         "selector": "0xbb27d5c4"
       },
@@ -211,7 +254,7 @@
         "args": [],
         "default": false,
         "docs": [],
-        "label": "get_data_source",
+        "label": "get_core",
         "mutates": false,
         "payable": false,
         "returnType": {
@@ -219,9 +262,74 @@
             "ink",
             "MessageResult"
           ],
-          "type": 20
+          "type": 27
         },
-        "selector": "0x0fa12e05"
+        "selector": "0x28948399"
+      },
+      {
+        "args": [
+          {
+            "label": "core_js",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
+            }
+          },
+          {
+            "label": "settings",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Configures the core script (admin only)"
+        ],
+        "label": "config_core",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 22
+        },
+        "selector": "0xb300407e"
+      },
+      {
+        "args": [
+          {
+            "label": "settings",
+            "type": {
+              "displayName": [
+                "String"
+              ],
+              "type": 3
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Set the configuration (admin only)"
+        ],
+        "label": "config_core_settings",
+        "mutates": true,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 22
+        },
+        "selector": "0x1c86a18c"
       },
       {
         "args": [
@@ -240,7 +348,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 23
+              "type": 29
             }
           }
         ],
@@ -256,46 +364,9 @@
             "ink",
             "MessageResult"
           ],
-          "type": 14
+          "type": 22
         },
         "selector": "0x35be49eb"
-      },
-      {
-        "args": [
-          {
-            "label": "url",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 3
-            }
-          },
-          {
-            "label": "transform_js",
-            "type": {
-              "displayName": [
-                "String"
-              ],
-              "type": 3
-            }
-          }
-        ],
-        "default": false,
-        "docs": [
-          " Configures the data source and transform js (admin only)"
-        ],
-        "label": "config_data_source",
-        "mutates": true,
-        "payable": false,
-        "returnType": {
-          "displayName": [
-            "ink",
-            "MessageResult"
-          ],
-          "type": 14
-        },
-        "selector": "0xb33f9392"
       },
       {
         "args": [
@@ -323,7 +394,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 14
+          "type": 22
         },
         "selector": "0x107e33ea"
       },
@@ -331,7 +402,7 @@
         "args": [],
         "default": false,
         "docs": [
-          " Processes a Lens Api stat request by a rollup transaction"
+          " Pop an element from the rollup queue if any and process it, then submit the answer."
         ],
         "label": "answer_request",
         "mutates": false,
@@ -341,9 +412,96 @@
             "ink",
             "MessageResult"
           ],
-          "type": 24
+          "type": 30
         },
         "selector": "0x2a5bcd75"
+      },
+      {
+        "args": [
+          {
+            "label": "request",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 29
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Processes a request with the the core js and returns the output wrapped in a signed meta tx."
+        ],
+        "label": "get_answer",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0x9d27bc00"
+      },
+      {
+        "args": [
+          {
+            "label": "request",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 29
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Processes a request with the the core js and returns the output wrapped in a signed meta tx.",
+          "",
+          " The output is a tuple of the reply and the sha256 hash of the core js.",
+          " The hash can be used to verify the integrity of the core js."
+        ],
+        "label": "get_answer_with_code_hash",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 33
+        },
+        "selector": "0xcb1538fd"
+      },
+      {
+        "args": [
+          {
+            "label": "request",
+            "type": {
+              "displayName": [
+                "Vec"
+              ],
+              "type": 29
+            }
+          }
+        ],
+        "default": false,
+        "docs": [
+          " Processes a request with the the core js and returns the output without signature."
+        ],
+        "label": "get_raw_answer",
+        "mutates": false,
+        "payable": false,
+        "returnType": {
+          "displayName": [
+            "ink",
+            "MessageResult"
+          ],
+          "type": 35
+        },
+        "selector": "0x2e8fc0a7"
       }
     ]
   },
@@ -441,57 +599,59 @@
             },
             {
               "layout": {
-                "enum": {
-                  "dispatchKey": "0x00000000",
-                  "name": "Option",
-                  "variants": {
-                    "0": {
-                      "fields": [],
-                      "name": "None"
-                    },
-                    "1": {
+                "root": {
+                  "layout": {
+                    "struct": {
                       "fields": [
                         {
                           "layout": {
-                            "struct": {
-                              "fields": [
-                                {
-                                  "layout": {
-                                    "leaf": {
-                                      "key": "0x00000000",
-                                      "ty": 3
-                                    }
-                                  },
-                                  "name": "url"
-                                },
-                                {
-                                  "layout": {
-                                    "leaf": {
-                                      "key": "0x00000000",
-                                      "ty": 3
-                                    }
-                                  },
-                                  "name": "transform_js"
-                                }
-                              ],
-                              "name": "DataSource"
+                            "leaf": {
+                              "key": "0xbe22fa40",
+                              "ty": 3
                             }
                           },
-                          "name": "0"
+                          "name": "script"
+                        },
+                        {
+                          "layout": {
+                            "leaf": {
+                              "key": "0xbe22fa40",
+                              "ty": 3
+                            }
+                          },
+                          "name": "settings"
+                        },
+                        {
+                          "layout": {
+                            "array": {
+                              "layout": {
+                                "leaf": {
+                                  "key": "0xbe22fa40",
+                                  "ty": 2
+                                }
+                              },
+                              "len": 32,
+                              "offset": "0xbe22fa40"
+                            }
+                          },
+                          "name": "code_hash"
                         }
                       ],
-                      "name": "Some"
+                      "name": "Core"
                     }
-                  }
+                  },
+                  "root_key": "0xbe22fa40",
+                  "ty": 4
                 }
               },
-              "name": "data_source"
+              "name": "core"
             }
           ],
           "name": "ActionOffchainRollup"
         }
       },
-      "root_key": "0x00000000"
+      "root_key": "0x00000000",
+      "ty": 10
     }
   },
   "types": [
@@ -546,41 +706,22 @@
       "id": 4,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 5
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
+          "composite": {}
         },
         "params": [
           {
-            "name": "T",
+            "name": "V",
             "type": 5
           },
           {
-            "name": "E",
+            "name": "KeyType",
             "type": 6
           }
         ],
         "path": [
-          "Result"
+          "ink_storage",
+          "lazy",
+          "Lazy"
         ]
       }
     },
@@ -588,26 +729,53 @@
       "id": 5,
       "type": {
         "def": {
-          "tuple": []
-        }
+          "composite": {
+            "fields": [
+              {
+                "name": "script",
+                "type": 3,
+                "typeName": "String"
+              },
+              {
+                "name": "settings",
+                "type": 3,
+                "typeName": "String"
+              },
+              {
+                "name": "code_hash",
+                "type": 1,
+                "typeName": "CodeHash"
+              }
+            ]
+          }
+        },
+        "path": [
+          "action_offchain_rollup",
+          "action_offchain_rollup",
+          "Core"
+        ]
       }
     },
     {
       "id": 6,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
-              {
-                "index": 1,
-                "name": "CouldNotReadInput"
-              }
-            ]
-          }
+          "composite": {}
         },
+        "params": [
+          {
+            "name": "L",
+            "type": 7
+          },
+          {
+            "name": "R",
+            "type": 8
+          }
+        ],
         "path": [
-          "ink_primitives",
-          "LangError"
+          "ink_storage_traits",
+          "impls",
+          "ResolverKey"
         ]
       }
     },
@@ -615,41 +783,12 @@
       "id": 7,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 8
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
+          "composite": {}
         },
-        "params": [
-          {
-            "name": "T",
-            "type": 8
-          },
-          {
-            "name": "E",
-            "type": 6
-          }
-        ],
         "path": [
-          "Result"
+          "ink_storage_traits",
+          "impls",
+          "AutoKey"
         ]
       }
     },
@@ -657,19 +796,26 @@
       "id": 8,
       "type": {
         "def": {
-          "tuple": [
-            9,
-            9,
-            9
-          ]
-        }
+          "composite": {}
+        },
+        "params": [
+          {
+            "name": "ParentKey",
+            "type": 9
+          }
+        ],
+        "path": [
+          "ink_storage_traits",
+          "impls",
+          "ManualKey"
+        ]
       }
     },
     {
       "id": 9,
       "type": {
         "def": {
-          "primitive": "u16"
+          "tuple": []
         }
       }
     },
@@ -677,41 +823,40 @@
       "id": 10,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
+          "composite": {
+            "fields": [
               {
-                "fields": [
-                  {
-                    "type": 0
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
+                "name": "owner",
+                "type": 0,
+                "typeName": "<AccountId as::ink::storage::traits::AutoStorableHint<::ink::\nstorage::traits::ManualKey<1268528939u32, ()>,>>::Type"
               },
               {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
+                "name": "attest_key",
+                "type": 1,
+                "typeName": "<[u8; 32] as::ink::storage::traits::AutoStorableHint<::ink::\nstorage::traits::ManualKey<1799049813u32, ()>,>>::Type"
+              },
+              {
+                "name": "brick_profile",
+                "type": 0,
+                "typeName": "<AccountId as::ink::storage::traits::AutoStorableHint<::ink::\nstorage::traits::ManualKey<4270123080u32, ()>,>>::Type"
+              },
+              {
+                "name": "client",
+                "type": 11,
+                "typeName": "<Option<Client> as::ink::storage::traits::AutoStorableHint<::\nink::storage::traits::ManualKey<634690880u32, ()>,>>::Type"
+              },
+              {
+                "name": "core",
+                "type": 4,
+                "typeName": "<Lazy<Core> as::ink::storage::traits::AutoStorableHint<::ink::\nstorage::traits::ManualKey<3189963328u32, ()>,>>::Type"
               }
             ]
           }
         },
-        "params": [
-          {
-            "name": "T",
-            "type": 0
-          },
-          {
-            "name": "E",
-            "type": 6
-          }
-        ],
         "path": [
-          "Result"
+          "action_offchain_rollup",
+          "action_offchain_rollup",
+          "ActionOffchainRollup"
         ]
       }
     },
@@ -722,22 +867,17 @@
           "variant": {
             "variants": [
               {
+                "index": 0,
+                "name": "None"
+              },
+              {
                 "fields": [
                   {
                     "type": 12
                   }
                 ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
                 "index": 1,
-                "name": "Err"
+                "name": "Some"
               }
             ]
           }
@@ -746,313 +886,15 @@
           {
             "name": "T",
             "type": 12
-          },
-          {
-            "name": "E",
-            "type": 6
           }
         ],
         "path": [
-          "Result"
+          "Option"
         ]
       }
     },
     {
       "id": 12,
-      "type": {
-        "def": {
-          "composite": {
-            "fields": [
-              {
-                "type": 13,
-                "typeName": "[u8; 20]"
-              }
-            ]
-          }
-        },
-        "path": [
-          "primitive_types",
-          "H160"
-        ]
-      }
-    },
-    {
-      "id": 13,
-      "type": {
-        "def": {
-          "array": {
-            "len": 20,
-            "type": 2
-          }
-        }
-      }
-    },
-    {
-      "id": 14,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 15
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 15
-          },
-          {
-            "name": "E",
-            "type": 6
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 15,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 5
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 16
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 5
-          },
-          {
-            "name": "E",
-            "type": 16
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 16,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "index": 0,
-                "name": "BadOrigin"
-              },
-              {
-                "index": 1,
-                "name": "ClientNotConfigured"
-              },
-              {
-                "index": 2,
-                "name": "DataSourceNotConfigured"
-              },
-              {
-                "index": 3,
-                "name": "BadBrickProfile"
-              },
-              {
-                "index": 4,
-                "name": "InvalidKeyLength"
-              },
-              {
-                "index": 5,
-                "name": "InvalidAddressLength"
-              },
-              {
-                "index": 6,
-                "name": "NoRequestInQueue"
-              },
-              {
-                "index": 7,
-                "name": "FailedToCreateClient"
-              },
-              {
-                "index": 8,
-                "name": "FailedToCommitTx"
-              },
-              {
-                "index": 9,
-                "name": "BadLensProfileId"
-              },
-              {
-                "index": 10,
-                "name": "FailedToFetchData"
-              },
-              {
-                "index": 11,
-                "name": "FailedToTransformData"
-              },
-              {
-                "index": 12,
-                "name": "BadTransformedData"
-              },
-              {
-                "index": 13,
-                "name": "FailedToGetStorage"
-              },
-              {
-                "index": 14,
-                "name": "FailedToCreateTransaction"
-              },
-              {
-                "index": 15,
-                "name": "FailedToSignTransaction"
-              },
-              {
-                "index": 16,
-                "name": "FailedToSendTransaction"
-              },
-              {
-                "index": 17,
-                "name": "FailedToGetBlockHash"
-              },
-              {
-                "index": 18,
-                "name": "FailedToDecode"
-              },
-              {
-                "index": 19,
-                "name": "InvalidRequest"
-              }
-            ]
-          }
-        },
-        "path": [
-          "action_offchain_rollup",
-          "action_offchain_rollup",
-          "Error"
-        ]
-      }
-    },
-    {
-      "id": 17,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 18
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 18
-          },
-          {
-            "name": "E",
-            "type": 6
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 18,
-      "type": {
-        "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 19
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 16
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
-          }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 19
-          },
-          {
-            "name": "E",
-            "type": 16
-          }
-        ],
-        "path": [
-          "Result"
-        ]
-      }
-    },
-    {
-      "id": 19,
       "type": {
         "def": {
           "composite": {
@@ -1078,6 +920,182 @@
       }
     },
     {
+      "id": 13,
+      "type": {
+        "def": {
+          "array": {
+            "len": 20,
+            "type": 2
+          }
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 9
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 9
+          },
+          {
+            "name": "E",
+            "type": 15
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 15,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 1,
+                "name": "CouldNotReadInput"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "LangError"
+        ]
+      }
+    },
+    {
+      "id": 16,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 17
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 17
+          },
+          {
+            "name": "E",
+            "type": 15
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 17,
+      "type": {
+        "def": {
+          "tuple": [
+            18,
+            18,
+            18
+          ]
+        }
+      }
+    },
+    {
+      "id": 18,
+      "type": {
+        "def": {
+          "primitive": "u16"
+        }
+      }
+    },
+    {
+      "id": 19,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 0
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 0
+          },
+          {
+            "name": "E",
+            "type": 15
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
       "id": 20,
       "type": {
         "def": {
@@ -1095,7 +1113,7 @@
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 15
                   }
                 ],
                 "index": 1,
@@ -1111,7 +1129,7 @@
           },
           {
             "name": "E",
-            "type": 6
+            "type": 15
           }
         ],
         "path": [
@@ -1123,12 +1141,31 @@
       "id": 21,
       "type": {
         "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 13,
+                "typeName": "[u8; 20]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "primitive_types",
+          "H160"
+        ]
+      }
+    },
+    {
+      "id": 22,
+      "type": {
+        "def": {
           "variant": {
             "variants": [
               {
                 "fields": [
                   {
-                    "type": 22
+                    "type": 23
                   }
                 ],
                 "index": 0,
@@ -1137,7 +1174,7 @@
               {
                 "fields": [
                   {
-                    "type": 16
+                    "type": 15
                   }
                 ],
                 "index": 1,
@@ -1149,11 +1186,11 @@
         "params": [
           {
             "name": "T",
-            "type": 22
+            "type": 23
           },
           {
             "name": "E",
-            "type": 16
+            "type": 15
           }
         ],
         "path": [
@@ -1162,39 +1199,45 @@
       }
     },
     {
-      "id": 22,
+      "id": 23,
       "type": {
         "def": {
-          "composite": {
-            "fields": [
+          "variant": {
+            "variants": [
               {
-                "name": "url",
-                "type": 3,
-                "typeName": "String"
+                "fields": [
+                  {
+                    "type": 9
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
               },
               {
-                "name": "transform_js",
-                "type": 3,
-                "typeName": "String"
+                "fields": [
+                  {
+                    "type": 24
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
               }
             ]
           }
         },
-        "path": [
-          "action_offchain_rollup",
-          "action_offchain_rollup",
-          "DataSource"
-        ]
-      }
-    },
-    {
-      "id": 23,
-      "type": {
-        "def": {
-          "sequence": {
-            "type": 2
+        "params": [
+          {
+            "name": "T",
+            "type": 9
+          },
+          {
+            "name": "E",
+            "type": 24
           }
-        }
+        ],
+        "path": [
+          "Result"
+        ]
       }
     },
     {
@@ -1204,38 +1247,74 @@
           "variant": {
             "variants": [
               {
-                "fields": [
-                  {
-                    "type": 25
-                  }
-                ],
                 "index": 0,
-                "name": "Ok"
+                "name": "BadOrigin"
+              },
+              {
+                "index": 1,
+                "name": "ClientNotConfigured"
+              },
+              {
+                "index": 2,
+                "name": "CoreNotConfigured"
+              },
+              {
+                "index": 3,
+                "name": "BadBrickProfile"
+              },
+              {
+                "index": 4,
+                "name": "InvalidAddressLength"
+              },
+              {
+                "index": 5,
+                "name": "NoRequestInQueue"
+              },
+              {
+                "index": 6,
+                "name": "FailedToCreateClient"
+              },
+              {
+                "index": 7,
+                "name": "FailedToCommitTx"
+              },
+              {
+                "index": 8,
+                "name": "FailedToGetStorage"
+              },
+              {
+                "index": 9,
+                "name": "FailedToCreateTransaction"
+              },
+              {
+                "index": 10,
+                "name": "FailedToSignTransaction"
+              },
+              {
+                "index": 11,
+                "name": "FailedToSendTransaction"
+              },
+              {
+                "index": 12,
+                "name": "InvalidJsOutput"
               },
               {
                 "fields": [
                   {
-                    "type": 6
+                    "type": 3,
+                    "typeName": "String"
                   }
                 ],
-                "index": 1,
-                "name": "Err"
+                "index": 13,
+                "name": "JsError"
               }
             ]
           }
         },
-        "params": [
-          {
-            "name": "T",
-            "type": 25
-          },
-          {
-            "name": "E",
-            "type": 6
-          }
-        ],
         "path": [
-          "Result"
+          "action_offchain_rollup",
+          "action_offchain_rollup",
+          "Error"
         ]
       }
     },
@@ -1257,7 +1336,7 @@
               {
                 "fields": [
                   {
-                    "type": 16
+                    "type": 15
                   }
                 ],
                 "index": 1,
@@ -1273,7 +1352,7 @@
           },
           {
             "name": "E",
-            "type": 16
+            "type": 15
           }
         ],
         "path": [
@@ -1288,13 +1367,97 @@
           "variant": {
             "variants": [
               {
+                "fields": [
+                  {
+                    "type": 12
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 24
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 12
+          },
+          {
+            "name": "E",
+            "type": 24
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 27,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 28
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 28
+          },
+          {
+            "name": "E",
+            "type": 15
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 28,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
                 "index": 0,
                 "name": "None"
               },
               {
                 "fields": [
                   {
-                    "type": 23
+                    "type": 5
                   }
                 ],
                 "index": 1,
@@ -1306,7 +1469,7 @@
         "params": [
           {
             "name": "T",
-            "type": 23
+            "type": 5
           }
         ],
         "path": [
@@ -1315,7 +1478,313 @@
       }
     },
     {
-      "id": 27,
+      "id": 29,
+      "type": {
+        "def": {
+          "sequence": {
+            "type": 2
+          }
+        }
+      }
+    },
+    {
+      "id": 30,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 31
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 31
+          },
+          {
+            "name": "E",
+            "type": 15
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 31,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 32
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 24
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 32
+          },
+          {
+            "name": "E",
+            "type": 24
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 32,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "index": 0,
+                "name": "None"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 29
+                  }
+                ],
+                "index": 1,
+                "name": "Some"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 29
+          }
+        ],
+        "path": [
+          "Option"
+        ]
+      }
+    },
+    {
+      "id": 33,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 34
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 34
+          },
+          {
+            "name": "E",
+            "type": 15
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 34,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 29
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 24
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 29
+          },
+          {
+            "name": "E",
+            "type": 24
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 35,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 36
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 15
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 36
+          },
+          {
+            "name": "E",
+            "type": 15
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 36,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 37
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 24
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 37
+          },
+          {
+            "name": "E",
+            "type": 24
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 37,
+      "type": {
+        "def": {
+          "tuple": [
+            29,
+            1
+          ]
+        }
+      }
+    },
+    {
+      "id": 38,
       "type": {
         "def": {
           "primitive": "u128"
@@ -1323,7 +1792,7 @@
       }
     },
     {
-      "id": 28,
+      "id": 39,
       "type": {
         "def": {
           "composite": {
@@ -1343,7 +1812,7 @@
       }
     },
     {
-      "id": 29,
+      "id": 40,
       "type": {
         "def": {
           "primitive": "u64"
@@ -1351,7 +1820,7 @@
       }
     },
     {
-      "id": 30,
+      "id": 41,
       "type": {
         "def": {
           "primitive": "u32"
@@ -1359,7 +1828,7 @@
       }
     },
     {
-      "id": 31,
+      "id": 42,
       "type": {
         "def": {
           "variant": {}

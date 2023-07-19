@@ -39,6 +39,10 @@ yarn devphase contract test
 ```
 This will call the `function _onMessageReceived(bytes calldata action)` in the pre-deployed smart contract mentioned in [evm/README.md](../evm/README.md).
 
+## Developing custom Oracles
+
+The contract [action_offchain_rollup](contracts/action_offchain_rollup) supports custom Oracles written in JavaScript. You can develop your own Oracle by modifying the example [here](example-oracles/lens_stats/).
+
 ## Code Details
 
 The core logic is to build a workflow in [phat/tests/legoActions.test.ts](./tests/legoActions.test.ts).

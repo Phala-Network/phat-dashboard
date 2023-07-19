@@ -1,11 +1,11 @@
 {
   "source": {
-    "hash": "0x219e0f258c0de1f730790b3602dadf8bd897b3b7e3e5c2cbcc1a161760634945",
-    "language": "ink! 4.0.1",
+    "hash": "0xd1f5cd6564f519cb7e07e3589e7d59da21776bbdaf2e088f65ca535caaaf535f",
+    "language": "ink! 4.2.0",
     "compiler": "rustc 1.69.0",
     "build_info": {
       "build_mode": "Debug",
-      "cargo_contract_version": "2.2.1",
+      "cargo_contract_version": "3.0.1",
       "rust_toolchain": "stable-x86_64-unknown-linux-gnu",
       "wasm_opt_settings": {
         "keep_debug_symbols": false,
@@ -24,6 +24,7 @@
     "constructors": [
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "default",
         "payable": false,
@@ -38,6 +39,45 @@
       }
     ],
     "docs": [],
+    "environment": {
+      "accountId": {
+        "displayName": [
+          "AccountId"
+        ],
+        "type": 9
+      },
+      "balance": {
+        "displayName": [
+          "Balance"
+        ],
+        "type": 12
+      },
+      "blockNumber": {
+        "displayName": [
+          "BlockNumber"
+        ],
+        "type": 15
+      },
+      "chainExtension": {
+        "displayName": [
+          "ChainExtension"
+        ],
+        "type": 16
+      },
+      "hash": {
+        "displayName": [
+          "Hash"
+        ],
+        "type": 13
+      },
+      "maxEventTopics": 4,
+      "timestamp": {
+        "displayName": [
+          "Timestamp"
+        ],
+        "type": 14
+      }
+    },
     "events": [],
     "lang_error": {
       "displayName": [
@@ -49,6 +89,7 @@
     "messages": [
       {
         "args": [],
+        "default": false,
         "docs": [],
         "label": "version",
         "mutates": false,
@@ -74,6 +115,7 @@
             }
           }
         ],
+        "default": false,
         "docs": [],
         "label": "run",
         "mutates": false,
@@ -288,6 +330,102 @@
         "def": {
           "primitive": "bool"
         }
+      }
+    },
+    {
+      "id": 9,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 10,
+                "typeName": "[u8; 32]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "types",
+          "AccountId"
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "type": {
+        "def": {
+          "array": {
+            "len": 32,
+            "type": 11
+          }
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": {
+        "def": {
+          "primitive": "u8"
+        }
+      }
+    },
+    {
+      "id": 12,
+      "type": {
+        "def": {
+          "primitive": "u128"
+        }
+      }
+    },
+    {
+      "id": 13,
+      "type": {
+        "def": {
+          "composite": {
+            "fields": [
+              {
+                "type": 10,
+                "typeName": "[u8; 32]"
+              }
+            ]
+          }
+        },
+        "path": [
+          "ink_primitives",
+          "types",
+          "Hash"
+        ]
+      }
+    },
+    {
+      "id": 14,
+      "type": {
+        "def": {
+          "primitive": "u64"
+        }
+      }
+    },
+    {
+      "id": 15,
+      "type": {
+        "def": {
+          "primitive": "u32"
+        }
+      }
+    },
+    {
+      "id": 16,
+      "type": {
+        "def": {
+          "variant": {}
+        },
+        "path": [
+          "ink_env",
+          "types",
+          "NoChainExtension"
+        ]
       }
     }
   ],

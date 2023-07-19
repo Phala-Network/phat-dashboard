@@ -255,7 +255,7 @@ impl SubmittableRollupTx {
     pub fn build_meta_tx(self, pair: &KeyPair, from: H160) -> Result<Vec<u8>> {
         let params = self.tx.into_params();
         let data = ethabi::encode(&[params.0, params.1, params.2, params.3, params.4]);
-        let meta_params = sign_meta_tx(&self.contract, self.at, &data, pair).unwrap();
+        let meta_params = sign_meta_tx_at(&self.contract, self.at, &data, pair).unwrap();
 
         // Estiamte gas before submission
         let gas = resolve_ready(self.contract.estimate_gas::<(Token, Bytes)>(
@@ -289,7 +289,7 @@ impl SubmittableRollupTx {
 /// Signes a meta tx with the help of the MetaTx contract
 ///
 /// Return (ForwardRequest, Sig)
-fn sign_meta_tx(
+fn sign_meta_tx_at(
     contract: &Contract<PinkHttp>,
     at: u64,
     data: &[u8],
@@ -317,6 +317,19 @@ fn sign_meta_tx(
     let signature = pair.sign(&hash, None).expect("signing error").sig_encode();
 
     Ok((req, signature.into()))
+}
+
+/// Signes a meta tx with the help of the MetaTx contract
+///
+/// Return (ForwardRequest, Sig)
+pub fn sign_meta_tx(
+    rpc: &str,
+    contract_id: H160,
+    data: &[u8],
+    pair: &KeyPair,
+) -> Result<(Token, Bytes)> {
+    let snap = EvmSnapshot::new(rpc, contract_id)?;
+    sign_meta_tx_at(&snap.contract, snap.at, data, pair)
 }
 
 trait Erc1271SigEncode {

@@ -8,7 +8,9 @@ pub use brick_profile::*;
 mod brick_profile {
     use alloc::{format, string::String, vec::Vec};
     use core::convert::TryInto;
-    use ink::storage::{traits::StorageLayout, Mapping};
+    use ink::storage::Mapping;
+    #[cfg(feature = "std")]
+    use ink::storage::traits::StorageLayout;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
     use pink_json as json;
@@ -252,11 +254,13 @@ mod brick_profile {
         /// Adds an existing EVM account, only owner is allowed
         /// This is only used for dev and will be removed in release
         #[ink(message)]
+        #[allow(unreachable_code, unused_variables)]
         pub fn import_evm_account(
             &mut self,
             rpc: String,
             sk: Vec<u8>,
         ) -> Result<ExternalAccountId> {
+
             // Deprecated in first release
             return Err(Error::Deprecated);
 

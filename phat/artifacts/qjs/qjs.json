@@ -1,12 +1,12 @@
 {
   "source": {
-    "hash": "0xda2659b09da536f015d3631f3215989c96c712c166dba9985c0a1ec647f54f0a",
+    "hash": "0xb081f1fb050decede4a167c7dfbf8d12ad01681c0e0bc9589fd8b40f4fc54a41",
     "language": "ink! 4.2.0",
-    "compiler": "rustc 1.69.0-nightly",
+    "compiler": "rustc 1.69.0",
     "build_info": {
       "build_mode": "Release",
-      "cargo_contract_version": "2.2.1",
-      "rust_toolchain": "nightly-x86_64-unknown-linux-gnu",
+      "cargo_contract_version": "3.0.1",
+      "rust_toolchain": "stable-x86_64-unknown-linux-gnu",
       "wasm_opt_settings": {
         "keep_debug_symbols": false,
         "optimization_passes": "Z"
@@ -15,7 +15,7 @@
   },
   "contract": {
     "name": "qjs",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "authors": [
       "[your_name] <[your_email]>"
     ]
@@ -33,7 +33,7 @@
             "ink_primitives",
             "ConstructorResult"
           ],
-          "type": 0
+          "type": 1
         },
         "selector": "0xed4b9d1b"
       }
@@ -44,38 +44,38 @@
         "displayName": [
           "AccountId"
         ],
-        "type": 10
+        "type": 11
       },
       "balance": {
         "displayName": [
           "Balance"
         ],
-        "type": 12
+        "type": 13
       },
       "blockNumber": {
         "displayName": [
           "BlockNumber"
         ],
-        "type": 15
+        "type": 16
       },
       "chainExtension": {
         "displayName": [
           "ChainExtension"
         ],
-        "type": 16
+        "type": 17
       },
       "hash": {
         "displayName": [
           "Hash"
         ],
-        "type": 13
+        "type": 14
       },
       "maxEventTopics": 4,
       "timestamp": {
         "displayName": [
           "Timestamp"
         ],
-        "type": 14
+        "type": 15
       }
     },
     "events": [],
@@ -84,7 +84,7 @@
         "ink",
         "LangError"
       ],
-      "type": 2
+      "type": 3
     },
     "messages": [
       {
@@ -95,7 +95,7 @@
               "displayName": [
                 "String"
               ],
-              "type": 3
+              "type": 4
             }
           },
           {
@@ -104,7 +104,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 4
+              "type": 5
             }
           }
         ],
@@ -118,7 +118,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 5
+          "type": 6
         },
         "selector": "0x49bfcd24"
       },
@@ -130,7 +130,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 8
+              "type": 9
             }
           },
           {
@@ -139,7 +139,7 @@
               "displayName": [
                 "Vec"
               ],
-              "type": 4
+              "type": 5
             }
           }
         ],
@@ -153,7 +153,7 @@
             "ink",
             "MessageResult"
           ],
-          "type": 5
+          "type": 6
         },
         "selector": "0xbf0ec203"
       }
@@ -167,7 +167,8 @@
           "name": "QuickJS"
         }
       },
-      "root_key": "0x00000000"
+      "root_key": "0x00000000",
+      "ty": 0
     }
   },
   "types": [
@@ -175,12 +176,25 @@
       "id": 0,
       "type": {
         "def": {
+          "composite": {}
+        },
+        "path": [
+          "qjs",
+          "qjs",
+          "QuickJS"
+        ]
+      }
+    },
+    {
+      "id": 1,
+      "type": {
+        "def": {
           "variant": {
             "variants": [
               {
                 "fields": [
                   {
-                    "type": 1
+                    "type": 2
                   }
                 ],
                 "index": 0,
@@ -189,7 +203,7 @@
               {
                 "fields": [
                   {
-                    "type": 2
+                    "type": 3
                   }
                 ],
                 "index": 1,
@@ -201,11 +215,11 @@
         "params": [
           {
             "name": "T",
-            "type": 1
+            "type": 2
           },
           {
             "name": "E",
-            "type": 2
+            "type": 3
           }
         ],
         "path": [
@@ -214,7 +228,7 @@
       }
     },
     {
-      "id": 1,
+      "id": 2,
       "type": {
         "def": {
           "tuple": []
@@ -222,7 +236,7 @@
       }
     },
     {
-      "id": 2,
+      "id": 3,
       "type": {
         "def": {
           "variant": {
@@ -241,7 +255,7 @@
       }
     },
     {
-      "id": 3,
+      "id": 4,
       "type": {
         "def": {
           "primitive": "str"
@@ -249,55 +263,13 @@
       }
     },
     {
-      "id": 4,
-      "type": {
-        "def": {
-          "sequence": {
-            "type": 3
-          }
-        }
-      }
-    },
-    {
       "id": 5,
       "type": {
         "def": {
-          "variant": {
-            "variants": [
-              {
-                "fields": [
-                  {
-                    "type": 6
-                  }
-                ],
-                "index": 0,
-                "name": "Ok"
-              },
-              {
-                "fields": [
-                  {
-                    "type": 2
-                  }
-                ],
-                "index": 1,
-                "name": "Err"
-              }
-            ]
+          "sequence": {
+            "type": 4
           }
-        },
-        "params": [
-          {
-            "name": "T",
-            "type": 6
-          },
-          {
-            "name": "E",
-            "type": 2
-          }
-        ],
-        "path": [
-          "Result"
-        ]
+        }
       }
     },
     {
@@ -351,7 +323,49 @@
               {
                 "fields": [
                   {
-                    "type": 3,
+                    "type": 8
+                  }
+                ],
+                "index": 0,
+                "name": "Ok"
+              },
+              {
+                "fields": [
+                  {
+                    "type": 4
+                  }
+                ],
+                "index": 1,
+                "name": "Err"
+              }
+            ]
+          }
+        },
+        "params": [
+          {
+            "name": "T",
+            "type": 8
+          },
+          {
+            "name": "E",
+            "type": 4
+          }
+        ],
+        "path": [
+          "Result"
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "type": {
+        "def": {
+          "variant": {
+            "variants": [
+              {
+                "fields": [
+                  {
+                    "type": 4,
                     "typeName": "String"
                   }
                 ],
@@ -361,7 +375,7 @@
               {
                 "fields": [
                   {
-                    "type": 8,
+                    "type": 9,
                     "typeName": "Vec<u8>"
                   }
                 ],
@@ -383,20 +397,12 @@
       }
     },
     {
-      "id": 8,
-      "type": {
-        "def": {
-          "sequence": {
-            "type": 9
-          }
-        }
-      }
-    },
-    {
       "id": 9,
       "type": {
         "def": {
-          "primitive": "u8"
+          "sequence": {
+            "type": 10
+          }
         }
       }
     },
@@ -404,10 +410,18 @@
       "id": 10,
       "type": {
         "def": {
+          "primitive": "u8"
+        }
+      }
+    },
+    {
+      "id": 11,
+      "type": {
+        "def": {
           "composite": {
             "fields": [
               {
-                "type": 11,
+                "type": 12,
                 "typeName": "[u8; 32]"
               }
             ]
@@ -421,21 +435,13 @@
       }
     },
     {
-      "id": 11,
+      "id": 12,
       "type": {
         "def": {
           "array": {
             "len": 32,
-            "type": 9
+            "type": 10
           }
-        }
-      }
-    },
-    {
-      "id": 12,
-      "type": {
-        "def": {
-          "primitive": "u128"
         }
       }
     },
@@ -443,10 +449,18 @@
       "id": 13,
       "type": {
         "def": {
+          "primitive": "u128"
+        }
+      }
+    },
+    {
+      "id": 14,
+      "type": {
+        "def": {
           "composite": {
             "fields": [
               {
-                "type": 11,
+                "type": 12,
                 "typeName": "[u8; 32]"
               }
             ]
@@ -460,7 +474,7 @@
       }
     },
     {
-      "id": 14,
+      "id": 15,
       "type": {
         "def": {
           "primitive": "u64"
@@ -468,7 +482,7 @@
       }
     },
     {
-      "id": 15,
+      "id": 16,
       "type": {
         "def": {
           "primitive": "u32"
@@ -476,7 +490,7 @@
       }
     },
     {
-      "id": 16,
+      "id": 17,
       "type": {
         "def": {
           "variant": {}
