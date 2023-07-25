@@ -1,5 +1,6 @@
 /.devphase
-/artifacts/*
+/artifacts
+/typings
 /contracts/*/target
 /logs
 /stacks
@@ -11,9 +12,3 @@
 
 node_modules
 
-!/artifacts/lego/
-!/artifacts/qjs/
-!/artifacts/action_evm_transaction/
-!/artifacts/action_offchain_rollup/
-!/artifacts/brick_profile/
-!/artifacts/brick_profile_factory/
