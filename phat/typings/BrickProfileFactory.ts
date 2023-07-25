@@ -1,103 +1,188 @@
 import type * as PhalaSdk from "@phala/sdk";
 import type * as DevPhase from "@devphase/service";
-import type * as DPT from "@devphase/service/etc/typings";
 import type { ContractCallResult, ContractQuery } from "@polkadot/api-contract/base/types";
 import type { ContractCallOutcome, ContractOptions } from "@polkadot/api-contract/types";
-import type { Codec } from "@polkadot/types/types";
+import type * as DPT from "@devphase/service/etc/typings";
+import type * as PT from "@polkadot/types";
+import type * as PTI from "@polkadot/types/interfaces";
+import type * as PTT from "@polkadot/types/types";
+
+
+/** */
+/** Exported types */
+/** */
+
+export namespace BrickProfile {
+    export interface CallBuilder {
+        accountId: string | number[];
+    }
+
+    export interface BrickProfileRef {
+        inner: BrickProfile.CallBuilder;
+    }
+
+    export namespace CallBuilder$ {
+        export interface Human {
+            accountId: string;
+        }
+
+        export interface Codec extends DPT.Json<BrickProfile.CallBuilder, BrickProfile.CallBuilder$.Human> {
+            accountId: PTI.AccountId;
+        }
+    }
+
+    export namespace BrickProfileRef$ {
+        export interface Human {
+            inner: BrickProfile.CallBuilder$.Human;
+        }
+
+        export interface Codec extends DPT.Json<BrickProfile.BrickProfileRef, BrickProfile.BrickProfileRef$.Human> {
+            inner: BrickProfile.CallBuilder$.Codec;
+        }
+    }
+}
+
+export namespace InkPrimitives {
+    export interface LangError {
+        couldNotReadInput?: null;
+    }
+
+    export namespace LangError$ {
+        export enum Enum {
+            CouldNotReadInput = "CouldNotReadInput"
+        }
+
+        export type Human = InkPrimitives.LangError$.Enum.CouldNotReadInput;
+        export type Codec = DPT.Enum<InkPrimitives.LangError$.Enum.CouldNotReadInput, never, never, PTT.Codec>;
+    }
+}
 
 export namespace BrickProfileFactory {
-    type InkPrimitives_Types_AccountId$1 = any;
-    type InkPrimitives_Types_Hash$2 = any;
-    type BTreeMap$3 = any;
-    type BrickProfile_BrickProfile_CallBuilder$5 = { account_id: InkPrimitives_Types_AccountId$1 };
-    type BrickProfile_BrickProfile_BrickProfileRef$4 = { inner: BrickProfile_BrickProfile_CallBuilder$5 };
-    type InkPrimitives_LangError$9 = {
-        CouldNotReadInput? : null
-        };
-    type Result$7 = {
-        Ok? : never[],
-        Err? : InkPrimitives_LangError$9
-        };
-    type Result$10 = {
-        Ok? : [ number, number, number ],
-        Err? : InkPrimitives_LangError$9
-        };
-    type Result$12 = {
-        Ok? : InkPrimitives_Types_AccountId$1,
-        Err? : InkPrimitives_LangError$9
-        };
-    type Result$13 = {
-        Ok? : number,
-        Err? : InkPrimitives_LangError$9
-        };
-    type Result$14 = {
-        Ok? : InkPrimitives_Types_Hash$2,
-        Err? : InkPrimitives_LangError$9
-        };
-    type BrickProfileFactory_BrickProfileFactory_Error$17 = {
-        BadOrigin? : null,
-        NoDuplicatedUserProfile? : null,
-        FailedToCreateProfile? : string,
-        UserProfileNotExists? : null
-        };
-    type Result$16 = {
-        Ok? : never[],
-        Err? : BrickProfileFactory_BrickProfileFactory_Error$17
-        };
-    type Result$15 = {
-        Ok? : Result$16,
-        Err? : InkPrimitives_LangError$9
-        };
-    type Result$19 = {
-        Ok? : InkPrimitives_Types_AccountId$1,
-        Err? : BrickProfileFactory_BrickProfileFactory_Error$17
-        };
-    type Result$18 = {
-        Ok? : Result$19,
-        Err? : InkPrimitives_LangError$9
-        };
-    type Result$21 = {
-        Ok? : [ InkPrimitives_Types_AccountId$1, InkPrimitives_Types_AccountId$1 ][],
-        Err? : BrickProfileFactory_BrickProfileFactory_Error$17
-        };
-    type Result$20 = {
-        Ok? : Result$21,
-        Err? : InkPrimitives_LangError$9
-        };
-    type PinkExtension_ChainExtension_PinkExt$23 = {
+    export interface Error {
+        badOrigin?: null;
+        noDuplicatedUserProfile?: null;
+        failedToCreateProfile?: string;
+        userProfileNotExists?: null;
+    }
 
-        };
+    export namespace Error$ {
+        export enum Enum {
+            BadOrigin = "BadOrigin",
+            NoDuplicatedUserProfile = "NoDuplicatedUserProfile",
+            FailedToCreateProfile = "FailedToCreateProfile",
+            UserProfileNotExists = "UserProfileNotExists"
+        }
 
+        export type Human = BrickProfileFactory.Error$.Enum.BadOrigin
+            | BrickProfileFactory.Error$.Enum.NoDuplicatedUserProfile
+            | BrickProfileFactory.Error$.Enum.UserProfileNotExists
+            | {
+                FailedToCreateProfile?: string
+            };
+        export type Codec = DPT.Enum<BrickProfileFactory.Error$.Enum.BadOrigin, never, never, PTT.Codec>
+            | DPT.Enum<BrickProfileFactory.Error$.Enum.NoDuplicatedUserProfile, never, never, PTT.Codec>
+            | DPT.Enum<BrickProfileFactory.Error$.Enum.FailedToCreateProfile, string, string, PT.Text>
+            | DPT.Enum<BrickProfileFactory.Error$.Enum.UserProfileNotExists, never, never, PTT.Codec>;
+    }
+}
+
+export namespace PinkExtension {
+    export namespace ChainExtension {
+        export type PinkExt = any;
+
+        export namespace PinkExt$ {
+            export type Enum = any;
+            export type Human = any;
+            export type Codec = any;
+        }
+    }
+}
+
+export namespace BrickProfileFactory {
     /** */
     /** Queries */
     /** */
     namespace ContractQuery {
         export interface Version extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$10>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    PTT.ITuple<[PT.U16, PT.U16, PT.U16]>,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
 
         export interface Owner extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$12>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    PTI.AccountId,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
 
         export interface UserCount extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$13>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    PT.U64,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
 
         export interface ProfileCodeHash extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$14>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    PTI.Hash,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
 
         export interface GetUserProfileAddress extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$18>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    DPT.Result$.Codec<
+                        PTI.AccountId,
+                        BrickProfileFactory.Error$.Codec
+                    >,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
 
         export interface GetUserProfiles extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$20>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    DPT.Result$.Codec<
+                        PT.Vec<PTT.ITuple<[PTI.AccountId, PTI.AccountId]>>,
+                        BrickProfileFactory.Error$.Codec
+                    >,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
     }
 
-    export interface MapMessageQuery extends DPT.MapMessageQuery {
+    interface MapMessageQuery extends DPT.MapMessageQuery {
         version: ContractQuery.Version;
         owner: ContractQuery.Owner;
         userCount: ContractQuery.UserCount;
@@ -111,7 +196,7 @@ export namespace BrickProfileFactory {
     /** */
     namespace ContractTx {
         export interface SetProfileCodeHash extends DPT.ContractTx {
-            (options: ContractOptions, profile_code_hash: InkPrimitives_Types_Hash$2): DPT.SubmittableExtrinsic;
+            (options: ContractOptions, profile_code_hash: string | number[]): DPT.SubmittableExtrinsic;
         }
 
         export interface CreateUserProfile extends DPT.ContractTx {
@@ -119,7 +204,7 @@ export namespace BrickProfileFactory {
         }
     }
 
-    export interface MapMessageTx extends DPT.MapMessageTx {
+    interface MapMessageTx extends DPT.MapMessageTx {
         setProfileCodeHash: ContractTx.SetProfileCodeHash;
         createUserProfile: ContractTx.CreateUserProfile;
     }
@@ -135,7 +220,7 @@ export namespace BrickProfileFactory {
     /** */
     /** Contract factory */
     /** */
-    export declare class Factory extends DevPhase.ContractFactory {
-        instantiate<T = Contract>(constructor: "new", params: [InkPrimitives_Types_Hash$2], options?: DevPhase.InstantiateOptions): Promise<T>;
+    export declare class Factory extends DevPhase.ContractFactory<Contract> {
+        instantiate(constructor: "new", params: [string | number[] | PTI.Hash], options?: DevPhase.InstantiateOptions): Promise<Contract>;
     }
 }

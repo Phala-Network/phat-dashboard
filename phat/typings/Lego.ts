@@ -1,46 +1,76 @@
 import type * as PhalaSdk from "@phala/sdk";
 import type * as DevPhase from "@devphase/service";
-import type * as DPT from "@devphase/service/etc/typings";
 import type { ContractCallResult, ContractQuery } from "@polkadot/api-contract/base/types";
 import type { ContractCallOutcome, ContractOptions } from "@polkadot/api-contract/types";
-import type { Codec } from "@polkadot/types/types";
+import type * as DPT from "@devphase/service/etc/typings";
+import type * as PT from "@polkadot/types";
+import type * as PTI from "@polkadot/types/interfaces";
+import type * as PTT from "@polkadot/types/types";
+
+
+/** */
+/** Exported types */
+/** */
+
+export namespace InkPrimitives {
+    export interface LangError {
+        couldNotReadInput?: null;
+    }
+
+    export namespace LangError$ {
+        export enum Enum {
+            CouldNotReadInput = "CouldNotReadInput"
+        }
+
+        export type Human = InkPrimitives.LangError$.Enum.CouldNotReadInput;
+        export type Codec = DPT.Enum<InkPrimitives.LangError$.Enum.CouldNotReadInput, never, never, PTT.Codec>;
+    }
+}
+
+export namespace InkEnv {
+    export namespace Types {
+        export type NoChainExtension = any;
+
+        export namespace NoChainExtension$ {
+            export type Enum = any;
+            export type Human = any;
+            export type Codec = any;
+        }
+    }
+}
 
 export namespace Lego {
-    type InkPrimitives_LangError$3 = {
-        CouldNotReadInput? : null
-        };
-    type Result$1 = {
-        Ok? : never[],
-        Err? : InkPrimitives_LangError$3
-        };
-    type Result$4 = {
-        Ok? : [ number, number, number ],
-        Err? : InkPrimitives_LangError$3
-        };
-    type Result$6 = {
-        Ok? : boolean,
-        Err? : InkPrimitives_LangError$3
-        };
-    type InkPrimitives_Types_AccountId$7 = any;
-    type InkPrimitives_Types_Hash$8 = any;
-    type InkEnv_Types_NoChainExtension$9 = {
-
-        };
-
     /** */
     /** Queries */
     /** */
     namespace ContractQuery {
         export interface Version extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$4>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    PTT.ITuple<[PT.U16, PT.U16, PT.U16]>,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
 
         export interface Run extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, actions: string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$6>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+                actions: string | PT.Text,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    PT.Bool,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
     }
 
-    export interface MapMessageQuery extends DPT.MapMessageQuery {
+    interface MapMessageQuery extends DPT.MapMessageQuery {
         version: ContractQuery.Version;
         run: ContractQuery.Run;
     }
@@ -51,7 +81,7 @@ export namespace Lego {
     namespace ContractTx {
     }
 
-    export interface MapMessageTx extends DPT.MapMessageTx {
+    interface MapMessageTx extends DPT.MapMessageTx {
     }
 
     /** */
@@ -65,7 +95,7 @@ export namespace Lego {
     /** */
     /** Contract factory */
     /** */
-    export declare class Factory extends DevPhase.ContractFactory {
-        instantiate<T = Contract>(constructor: "default", params: never[], options?: DevPhase.InstantiateOptions): Promise<T>;
+    export declare class Factory extends DevPhase.ContractFactory<Contract> {
+        instantiate(constructor: "default", params: never[], options?: DevPhase.InstantiateOptions): Promise<Contract>;
     }
 }

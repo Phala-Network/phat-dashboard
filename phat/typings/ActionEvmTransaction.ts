@@ -1,100 +1,166 @@
 import type * as PhalaSdk from "@phala/sdk";
 import type * as DevPhase from "@devphase/service";
-import type * as DPT from "@devphase/service/etc/typings";
 import type { ContractCallResult, ContractQuery } from "@polkadot/api-contract/base/types";
 import type { ContractCallOutcome, ContractOptions } from "@polkadot/api-contract/types";
-import type { Codec } from "@polkadot/types/types";
+import type * as DPT from "@devphase/service/etc/typings";
+import type * as PT from "@polkadot/types";
+import type * as PTI from "@polkadot/types/interfaces";
+import type * as PTT from "@polkadot/types/types";
+
+
+/** */
+/** Exported types */
+/** */
+
+export namespace InkPrimitives {
+    export interface LangError {
+        couldNotReadInput?: null;
+    }
+
+    export namespace LangError$ {
+        export enum Enum {
+            CouldNotReadInput = "CouldNotReadInput"
+        }
+
+        export type Human = InkPrimitives.LangError$.Enum.CouldNotReadInput;
+        export type Codec = DPT.Enum<InkPrimitives.LangError$.Enum.CouldNotReadInput, never, never, PTT.Codec>;
+    }
+}
 
 export namespace ActionEvmTransaction {
-    type InkPrimitives_Types_AccountId$1 = any;
-    type InkPrimitives_LangError$4 = {
-        CouldNotReadInput? : null
-        };
-    type Result$2 = {
-        Ok? : never[],
-        Err? : InkPrimitives_LangError$4
-        };
-    type Result$5 = {
-        Ok? : [ number, number, number ],
-        Err? : InkPrimitives_LangError$4
-        };
-    type Result$7 = {
-        Ok? : InkPrimitives_Types_AccountId$1,
-        Err? : InkPrimitives_LangError$4
-        };
-    type ActionEvmTransaction_ActionEvmTransaction_Error$10 = {
-        BadOrigin? : null,
-        NotConfigured? : null,
-        BadAbi? : null,
-        BadParams? : string,
-        BadToAddress? : null,
-        BadTransaction? : null,
-        FailedToSendTransaction? : null
-        };
-    type Result$9 = {
-        Ok? : string,
-        Err? : ActionEvmTransaction_ActionEvmTransaction_Error$10
-        };
-    type Result$8 = {
-        Ok? : Result$9,
-        Err? : InkPrimitives_LangError$4
-        };
-    type Result$12 = {
-        Ok? : never[],
-        Err? : ActionEvmTransaction_ActionEvmTransaction_Error$10
-        };
-    type Result$11 = {
-        Ok? : Result$12,
-        Err? : InkPrimitives_LangError$4
-        };
-    type Result$14 = {
-        Ok? : number[] | string,
-        Err? : ActionEvmTransaction_ActionEvmTransaction_Error$10
-        };
-    type Result$13 = {
-        Ok? : Result$14,
-        Err? : InkPrimitives_LangError$4
-        };
-    type PrimitiveTypes_H256$17 = any;
-    type Result$16 = {
-        Ok? : PrimitiveTypes_H256$17,
-        Err? : ActionEvmTransaction_ActionEvmTransaction_Error$10
-        };
-    type Result$15 = {
-        Ok? : Result$16,
-        Err? : InkPrimitives_LangError$4
-        };
-    type InkPrimitives_Types_Hash$18 = any;
-    type PinkExtension_ChainExtension_PinkExt$19 = {
+    export interface Error {
+        badOrigin?: null;
+        notConfigured?: null;
+        badAbi?: null;
+        badParams?: string;
+        badToAddress?: null;
+        badTransaction?: null;
+        failedToSendTransaction?: null;
+    }
 
-        };
+    export namespace Error$ {
+        export enum Enum {
+            BadOrigin = "BadOrigin",
+            NotConfigured = "NotConfigured",
+            BadAbi = "BadAbi",
+            BadParams = "BadParams",
+            BadToAddress = "BadToAddress",
+            BadTransaction = "BadTransaction",
+            FailedToSendTransaction = "FailedToSendTransaction"
+        }
 
+        export type Human = ActionEvmTransaction.Error$.Enum.BadOrigin
+            | ActionEvmTransaction.Error$.Enum.NotConfigured
+            | ActionEvmTransaction.Error$.Enum.BadAbi
+            | ActionEvmTransaction.Error$.Enum.BadToAddress
+            | ActionEvmTransaction.Error$.Enum.BadTransaction
+            | ActionEvmTransaction.Error$.Enum.FailedToSendTransaction
+            | {
+                BadParams?: string
+            };
+        export type Codec = DPT.Enum<ActionEvmTransaction.Error$.Enum.BadOrigin, never, never, PTT.Codec>
+            | DPT.Enum<ActionEvmTransaction.Error$.Enum.NotConfigured, never, never, PTT.Codec>
+            | DPT.Enum<ActionEvmTransaction.Error$.Enum.BadAbi, never, never, PTT.Codec>
+            | DPT.Enum<ActionEvmTransaction.Error$.Enum.BadParams, string, string, PT.Text>
+            | DPT.Enum<ActionEvmTransaction.Error$.Enum.BadToAddress, never, never, PTT.Codec>
+            | DPT.Enum<ActionEvmTransaction.Error$.Enum.BadTransaction, never, never, PTT.Codec>
+            | DPT.Enum<ActionEvmTransaction.Error$.Enum.FailedToSendTransaction, never, never, PTT.Codec>;
+    }
+}
+
+export namespace PinkExtension {
+    export namespace ChainExtension {
+        export type PinkExt = any;
+
+        export namespace PinkExt$ {
+            export type Enum = any;
+            export type Human = any;
+            export type Codec = any;
+        }
+    }
+}
+
+export namespace ActionEvmTransaction {
     /** */
     /** Queries */
     /** */
     namespace ContractQuery {
         export interface Version extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$5>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    PTT.ITuple<[PT.U16, PT.U16, PT.U16]>,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
 
         export interface Owner extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$7>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    PTI.AccountId,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
 
         export interface GetRpc extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$8>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    DPT.Result$.Codec<
+                        PT.Text,
+                        ActionEvmTransaction.Error$.Codec
+                    >,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
 
         export interface BuildTransaction extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, to: string, abi: number[] | string, func: string, params: number[] | string[]): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$13>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+                to: string | PT.Text,
+                abi: number[] | string | PT.Vec<PT.U8>,
+                func: string | PT.Text,
+                params: number[] | string[] | PT.Vec<PT.Vec<PT.U8>>,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    DPT.Result$.Codec<
+                        PT.Vec<PT.U8>,
+                        ActionEvmTransaction.Error$.Codec
+                    >,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
 
         export interface MaybeSendTransaction extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, rlp: number[] | string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$15>>>;
+            (
+                certificateData: PhalaSdk.CertificateData,
+                options: ContractOptions,
+                rlp: number[] | string | PT.Vec<PT.U8>,
+            ): DPT.CallReturn<
+                DPT.Result$.Codec<
+                    DPT.Result$.Codec<
+                        PTI.H256,
+                        ActionEvmTransaction.Error$.Codec
+                    >,
+                    InkPrimitives.LangError$.Codec
+                >
+            >;
         }
     }
 
-    export interface MapMessageQuery extends DPT.MapMessageQuery {
+    interface MapMessageQuery extends DPT.MapMessageQuery {
         version: ContractQuery.Version;
         owner: ContractQuery.Owner;
         getRpc: ContractQuery.GetRpc;
@@ -111,7 +177,7 @@ export namespace ActionEvmTransaction {
         }
     }
 
-    export interface MapMessageTx extends DPT.MapMessageTx {
+    interface MapMessageTx extends DPT.MapMessageTx {
         config: ContractTx.Config;
     }
 
@@ -126,7 +192,7 @@ export namespace ActionEvmTransaction {
     /** */
     /** Contract factory */
     /** */
-    export declare class Factory extends DevPhase.ContractFactory {
-        instantiate<T = Contract>(constructor: "default", params: never[], options?: DevPhase.InstantiateOptions): Promise<T>;
+    export declare class Factory extends DevPhase.ContractFactory<Contract> {
+        instantiate(constructor: "default", params: never[], options?: DevPhase.InstantiateOptions): Promise<Contract>;
     }
 }
