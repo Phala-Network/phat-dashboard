@@ -5,7 +5,7 @@ import type { ContractCallResult, ContractQuery } from "@polkadot/api-contract/b
 import type { ContractCallOutcome, ContractOptions } from "@polkadot/api-contract/types";
 import type { Codec } from "@polkadot/types/types";
 
-export namespace PinkSystem {
+export namespace System {
     type InkPrimitives_Types_AccountId$1 = any;
     type InkPrimitives_LangError$4 = {
         CouldNotReadInput? : null
@@ -15,127 +15,114 @@ export namespace PinkSystem {
         Err? : InkPrimitives_LangError$4
         };
     type Result$5 = {
-        Ok? : InkPrimitives_Types_AccountId$1,
+        Ok? : [ number, number ],
         Err? : InkPrimitives_LangError$4
         };
-    type Result$6 = {
-        Ok? : [ number, number, number ],
-        Err? : InkPrimitives_LangError$4
-        };
-    type PinkExtension_System_Error$10 = {
+    type PinkExtension_System_Error$9 = {
         PermisionDenied? : null,
         DriverNotFound? : null,
         CodeNotFound? : null,
         ConditionNotMet? : null
         };
-    type Result$9 = {
-        Ok? : never[],
-        Err? : PinkExtension_System_Error$10
-        };
     type Result$8 = {
-        Ok? : Result$9,
+        Ok? : never[],
+        Err? : PinkExtension_System_Error$9
+        };
+    type Result$7 = {
+        Ok? : Result$8,
         Err? : InkPrimitives_LangError$4
         };
-    type Option$12 = {
+    type Option$11 = {
         None? : null,
         Some? : InkPrimitives_Types_AccountId$1
         };
-    type Result$11 = {
-        Ok? : Option$12,
+    type Result$10 = {
+        Ok? : Option$11,
         Err? : InkPrimitives_LangError$4
         };
-    type PinkExtension_HookPoint$13 = {
+    type PinkExtension_HookPoint$12 = {
         OnBlockEnd? : null
         };
-    type Result$14 = {
+    type Result$13 = {
         Ok? : number,
         Err? : InkPrimitives_LangError$4
         };
-    type Result$15 = {
+    type Result$14 = {
         Ok? : boolean,
         Err? : InkPrimitives_LangError$4
         };
-    type PinkExtension_System_CodeType$17 = {
+    type PinkExtension_System_CodeType$16 = {
         Ink? : null,
         Sidevm? : null
         };
-    type PinkExtension_System_DriverError$20 = {
+    type PinkExtension_System_DriverError$19 = {
         Other? : string,
-        SystemError? : PinkExtension_System_Error$10,
+        SystemError? : PinkExtension_System_Error$9,
         BadOrigin? : null
         };
-    type Result$19 = {
-        Ok? : never[],
-        Err? : PinkExtension_System_DriverError$20
-        };
     type Result$18 = {
-        Ok? : Result$19,
-        Err? : InkPrimitives_LangError$4
+        Ok? : never[],
+        Err? : PinkExtension_System_DriverError$19
         };
-    type InkPrimitives_Types_Hash$21 = any;
-    type PinkExtension_ChainExtension_PinkExt$22 = {
-
+    type Result$17 = {
+        Ok? : Result$18,
+        Err? : InkPrimitives_LangError$4
         };
 
     /** */
     /** Queries */
     /** */
     namespace ContractQuery {
-        export interface Owner extends DPT.ContractQuery {
+        export interface System_Version extends DPT.ContractQuery {
             (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$5>>>;
         }
 
-        export interface System_Version extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$6>>>;
-        }
-
         export interface System_GetDriver extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, name: string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$11>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, name: string): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$10>>>;
         }
 
         export interface System_DeploySidevmTo extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, contract_id: InkPrimitives_Types_AccountId$1, code_hash: DPT.FixedArray<number, 32>): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$8>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, contract_id: InkPrimitives_Types_AccountId$1, code_hash: DPT.FixedArray<number, 32>): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$7>>>;
         }
 
         export interface System_StopSidevmAt extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, contract_id: InkPrimitives_Types_AccountId$1): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$8>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, contract_id: InkPrimitives_Types_AccountId$1): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$7>>>;
         }
 
         export interface System_SetContractWeight extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, contract_id: InkPrimitives_Types_AccountId$1, weight: number): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$8>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, contract_id: InkPrimitives_Types_AccountId$1, weight: number): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$7>>>;
         }
 
         export interface System_TotalBalanceOf extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, account: InkPrimitives_Types_AccountId$1): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$14>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, account: InkPrimitives_Types_AccountId$1): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$13>>>;
         }
 
         export interface System_FreeBalanceOf extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, account: InkPrimitives_Types_AccountId$1): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$14>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, account: InkPrimitives_Types_AccountId$1): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$13>>>;
         }
 
         export interface System_IsAdmin extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, contract_id: InkPrimitives_Types_AccountId$1): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$15>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, contract_id: InkPrimitives_Types_AccountId$1): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$14>>>;
         }
 
         export interface System_UpgradeSystemContract extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$8>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$7>>>;
         }
 
         export interface System_DoUpgrade extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, from_version: [ number, number, number ]): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$8>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, from_version: [ number, number ]): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$7>>>;
         }
 
         export interface System_UpgradeRuntime extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, version: [ number, number ]): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$8>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, version: [ number, number ]): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$7>>>;
         }
 
         export interface System_CodeExists extends DPT.ContractQuery {
-            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, code_hash: DPT.FixedArray<number, 32>, code_type: PinkExtension_System_CodeType$17): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$15>>>;
+            (certificateData: PhalaSdk.CertificateData, options: ContractOptions, code_hash: DPT.FixedArray<number, 32>, code_type: PinkExtension_System_CodeType$16): DPT.CallResult<DPT.CallOutcome<DPT.IJson<Result$14>>>;
         }
     }
 
     export interface MapMessageQuery extends DPT.MapMessageQuery {
-        owner: ContractQuery.Owner;
         'system::version': ContractQuery.System_Version;
         'system::getDriver': ContractQuery.System_GetDriver;
         'system::deploySidevmTo': ContractQuery.System_DeploySidevmTo;
@@ -163,7 +150,7 @@ export namespace PinkSystem {
         }
 
         export interface System_SetHook extends DPT.ContractTx {
-            (options: ContractOptions, hook: PinkExtension_HookPoint$13, contract: InkPrimitives_Types_AccountId$1, selector: number, gas_limit: number): DPT.SubmittableExtrinsic;
+            (options: ContractOptions, hook: PinkExtension_HookPoint$12, contract: InkPrimitives_Types_AccountId$1, selector: number, gas_limit: number): DPT.SubmittableExtrinsic;
         }
 
         export interface ContractDeposit_ChangeDeposit extends DPT.ContractTx {
