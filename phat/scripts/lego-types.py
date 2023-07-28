@@ -20,7 +20,10 @@ class TypeInfo:
             self.tdef = td['primitive']
         elif 'composite' in td:
             self.kind = 'struct'
-            self.tdef = td['composite']
+            params = info['type'].get('params')
+            self.tdef = {'fields': params} if params else td['composite']
+            if 'fields' not in self.tdef:
+                self.tdef = {'fields': []}
         elif 'variant' in td:
             self.kind = 'enum'
             self.tdef = td['variant']
