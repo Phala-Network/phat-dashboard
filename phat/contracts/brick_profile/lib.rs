@@ -260,10 +260,6 @@ mod brick_profile {
             rpc: String,
             sk: Vec<u8>,
         ) -> Result<ExternalAccountId> {
-
-            // Deprecated in first release
-            return Err(Error::Deprecated);
-
             self.ensure_owner()?;
 
             let id = self.next_external_account_id;

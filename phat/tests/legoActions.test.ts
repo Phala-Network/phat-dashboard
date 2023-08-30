@@ -60,8 +60,8 @@ describe("Run lego actions", () => {
 
   const rpc = process.env.RPC ?? "http://localhost:8545";
   const ethSecretKey = process.env.PRIVKEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
-  const lensApi = process.env.LENS ?? "https://api-mumbai.lens.dev/";
-  const anchorAddr = process.env.ANCHOR ?? "0xb037f1EDD1474D028984D6594F7E848CDD3FAdE3";
+  const lensApi = process.env.LENS ?? "https://api.lens.dev/";
+  const anchorAddr = process.env.ANCHOR ?? "0x94Af64b38E27acD8b0B01dBCF214536D4a357A3c";
 
   before(async function () {
     this.timeout(500_000_000);
@@ -192,16 +192,16 @@ describe("Run lego actions", () => {
 
       // STEP 2: generate the external ETH account, the ExternalAccountId increases from 0
       // importEvmAccount is only available for debug, will be disabled in first release
-      // await TxHandler.handle(
-      //   brickProfile.tx.importEvmAccount({ gasLimit: "10000000000000" }, rpc, ethSecretKey),
-      //   alice,
-      //   true,
-      // );
       await TxHandler.handle(
-        brickProfile.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
+        brickProfile.tx.importEvmAccount({ gasLimit: "10000000000000" }, rpc, ethSecretKey),
         alice,
         true,
       );
+      // await TxHandler.handle(
+      //   brickProfile.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
+      //   alice,
+      //   true,
+      // );
       await TxHandler.handle(
         brickProfile.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
         alice,
@@ -287,7 +287,7 @@ describe("Run lego actions", () => {
       }, 1000 * 10);
       console.log("ActionOffchainRollup client configured");
 
-      let coreJs = fs.readFileSync("./example-oracles/lens_stats/dist/index.js", "utf8");
+      let coreJs = fs.readFileSync("./example-oracles/lens_pub/dist/index.js", "utf8");
       await TxHandler.handle(
         offchainRollup.tx.configCore({ gasLimit: "10000000000000" }, coreJs, lensApi as any),
         alice,
