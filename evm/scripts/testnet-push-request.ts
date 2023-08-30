@@ -1,17 +1,17 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const TestLensOracle = await ethers.getContractFactory("TestLensOracle");
+  const TestLensOracle = await ethers.getContractFactory("TestLensPubOracle");
 
   const [deployer] = await ethers.getSigners();
 
-  const oracle = await TestLensOracle.attach('0x2a6a5d59564C470f6aC3E93C4c197251F31EBCf8'); // change this to your client smart contract address
+  const oracle = await TestLensOracle.attach('0x94Af64b38E27acD8b0B01dBCF214536D4a357A3c'); // change this to your client smart contract address
   await Promise.all([
     oracle.deployed(),
   ])
 
   console.log('Pushing a request...');
-  await oracle.connect(deployer).request("0x01");
+  await oracle.connect(deployer).requestWhoMirroredPub("0x09-0x01", "");
   console.log('Done');
 }
 
