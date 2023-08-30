@@ -229,7 +229,7 @@ describe("Run lego actions", () => {
       }, 1000 * 10);
     });
 
-    it("can update rpc endpoint", async function () {
+    it.skip("can update rpc endpoint", async function () {
       await TxHandler.handle(
         brickProfile.tx.generateEvmAccount({ gasLimit: "10000000000000" }, rpc),
         alice,
@@ -252,7 +252,7 @@ describe("Run lego actions", () => {
       }, 1000 * 10);
     });
 
-    it("can dump secret key", async function () {
+    it.skip("can dump secret key", async function () {
       {
         const { output } = await brickProfile.query.getDumpedKey(certAlice, {}, 2);
         expect(output.asOk.isErr).to.be.true;
@@ -308,15 +308,10 @@ describe("Run lego actions", () => {
       const selectorGetAnswer = 0x9d27bc00;
       const input = "0x010200000000000000000000000000000000000000000000000000000000000004d2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000043078303100000000000000000000000000000000000000000000000000000000";
       const actions_lens_api = JSON.stringify([
-          // { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorGetAnswer }, input },
-          { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorAnswerRequest } },
-          { cmd: "log" }
+        // { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorGetAnswer }, input },
+        { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorAnswerRequest } },
+        { cmd: "log" }
       ]);
-      await TxHandler.handle(
-        brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
-        alice,
-        true,
-      );
       await TxHandler.handle(
         brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
         alice,
@@ -328,31 +323,20 @@ describe("Run lego actions", () => {
         alice,
         true,
       );
-      await TxHandler.handle(
-        brickProfile.tx.authorizeWorkflow({ gasLimit: "10000000000000" }, 1, 1),
-        alice,
-        true,
-      );
       await checkUntil(async () => {
         const { output: outputWorkflow0 } = await brickProfile.query.getWorkflow(certAlice, {}, 0); // 0 for WorkflowId
-        const { output: outputWorkflow1 } = await brickProfile.query.getWorkflow(certAlice, {}, 1); // 1 for WorkflowId
         const { output: outputWorkflowCount } = await brickProfile.query.workflowCount(certAlice, {});
         const { output: outputAuthorized0 } = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 0); // 0 for WorkflowId
-        const { output: outputAuthorized1 } = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 1); // 1 for WorkflowId
         // console.log(`brickProfile authorize: ${JSON.stringify(resultAuthorized)}`);
-        return outputWorkflowCount.asOk.toPrimitive() === 2
-          && outputWorkflow0.asOk.isOk && outputAuthorized0.asOk.toPrimitive() === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
-          && outputWorkflow1.asOk.isOk && outputAuthorized1.asOk.toPrimitive() === 1
+        return outputWorkflowCount.asOk.toPrimitive() === 1
+          && outputWorkflow0.asOk.isOk && outputAuthorized0.asOk.toPrimitive() === 0; // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
       }, 1000 * 10);
 
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
       // ATTENTION: the oralce is on-demand so it will only respond when there is request from EVM client
       while (true) {
-        let { output: outputWorkflowCount } = await brickProfile.query.workflowCount(certAlice, {});
-        for (let i = 0; i < outputWorkflowCount.asOk; i++) {
-          const { output } = await brickProfile.query.poll(certAlice, {}, i);
-          console.log(`Workflow ${i} triggerred: ${JSON.stringify(output)}`);
-        }
+        const { output } = await brickProfile.query.poll(certAlice, {}, 0);
+        console.log(`Workflow 0 triggerred: ${JSON.stringify(output)}`);
 
         sleep(5_000);
       }

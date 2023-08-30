@@ -24,9 +24,7 @@ const config: ProjectConfigOptions = {
             port: 38000, // server port
             binary: '{{directories.stacks}}/{{stack.version}}/pruntime',
             workingDir: '{{directories.stacks}}/.data/pruntime',
-            envs: {
-                'RUST_LOG': 'debug'
-            },
+            envs: {},
             args: {
                 '--allow-cors': true,
                 '--cores': 0,
