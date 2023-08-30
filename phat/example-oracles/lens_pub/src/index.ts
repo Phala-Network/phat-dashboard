@@ -266,7 +266,7 @@ function fetchWhoMirroredPub(lensApi: string, pubId: string, cursor?: string): a
         returnTextBody: true,
       },
     ],
-    2000
+    10000
   )[0];
   if (response.statusCode != 200) {
     console.log(
