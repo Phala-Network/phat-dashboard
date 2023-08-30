@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./PhatRollupAnchor.sol";
 
 contract TestLensPubOracle is PhatRollupAnchor, Ownable {
-    event ResponseReceived(uint reqId, uint reqType, string id, string value);
-    event ErrorReceived(uint reqId, uint reqType, string id, string errno);
+    event ResponseReceived(uint reqId, uint reqType, string id, uint256 value);
+    event ErrorReceived(uint reqId, uint reqType, string id, uint256 errno);
 
     uint constant TYPE_PUB_WHO_MIRRORED = 0;
     uint constant TYPE_PUB_WHO_COMMENTED = 1;
@@ -54,9 +54,9 @@ contract TestLensPubOracle is PhatRollupAnchor, Ownable {
 
     function _onMessageReceived(bytes calldata action) internal override {
         // require(action.length == 32 * 3, "cannot parse action");
-        (uint respType, uint id, string memory data) = abi.decode(
+        (uint respType, uint id, uint256 data) = abi.decode(
             action,
-            (uint, uint, string)
+            (uint, uint, uint256)
         );
         if (respType == TYPE_ERROR) {
             emit ErrorReceived(id, requests[id].reqType, requests[id].id, data);
