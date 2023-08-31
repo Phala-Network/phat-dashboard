@@ -16,6 +16,8 @@ secp256k1 = { version = "0.24.3", default-features = false }
 pink-extension = { version = "0.4", default-features = false }
 pink-json = { git = "https://github.com/Phala-Network/pink-json.git", branch = "pink", default-features = false, features = ["de-number-as-str"] }
 pink-web3 = { version = "0.20", default-features = false, features = ["pink", "signing"] }
+logging = { path = "../../crates/logging", default-features = false }
+hex_fmt = { version = "0.3", default-features = false }
 
 [dev-dependencies]
 dotenvy = "0.15"
@@ -37,6 +39,7 @@ std = [
     "pink-extension/std",
     "pink-json/std",
     "pink-web3/std",
+    "logging/std",
 ]
 ink-as-dependency = []
 

@@ -6,6 +6,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 use pink_extension as pink;
 use scale::{Decode, Encode};
+use logging::info;
 
 #[derive(Debug, Encode, Decode)]
 #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
@@ -31,7 +32,7 @@ pub fn eval(script: &str, args: &[String]) -> Result<Output, String> {
         .returns::<Result<Result<Output, String>, ink::LangError>>()
         .invoke()
         .expect("Failed to invoke delegate call");
-    pink::info!("eval result: {result:?}");
+    info!("eval result: {result:?}");
     result
 }
 

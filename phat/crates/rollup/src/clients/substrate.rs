@@ -12,6 +12,7 @@ use pink::ResultExt;
 use pink_extension as pink;
 use pink_extension::AccountId;
 use primitive_types::H256;
+use logging::warn;
 
 const METHOD_CLAIM_NAME: u8 = 0u8;
 const METHOD_ROLLUP: u8 = 1u8;
@@ -47,7 +48,7 @@ impl<'a> KvSnapshot for SubstrateSnapshot<'a> {
             .or(Err(kv_session::Error::FailedToGetStorage))?;
 
         #[cfg(feature = "logging")]
-        pink::warn!(
+        warn!(
             "Storage[{}][{}] = {:?}",
             hex::encode(key1),
             hex::encode(key2),
@@ -147,7 +148,7 @@ impl<'a> SubstrateRollupClient<'a> {
         .map_err(Self::convert_err)?;
 
         // #[cfg(feature = "logging")]
-        // pink::warn!("RawTx: {raw_tx:?}");
+        // warn!("RawTx: {raw_tx:?}");
 
         if raw_tx.updates.is_empty() && self.actions.is_empty() {
             return Ok(None);
@@ -203,15 +204,15 @@ impl<'a> SubmittableRollupTx<'a> {
 
         #[cfg(feature = "logging")]
         {
-            pink::warn!("ContractId = {}", hex::encode(self.contract_id),);
-            pink::warn!("SignedTx = {}", hex::encode(&signed_tx),);
+            warn!("ContractId = {}", hex::encode(self.contract_id),);
+            warn!("SignedTx = {}", hex::encode(&signed_tx),);
         }
 
         let tx_hash = subrpc::send_transaction(self.rpc, &signed_tx)
             .or(Err(Error::FailedToSendTransaction))?;
 
         #[cfg(feature = "logging")]
-        pink::warn!("Sent = {}", hex::encode(&tx_hash),);
+        warn!("Sent = {}", hex::encode(&tx_hash),);
         Ok(tx_hash)
     }
 }
@@ -252,6 +253,6 @@ pub fn claim_name(
         subrpc::send_transaction(rpc, &signed_tx).or(Err(Error::FailedToSendTransaction))?;
 
     #[cfg(feature = "logging")]
-    pink::warn!("Sent = {}", hex::encode(&tx_hash),);
+    warn!("Sent = {}", hex::encode(&tx_hash),);
     Ok(tx_hash)
 }
