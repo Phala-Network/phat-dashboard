@@ -15,6 +15,7 @@ import { BrickProfileFactory } from "@/typings/BrickProfileFactory"
 import { BrickProfile } from '@/typings/BrickProfile';
 import { ActionEvmTransaction } from "@/typings/ActionEvmTransaction";
 import { ActionOffchainRollup } from '@/typings/ActionOffchainRollup';
+import { Tagbag } from "@/typings/Tagbag";
 
 import "dotenv/config";
 
@@ -50,6 +51,8 @@ describe("Run lego actions", () => {
   let evmTransaction: ActionEvmTransaction.Contract;
   let offchainRollupFactory: ActionOffchainRollup.Factory;
   let offchainRollup: ActionOffchainRollup.Contract;
+  let tagbagFactory: Lego.Factory;
+  let tagbag: Lego.Contract;
 
   let api: ApiPromise;
   let alice: KeyringPair;
@@ -84,6 +87,7 @@ describe("Run lego actions", () => {
       contractType: ContractType.IndeterministicInkCode,
     });
     legoFactory = await this.devPhase.getFactory('lego_rs', { contractType: ContractType.InkCode });
+    tagbagFactory = await this.devPhase.getFactory('tagbag', { contractType: ContractType.InkCode });
     profileFactoryFactory = await this.devPhase.getFactory('brick_profile_factory', { contractType: ContractType.InkCode });
     brickProfileFactory = await this.devPhase.getFactory('brick_profile', { contractType: ContractType.InkCode });
     evmTransactionFactory = await this.devPhase.getFactory('action_evm_transaction', { contractType: ContractType.InkCode });
@@ -91,6 +95,7 @@ describe("Run lego actions", () => {
 
     await qjsFactory.deploy();
     await legoFactory.deploy();
+    await tagbagFactory.deploy();
     await profileFactoryFactory.deploy();
     await brickProfileFactory.deploy();
     await evmTransactionFactory.deploy();
@@ -138,8 +143,18 @@ describe("Run lego actions", () => {
     this.timeout(500_000_000);
 
     before(async function () {
+      tagbag = await tagbagFactory.instantiate("default", [], {});
       // Deploy contracts
       lego = await legoFactory.instantiate("default", [], {});
+      await TxHandler.handle(
+        system.tx["system::setDriver"](
+          { gasLimit: "10000000000000" },
+          "TagStack",
+          tagbag.address.toHex()
+        ),
+        alice,
+        true,
+      );
       evmTransaction = await evmTransactionFactory.instantiate("default", [], {});
       // setup BrickProfileFactory
       profileFactory = await profileFactoryFactory.instantiate("new", [brickProfileFactory.metadata.source.hash], { transferToCluster: 1e12 });
@@ -308,9 +323,9 @@ describe("Run lego actions", () => {
       const selectorGetAnswer = 0x9d27bc00;
       const input = "0x010200000000000000000000000000000000000000000000000000000000000004d2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000043078303100000000000000000000000000000000000000000000000000000000";
       const actions_lens_api = JSON.stringify([
-          // { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorGetAnswer }, input },
-          { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorAnswerRequest } },
-          { cmd: "log" }
+        // { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorGetAnswer }, input },
+        { cmd: "call", config: { callee: offchainRollup.address.toHex(), selector: selectorAnswerRequest } },
+        { cmd: "log" }
       ]);
       await TxHandler.handle(
         brickProfile.tx.addWorkflow({ gasLimit: "10000000000000" }, "TestRollupOracle", actions_lens_api),
@@ -345,12 +360,14 @@ describe("Run lego actions", () => {
           && outputWorkflow1.asOk.isOk && outputAuthorized1.asOk.toPrimitive() === 1
       }, 1000 * 10);
 
+      var sn = 0;
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
       // ATTENTION: the oralce is on-demand so it will only respond when there is request from EVM client
       while (true) {
         let { output: outputWorkflowCount } = await brickProfile.query.workflowCount(certAlice, {});
         for (let i = 0; i < outputWorkflowCount.asOk; i++) {
-          const { output } = await brickProfile.query.poll(certAlice, {}, i);
+          const { output } = await brickProfile.query.poll(certAlice, {}, i, `PID_${sn}`);
+          sn += 1;
           console.log(`Workflow ${i} triggerred: ${JSON.stringify(output)}`);
         }
 

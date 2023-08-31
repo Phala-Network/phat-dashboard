@@ -9,7 +9,7 @@ mod lego {
     use alloc::string::String;
     use alloc::vec::Vec;
     use ink::env::Error;
-    use pink::{info, warn};
+    use logging::{info, warn};
     use scale::Encode;
     use serde::Deserialize;
     use this_crate::{version_tuple, VersionTuple};
@@ -78,7 +78,7 @@ mod lego {
                     result = format!("{res:?}");
                 }
                 Action::Log => {
-                    pink::info!("output={}", result);
+                    info!("output={}", result);
                     result.clear();
                 }
             }
