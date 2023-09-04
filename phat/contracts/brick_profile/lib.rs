@@ -8,9 +8,9 @@ pub use brick_profile::*;
 mod brick_profile {
     use alloc::{format, string::String, vec::Vec};
     use core::convert::TryInto;
-    use ink::storage::Mapping;
     #[cfg(feature = "std")]
     use ink::storage::traits::StorageLayout;
+    use ink::storage::{Lazy, Mapping};
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
     use pink_json as json;
@@ -42,7 +42,7 @@ mod brick_profile {
         next_external_account_id: ExternalAccountId,
         external_accounts: Mapping<ExternalAccountId, ExternalAccount>,
         authorized_account: Mapping<WorkflowId, ExternalAccountId>,
-        workflow_session: Option<WorkflowId>,
+        workflow_session: Lazy<WorkflowId>,
     }
 
     #[derive(Encode, Decode, Debug)]
@@ -105,7 +105,7 @@ mod brick_profile {
                 next_external_account_id: 0,
                 external_accounts: Mapping::default(),
                 authorized_account: Mapping::default(),
-                workflow_session: None,
+                workflow_session: Default::default(),
             }
         }
 
@@ -322,16 +322,6 @@ mod brick_profile {
             self.authorized_account.get(workflow)
         }
 
-        /// This is an internal function which can only be called by `this.poll()` in a cross-contract manner
-        #[ink(message)]
-        pub fn set_workflow_session(&mut self, workflow: WorkflowId) -> Result<()> {
-            if self.env().caller() != self.env().account_id() {
-                return Err(Error::BadOrigin);
-            }
-            self.workflow_session = Some(workflow);
-            Ok(())
-        }
-
         /// Called by a scheduler periodically with Query
         #[ink(message)]
         pub fn poll(&mut self, workflow_id: WorkflowId) -> Result<bool> {
@@ -344,22 +334,7 @@ mod brick_profile {
             }
 
             let now_workflow = self.ensure_enabled_workflow(workflow_id)?;
-            // call `this.set_workflow_session()` in a cross-contract manner to let the `self.workflow_session` value
-            // change take effect
-            // this value change only lives in this execution since `poll()` is called with query
-            let _ = build_call::<pink::PinkEnvironment>()
-                .call(self.env().account_id())
-                .transferred_value(0)
-                .call_flags(ink::env::CallFlags::default().set_allow_reentry(true))
-                .exec_input(
-                    ExecutionInput::new(Selector::new(ink::selector_bytes!(
-                        "set_workflow_session"
-                    )))
-                    .push_arg(now_workflow.id),
-                )
-                .returns::<Result<()>>()
-                .invoke();
-
+            self.workflow_session.set(&now_workflow.id);
             let js_runner = self.get_js_runner()?;
             let call_result = build_call::<pink::PinkEnvironment>()
                 .call(js_runner)
@@ -435,10 +410,9 @@ mod brick_profile {
         }
 
         fn ensure_workflow_session(&self) -> Result<WorkflowId> {
-            if self.workflow_session.is_some() {
-                Ok(self.workflow_session.unwrap())
-            } else {
-                Err(Error::BadWorkflowSession)
+            match self.workflow_session.get() {
+                Some(id) => Ok(id),
+                None => Err(Error::BadWorkflowSession),
             }
         }
 
