@@ -28,6 +28,7 @@ ethabi = { version = "18.0.0", default-features = false, features = [
 
 # for Substrate rollup
 subrpc = { package = "pink-subrpc", version = "0.4.1", default-features = false, optional = true }
+logging = { path = "../../crates/logging", default-features = false }
 
 [dev-dependencies]
 hex-literal = "0.4.1"
@@ -43,6 +44,7 @@ std = [
     "pink-web3/std",
     "ethabi/std",
     "subrpc/std",
+    "logging/std",
 ]
 logging = [
     "pink-extension",

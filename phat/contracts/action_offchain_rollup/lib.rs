@@ -27,6 +27,7 @@ mod action_offchain_rollup {
     use pink::ResultExt;
 
     use ethabi::Token;
+    use logging::error;
     use phat_js as js;
     use phat_offchain_rollup::{
         clients::evm::{sign_meta_tx, EvmRollupClient},
@@ -268,14 +269,44 @@ mod action_offchain_rollup {
 
         /// Processes a request with the the core js and returns the output.
         fn handle_request(&self, request: &[u8]) -> Result<(Vec<u8>, CodeHash)> {
-            let Some(Core{ script, settings, code_hash }) = self.core.get() else {
-                pink::error!("CoreNotConfigured");
+            let Some(Core {
+                script,
+                settings,
+                code_hash,
+            }) = self.core.get()
+            else {
+                error!("CoreNotConfigured");
                 return Err(Error::CoreNotConfigured);
             };
+            let log_prefix = logging::tagged_prefix().unwrap_or_default();
+            let final_js = alloc::format!(
+                r#"
+                (function(){{
+                    const logPrefix = "[{log_prefix}]:";
+                    const originLog = console.log;
+                    const originWarn = console.warn;
+                    const originError = console.error;
+                    console.log = function(...args) {{
+                        originLog(logPrefix, ...args);
+                    }};
+                    console.warn = function(...args) {{
+                        originWarn(logPrefix, ...args);
+                    }};
+                    console.error = function(...args) {{
+                        originError(logPrefix, ...args);
+                    }};
+                }}());
+                {script}
+            "#
+            );
             let args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request)), settings];
-            let output = js::eval(&script, &args)
-                .log_err("Failed to eval the core js")
-                .map_err(Error::JsError)?;
+            let output = match js::eval(&final_js, &args) {
+                Ok(output) => output,
+                Err(e) => {
+                    error!("Failed to eval the core js: {}", e);
+                    return Err(Error::JsError(e));
+                }
+            };
             let output = match output {
                 js::Output::String(bytes) => hex::decode(bytes.as_str().trim_start_matches("0x"))
                     .map_err(|_| Error::InvalidJsOutput)?,
