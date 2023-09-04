@@ -374,6 +374,15 @@ mod action_offchain_rollup {
                     console.error = function(...args) {{
                         originError(logPrefix, ...args);
                     }};
+                    console.debug = function(...args) {{
+                        originLog(logPrefix, ...args);
+                    }};
+                    console.info = function(...args) {{
+                        originLog(logPrefix, ...args);
+                    }};
+                    console.assert = console.clear = console.count = console.countReset = console.dir = console.dirxml = console.group = console.groupCollapsed = console.groupEnd = console.profile = console.profileEnd = console.table = console.time = console.timeEnd = console.timeLog = console.timeStamp = console.trace = function() {{
+                        throw new Error("Console API not all implemented, please use console.log instead.");
+                    }};
                 }}());
                 {script}
             "#
