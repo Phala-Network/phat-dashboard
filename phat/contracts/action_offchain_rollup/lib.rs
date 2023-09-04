@@ -209,6 +209,23 @@ mod action_offchain_rollup {
             Ok(())
         }
 
+        /// Set the core script (admin only)
+        ///
+        /// @category Configuration
+        ///
+        /// @ui core_js widget codemirror
+        /// @ui core_js options.lang javascript
+        ///
+        #[ink(message)]
+        pub fn config_core_script(&mut self, core_js: String) -> Result<()> {
+            self.ensure_owner()?;
+            let Some(core) = self.core.get() else {
+                return Err(Error::CoreNotConfigured);
+            };
+            self.config_core_inner(core_js, core.settings);
+            Ok(())
+        }
+
         /// Set the configuration (admin only)
         ///
         /// @category Configuration
@@ -240,6 +257,17 @@ mod action_offchain_rollup {
             Ok(())
         }
 
+        /// Get the final script to eval, for debugging.
+        ///
+        /// @category Configuration
+        ///
+        #[ink(message)]
+        pub fn get_core_script(&self) -> Result<String> {
+            let Some(Core { script, .. }) = self.core.get() else {
+                return Err(Error::CoreNotConfigured);
+            };
+            Ok(build_final_js(script.clone(), logging::tagged_prefix().unwrap_or_default()))
+        }
 
         /// Configures the rollup target (admin only)
         ///
@@ -358,35 +386,7 @@ mod action_offchain_rollup {
                 return Err(Error::CoreNotConfigured);
             };
             let log_prefix = logging::tagged_prefix().unwrap_or_default();
-            let final_js = alloc::format!(
-                r#"
-                (function(){{
-                    const logPrefix = "[{log_prefix}]:";
-                    const originLog = console.log;
-                    const originWarn = console.warn;
-                    const originError = console.error;
-                    console.log = function(...args) {{
-                        originLog(logPrefix, ...args);
-                    }};
-                    console.warn = function(...args) {{
-                        originWarn(logPrefix, ...args);
-                    }};
-                    console.error = function(...args) {{
-                        originError(logPrefix, ...args);
-                    }};
-                    console.debug = function(...args) {{
-                        originLog(logPrefix, ...args);
-                    }};
-                    console.info = function(...args) {{
-                        originLog(logPrefix, ...args);
-                    }};
-                    console.assert = console.clear = console.count = console.countReset = console.dir = console.dirxml = console.group = console.groupCollapsed = console.groupEnd = console.profile = console.profileEnd = console.table = console.time = console.timeEnd = console.timeLog = console.timeStamp = console.trace = function() {{
-                        throw new Error("Console API not all implemented, please use console.log instead.");
-                    }};
-                }}());
-                {script}
-            "#
-            );
+            let final_js = build_final_js(script, log_prefix);
             let args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request)), settings];
             let output = match js::eval(&final_js, &args) {
                 Ok(output) => output,
@@ -489,5 +489,38 @@ mod action_offchain_rollup {
             return Ok(Some(tx_id.encode()));
         }
         Ok(None)
+    }
+
+    fn build_final_js(script: String, log_prefix: String) -> String {
+        let final_js = alloc::format!(
+            r#"
+            (function(){{
+                const logPrefix = "[{log_prefix}]:";
+                const originLog = console.log;
+                const originWarn = console.warn;
+                const originError = console.error;
+                console.log = function(...args) {{
+                    originLog(logPrefix, ...args);
+                }};
+                console.warn = function(...args) {{
+                    originWarn(logPrefix, ...args);
+                }};
+                console.error = function(...args) {{
+                    originError(logPrefix, ...args);
+                }};
+                console.debug = function(...args) {{
+                    originLog(logPrefix, ...args);
+                }};
+                console.info = function(...args) {{
+                    originLog(logPrefix, ...args);
+                }};
+                console.assert = console.clear = console.count = console.countReset = console.dir = console.dirxml = console.group = console.groupCollapsed = console.groupEnd = console.profile = console.profileEnd = console.table = console.time = console.timeEnd = console.timeLog = console.timeStamp = console.trace = function() {{
+                    throw new Error("Console API not all implemented, please use console.log instead.");
+                }};
+            }}());
+            {script}
+        "#
+        );
+        final_js
     }
 }
