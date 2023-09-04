@@ -33,7 +33,6 @@ brick_profile = { path = "../../contracts/brick_profile", default-features = fal
 
 hex = { version = "0.4", default-features = false }
 hex_fmt = { version = "0.3", default-features = false }
-logging = { path = "../../crates/logging", default-features = false }
 
 [dev-dependencies]
 dotenvy = "0.15"
@@ -59,7 +58,6 @@ std = [
     "pink-json/std",
     "pink-web3/std",
     "ethabi/std",
-    "logging/std",
 ]
 ink-as-dependency = [ "brick_profile/ink-as-dependency" ]
 

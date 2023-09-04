@@ -20,8 +20,6 @@ use pink_web3::{
     transports::{resolve_ready, PinkHttp},
     types::{BlockId, BlockNumber, Bytes, TransactionRequest, U64},
 };
-#[cfg(feature = "logging")]
-use logging::warn;
 
 const ANCHOR_ABI: &[u8] = include_bytes!("../../res/anchor.abi.json");
 const DEFAULT_QUEUE_PREFIX: &[u8] = b"q/";
@@ -68,7 +66,7 @@ impl KvSnapshot for EvmSnapshot {
         .or(Err(kv_session::Error::FailedToGetStorage))?;
 
         #[cfg(feature = "logging")]
-        warn!(
+        pink::warn!(
             "Storage[{}] = {:?}",
             hex::encode(&key.0),
             hex::encode(&value.0)
@@ -177,7 +175,7 @@ impl EvmRollupClient {
         .map_err(Self::convert_err)?;
 
         // #[cfg(feature = "logging")]
-        // warn!("RawTx: {raw_tx:?}");
+        // pink::warn!("RawTx: {raw_tx:?}");
 
         if let Some(head_idx) = raw_tx.queue_head {
             self.actions

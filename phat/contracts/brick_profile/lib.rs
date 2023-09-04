@@ -8,10 +8,9 @@ pub use brick_profile::*;
 mod brick_profile {
     use alloc::{format, string::String, vec::Vec};
     use core::convert::TryInto;
+    use ink::storage::Mapping;
     #[cfg(feature = "std")]
     use ink::storage::traits::StorageLayout;
-    use ink::storage::Mapping;
-    use logging::info;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
     use pink_json as json;
@@ -261,6 +260,7 @@ mod brick_profile {
             rpc: String,
             sk: Vec<u8>,
         ) -> Result<ExternalAccountId> {
+
             // Deprecated in first release
             return Err(Error::Deprecated);
 
@@ -334,17 +334,14 @@ mod brick_profile {
 
         /// Called by a scheduler periodically with Query
         #[ink(message)]
-        pub fn poll(&mut self, workflow_id: WorkflowId, poll_id: String) -> Result<bool> {
+        pub fn poll(&mut self, workflow_id: WorkflowId) -> Result<bool> {
             use ink::env::call::{build_call, ExecutionInput, Selector};
+
             // Trick here: We only allow Query the `poll()` function, so the following `workflow_session` change only
             // lives in this call and is never written back to chain.
             if pink::ext().is_in_transaction() {
                 return Err(Error::NoPollForTransaction);
             }
-
-            let _span = logging::enter_span(&format!("poll_id={poll_id}"));
-            let profile = hex_fmt::HexFmt(self.env().account_id());
-            info!("polling profile 0x{profile}:{workflow_id}");
 
             let now_workflow = self.ensure_enabled_workflow(workflow_id)?;
             // call `this.set_workflow_session()` in a cross-contract manner to let the `self.workflow_session` value
@@ -394,14 +391,14 @@ mod brick_profile {
         #[ink(message)]
         pub fn sign_evm_transaction(&self, tx: Vec<u8>) -> Result<Vec<u8>> {
             let now_workflow_id = self.ensure_workflow_session()?;
-            info!("Workflow {} asks for EVM tx signing", now_workflow_id);
+            pink::info!("Workflow {} asks for EVM tx signing", now_workflow_id);
 
             let account_id = self
                 .authorized_account
                 .get(now_workflow_id)
                 .ok_or(Error::NoAuthorizedExternalAccount)?;
             let account = self.ensure_enabled_external_account(account_id)?;
-            info!("ExternalAccount {} is allowed", account_id);
+            pink::info!("ExternalAccount {} is allowed", account_id);
 
             let phttp = PinkHttp::new(account.rpc.clone());
             let web3 = pink_web3::Web3::new(phttp);
@@ -490,7 +487,6 @@ mod brick_profile {
     mod tests {
         use super::*;
         use alloc::collections::BTreeMap;
-        use logging::warn;
 
         struct EnvVars {
             rpc: String,
@@ -603,7 +599,7 @@ mod brick_profile {
             ));
             profile.dump_evm_account(ea2_id).unwrap();
             let sk = profile.get_dumped_key(ea2_id).unwrap();
-            warn!("Dumped sk: 0x{}", hex::encode(sk));
+            pink::warn!("Dumped sk: 0x{}", hex::encode(sk));
 
             // Access control
             let accounts = ink::env::test::default_accounts::<pink::PinkEnvironment>();

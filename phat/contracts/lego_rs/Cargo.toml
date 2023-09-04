@@ -13,7 +13,6 @@ scale-info = { version = "2.6", default-features = false, features = ["derive"],
 serde = { version = "=1.0.185", default-features = false, features = ["derive"] }
 pink-json = { version = "0.4.0", default-features = false }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
-logging = { path = "../../crates/logging", default-features = false }
 this-crate = "0.1"
 
 [dev-dependencies]
@@ -31,7 +30,6 @@ std = [
     "scale-info/std",
     "pink-json/std",
     "serde/std",
-    "logging/std",
 ]
 ink-as-dependency = []
 e2e-tests = []
