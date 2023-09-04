@@ -10,7 +10,7 @@ import {
   ContractType
 } from "@devphase/service";
 import { PinkSystem } from "@/typings/PinkSystem";
-import { Lego } from "@/typings/Lego";
+import { LegoRs as Lego } from "@/typings/LegoRs";
 import { BrickProfileFactory } from "@/typings/BrickProfileFactory"
 import { BrickProfile } from '@/typings/BrickProfile';
 import { ActionEvmTransaction } from "@/typings/ActionEvmTransaction";
@@ -83,7 +83,7 @@ describe("Run lego actions", () => {
       clusterId: this.devPhase.mainClusterId,
       contractType: ContractType.IndeterministicInkCode,
     });
-    legoFactory = await this.devPhase.getFactory('lego', { contractType: ContractType.InkCode });
+    legoFactory = await this.devPhase.getFactory('lego_rs', { contractType: ContractType.InkCode });
     profileFactoryFactory = await this.devPhase.getFactory('brick_profile_factory', { contractType: ContractType.InkCode });
     brickProfileFactory = await this.devPhase.getFactory('brick_profile', { contractType: ContractType.InkCode });
     evmTransactionFactory = await this.devPhase.getFactory('action_evm_transaction', { contractType: ContractType.InkCode });
