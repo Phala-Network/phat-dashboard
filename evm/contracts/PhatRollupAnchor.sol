@@ -276,4 +276,38 @@ abstract contract PhatRollupAnchor is ReentrancyGuard, MetaTxReceiver, AccessCon
         bytes memory storageKey = bytes.concat(QUEUE_PREFIX, key);
         delete kvStore[storageKey];
     }
+
+    /// Get the next item id in queue.
+    function getTailIndex() public view returns (uint32) {
+        uint32 tail = queueGetUint(KEY_TAIL);
+        return tail;
+    }
+
+    /// Get the current item id in queue.
+    function getHeadIndex() public view returns (uint32) {
+        uint32 head = queueGetUint(KEY_HEAD);
+        return head;
+    }
+
+    /// Get the current item storage key in queue
+    function getHeadStorageKey() public view returns (bytes memory) {
+        uint32 idx = queueGetUint(KEY_HEAD);
+        bytes memory key = abi.encode(idx);
+        bytes memory storageKey = bytes.concat(QUEUE_PREFIX, key);
+        return storageKey;
+    }
+
+    /// Get the next item storage key in queue
+    function getTailStorageKey() public view returns (bytes memory) {
+        uint32 idx = queueGetUint(KEY_TAIL);
+        bytes memory key = abi.encode(idx);
+        bytes memory storageKey = bytes.concat(QUEUE_PREFIX, key);
+        return storageKey;
+    }
+
+    /// Like getStorage but it don't need any arguments and always returns the current item.
+    function getCurrent() public view returns (bytes memory) {
+        bytes memory key = getHeadStorageKey();
+        return kvStore[key];
+    }
 }

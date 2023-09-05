@@ -109,6 +109,8 @@ mod action_offchain_rollup {
             }
         }
 
+        /// @ui core_js widget codemirror
+        /// @ui core_js options.lang javascript
         #[ink(constructor)]
         pub fn with_core(core_js: String, core_settings: String, brick_profile: AccountId) -> Self {
             let mut this = Self::new(brick_profile);
@@ -116,28 +118,58 @@ mod action_offchain_rollup {
             this
         }
 
+        /// @ui core_js widget codemirror
+        /// @ui core_js options.lang javascript
+        #[ink(constructor)]
+        pub fn with_configuration(
+            client_rpc: String,
+            client_addr: Vec<u8>,
+            core_js: String,
+            core_settings: String,
+            brick_profile: AccountId,
+        ) -> Self {
+            let mut this = Self::new(brick_profile);
+            this.config_core_inner(core_js, core_settings);
+            this.config_client(client_rpc, client_addr)
+                .expect("failed to configure client");
+            this
+        }
+
+        /// @category Metadata
         #[ink(message)]
         pub fn version(&self) -> VersionTuple {
             version_tuple!()
         }
 
         /// Gets the owner of the contract
+        ///
+        /// @category Metadata
+        ///
         #[ink(message)]
         pub fn owner(&self) -> AccountId {
             self.owner
         }
 
         /// Get the identity of offchain rollup
+        ///
+        /// @category Configuration
+        ///
         #[ink(message)]
         pub fn get_attest_address(&self) -> H160 {
             KeyPair::from(self.attest_key).address()
         }
 
+        ///
+        /// @category Metadata
+        ///
         #[ink(message)]
         pub fn get_brick_profile_address(&self) -> AccountId {
             self.brick_profile
         }
 
+        ///
+        /// @category Metadata
+        ///
         #[ink(message)]
         pub fn set_brick_profile_address(&mut self, brick_profile: AccountId) -> Result<()> {
             self.ensure_owner()?;
@@ -145,6 +177,9 @@ mod action_offchain_rollup {
             Ok(())
         }
 
+        ///
+        /// @category Configuration
+        ///
         #[ink(message)]
         pub fn get_client(&self) -> Result<Client> {
             self.ensure_owner()?;
@@ -152,12 +187,21 @@ mod action_offchain_rollup {
             Ok(client.clone())
         }
 
+        ///
+        /// @category Configuration
+        ///
         #[ink(message)]
         pub fn get_core(&self) -> Option<Core> {
             self.core.get()
         }
 
         /// Configures the core script (admin only)
+        ///
+        /// @category Configuration
+        ///
+        /// @ui core_js widget codemirror
+        /// @ui core_js options.lang javascript
+        ///
         #[ink(message)]
         pub fn config_core(&mut self, core_js: String, settings: String) -> Result<()> {
             self.ensure_owner()?;
@@ -165,7 +209,27 @@ mod action_offchain_rollup {
             Ok(())
         }
 
+        /// Set the core script (admin only)
+        ///
+        /// @category Configuration
+        ///
+        /// @ui core_js widget codemirror
+        /// @ui core_js options.lang javascript
+        ///
+        #[ink(message)]
+        pub fn config_core_script(&mut self, core_js: String) -> Result<()> {
+            self.ensure_owner()?;
+            let Some(core) = self.core.get() else {
+                return Err(Error::CoreNotConfigured);
+            };
+            self.config_core_inner(core_js, core.settings);
+            Ok(())
+        }
+
         /// Set the configuration (admin only)
+        ///
+        /// @category Configuration
+        ///
         #[ink(message)]
         pub fn config_core_settings(&mut self, settings: String) -> Result<()> {
             self.ensure_owner()?;
@@ -178,6 +242,9 @@ mod action_offchain_rollup {
         }
 
         /// Configures the rollup target (admin only)
+        ///
+        /// @category Configuration
+        ///
         #[ink(message)]
         pub fn config_client(&mut self, rpc: String, client_addr: Vec<u8>) -> Result<()> {
             self.ensure_owner()?;
@@ -190,9 +257,37 @@ mod action_offchain_rollup {
             Ok(())
         }
 
+        /// Get the final script to eval, for debugging.
+        ///
+        /// @category Configuration
+        ///
+        #[ink(message)]
+        pub fn get_core_script(&self) -> Result<String> {
+            let Some(Core { script, .. }) = self.core.get() else {
+                return Err(Error::CoreNotConfigured);
+            };
+            Ok(build_final_js(script.clone(), logging::tagged_prefix().unwrap_or_default()))
+        }
+
+        /// Configures the rollup target (admin only)
+        ///
+        /// @category Configuration
+        ///
+        #[ink(message)]
+        pub fn is_ready(&self) -> Result<bool> {
+            if self.client.is_some() && self.core.get().is_some() {
+                Ok(true)
+            } else {
+                Ok(false)
+            }
+        }
+
         /// Transfers the ownership of the contract (admin only)
         ///
         /// transfer this to non-existent owner to renounce ownership and lock the configuration
+        ///
+        /// @category Metadata
+        ///
         #[ink(message)]
         pub fn transfer_ownership(&mut self, new_owner: AccountId) -> Result<()> {
             self.ensure_owner()?;
@@ -201,6 +296,9 @@ mod action_offchain_rollup {
         }
 
         /// Pop an element from the rollup queue if any and process it, then submit the answer.
+        ///
+        /// @category Answer
+        ///
         #[ink(message)]
         pub fn answer_request(&self) -> Result<Option<Vec<u8>>> {
             use pink_kv_session::traits::QueueSession;
@@ -226,6 +324,9 @@ mod action_offchain_rollup {
         }
 
         /// Processes a request with the the core js and returns the output wrapped in a signed meta tx.
+        ///
+        /// @category Answer
+        ///
         #[ink(message)]
         pub fn get_answer(&self, request: Vec<u8>) -> Result<Vec<u8>> {
             let client = self.ensure_client_configured()?;
@@ -245,6 +346,9 @@ mod action_offchain_rollup {
         ///
         /// The output is a tuple of the reply and the sha256 hash of the core js.
         /// The hash can be used to verify the integrity of the core js.
+        ///
+        /// @category Answer
+        ///
         #[ink(message)]
         pub fn get_answer_with_code_hash(&self, request: Vec<u8>) -> Result<Vec<u8>> {
             let client = self.ensure_client_configured()?;
@@ -262,6 +366,9 @@ mod action_offchain_rollup {
         }
 
         /// Processes a request with the the core js and returns the output without signature.
+        ///
+        /// @category Answer
+        ///
         #[ink(message)]
         pub fn get_raw_answer(&self, request: Vec<u8>) -> Result<(Vec<u8>, CodeHash)> {
             self.handle_request(&request)
@@ -279,26 +386,7 @@ mod action_offchain_rollup {
                 return Err(Error::CoreNotConfigured);
             };
             let log_prefix = logging::tagged_prefix().unwrap_or_default();
-            let final_js = alloc::format!(
-                r#"
-                (function(){{
-                    const logPrefix = "[{log_prefix}]:";
-                    const originLog = console.log;
-                    const originWarn = console.warn;
-                    const originError = console.error;
-                    console.log = function(...args) {{
-                        originLog(logPrefix, ...args);
-                    }};
-                    console.warn = function(...args) {{
-                        originWarn(logPrefix, ...args);
-                    }};
-                    console.error = function(...args) {{
-                        originError(logPrefix, ...args);
-                    }};
-                }}());
-                {script}
-            "#
-            );
+            let final_js = build_final_js(script, log_prefix);
             let args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request)), settings];
             let output = match js::eval(&final_js, &args) {
                 Ok(output) => output,
@@ -401,5 +489,38 @@ mod action_offchain_rollup {
             return Ok(Some(tx_id.encode()));
         }
         Ok(None)
+    }
+
+    fn build_final_js(script: String, log_prefix: String) -> String {
+        let final_js = alloc::format!(
+            r#"
+            (function(){{
+                const logPrefix = "[{log_prefix}]:";
+                const originLog = console.log;
+                const originWarn = console.warn;
+                const originError = console.error;
+                console.log = function(...args) {{
+                    originLog(logPrefix, ...args);
+                }};
+                console.warn = function(...args) {{
+                    originWarn(logPrefix, ...args);
+                }};
+                console.error = function(...args) {{
+                    originError(logPrefix, ...args);
+                }};
+                console.debug = function(...args) {{
+                    originLog(logPrefix, ...args);
+                }};
+                console.info = function(...args) {{
+                    originLog(logPrefix, ...args);
+                }};
+                console.assert = console.clear = console.count = console.countReset = console.dir = console.dirxml = console.group = console.groupCollapsed = console.groupEnd = console.profile = console.profileEnd = console.table = console.time = console.timeEnd = console.timeLog = console.timeStamp = console.trace = function() {{
+                    throw new Error("Console API not all implemented, please use console.log instead.");
+                }};
+            }}());
+            {script}
+        "#
+        );
+        final_js
     }
 }
