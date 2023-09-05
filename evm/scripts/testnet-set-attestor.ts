@@ -5,13 +5,13 @@ async function main() {
 
   const [deployer] = await ethers.getSigners();
 
-  const oracle = await TestLensOracle.attach('0x94Af64b38E27acD8b0B01dBCF214536D4a357A3c'); // change this to your client smart contract address
+  const oracle = await TestLensOracle.attach('0xCe2D36084c2b9F49bf1Cfd1E6A27a2e92454705d'); // change this to your client smart contract address
   await Promise.all([
     oracle.deployed(),
   ])
 
   console.log('Setting attestor ...');
-  await oracle.connect(deployer).setAttestor("0xa4d81361579ff03e085457bb38cbc6f481eada0e"); // change this to the identity of your ActionOffchainRollup
+  await oracle.connect(deployer).setAttestor("0x601e4173fb8f1650ac83b884b25b261145d85518"); // change this to the identity of your ActionOffchainRollup
   console.log('Done');
 }
 

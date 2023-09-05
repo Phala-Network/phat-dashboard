@@ -61,7 +61,7 @@ describe("Run lego actions", () => {
   const rpc = process.env.RPC ?? "http://localhost:8545";
   const ethSecretKey = process.env.PRIVKEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
   const lensApi = process.env.LENS ?? "https://api.lens.dev/";
-  const anchorAddr = process.env.ANCHOR ?? "0x94Af64b38E27acD8b0B01dBCF214536D4a357A3c";
+  const anchorAddr = process.env.ANCHOR ?? "0xCe2D36084c2b9F49bf1Cfd1E6A27a2e92454705d";
 
   before(async function () {
     this.timeout(500_000_000);
