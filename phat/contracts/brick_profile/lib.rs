@@ -115,18 +115,25 @@ mod brick_profile {
             Self::new(Self::env().caller())
         }
 
+        /// @category Metadata
         #[ink(message)]
         pub fn version(&self) -> VersionTuple {
             version_tuple!()
         }
 
         /// Gets the owner of the contract
+        ///
+        /// @category Metadata
+        ///
         #[ink(message)]
         pub fn owner(&self) -> AccountId {
             self.owner
         }
 
         /// Gets the contract address of Js runner contract
+        ///
+        /// @category Configuration
+        ///
         #[ink(message)]
         pub fn get_js_runner(&self) -> Result<AccountId> {
             let config = self.config.as_ref().ok_or(Error::NotConfigured)?;
@@ -134,6 +141,9 @@ mod brick_profile {
         }
 
         /// Configures the workflow executor
+        ///
+        /// @category Configuration
+        ///
         #[ink(message)]
         pub fn config(&mut self, js_runner: AccountId) -> Result<()> {
             self.ensure_owner()?;
@@ -142,12 +152,18 @@ mod brick_profile {
         }
 
         /// Gets the total number of workerflows
+        ///
+        /// @category Workflow
+        ///
         #[ink(message)]
         pub fn workflow_count(&self) -> u64 {
             self.next_workflow_id
         }
 
         /// Adds a new workflow, only owner is allowed
+        ///
+        /// @category Workflow
+        ///
         #[ink(message)]
         pub fn add_workflow(&mut self, name: String, commandline: String) -> Result<WorkflowId> {
             self.ensure_owner()?;
@@ -167,6 +183,9 @@ mod brick_profile {
         }
 
         /// Gets workflow details, only owner is allowed
+        ///
+        /// @category Workflow
+        ///
         #[ink(message)]
         pub fn get_workflow(&self, id: WorkflowId) -> Result<Workflow> {
             self.ensure_owner()?;
@@ -174,6 +193,9 @@ mod brick_profile {
         }
 
         /// Enable a workflow, only owner is allowed
+        ///
+        /// @category Workflow
+        ///
         #[ink(message)]
         pub fn enable_workflow(&mut self, id: WorkflowId) -> Result<()> {
             self.ensure_owner()?;
@@ -186,6 +208,9 @@ mod brick_profile {
         }
 
         /// Disable a workflow, only owner is allowed
+        ///
+        /// @category Workflow
+        ///
         #[ink(message)]
         pub fn disable_workflow(&mut self, id: WorkflowId) -> Result<()> {
             self.ensure_owner()?;
@@ -200,6 +225,9 @@ mod brick_profile {
         // TODO.shelven: merge the following two functions in next major version
 
         /// Get the EVM account address of given id
+        ///
+        /// @category EvmAccount
+        ///
         #[ink(message)]
         pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
             let account = self.ensure_enabled_external_account(id)?;
@@ -208,6 +236,9 @@ mod brick_profile {
         }
 
         /// Get the EVM rpc endpoint of given id, only owner is allowed
+        ///
+        /// @category EvmAccount
+        ///
         #[ink(message)]
         pub fn get_rpc_endpoint(&self, id: ExternalAccountId) -> Result<String> {
             self.ensure_owner()?;
@@ -216,6 +247,9 @@ mod brick_profile {
         }
 
         /// Set the EVM rpc endpoint of given id, only owner is allowed
+        ///
+        /// @category EvmAccount
+        ///
         #[ink(message)]
         pub fn set_rpc_endpoint(&mut self, id: ExternalAccountId, rpc: String) -> Result<()> {
             self.ensure_owner()?;
@@ -227,12 +261,18 @@ mod brick_profile {
 
         /// Gets the total number of external accounts
         /// The external account ids increase from 0 to current count
+        ///
+        /// @category EvmAccount
+        ///
         #[ink(message)]
         pub fn external_account_count(&self) -> u64 {
             self.next_external_account_id
         }
 
         /// Generates a new EVM account, only owner is allowed
+        ///
+        /// @category EvmAccount
+        ///
         #[ink(message)]
         pub fn generate_evm_account(&mut self, rpc: String) -> Result<ExternalAccountId> {
             self.ensure_owner()?;
@@ -254,6 +294,9 @@ mod brick_profile {
 
         /// Adds an existing EVM account, only owner is allowed
         /// This is only used for dev and will be removed in release
+        ///
+        /// @category EvmAccount
+        ///
         #[ink(message)]
         #[allow(unreachable_code, unused_variables)]
         pub fn import_evm_account(
@@ -281,6 +324,9 @@ mod brick_profile {
         }
 
         /// Dump an EVM account, this will disable the account, only owner is allowed
+        ///
+        /// @category EvmAccount
+        ///
         #[ink(message)]
         pub fn dump_evm_account(&mut self, id: ExternalAccountId) -> Result<()> {
             self.ensure_owner()?;
@@ -294,6 +340,9 @@ mod brick_profile {
         }
 
         /// Get the secret key of a dumped EVM account, only owner is allowed
+        ///
+        /// @category EvmAccount
+        ///
         #[ink(message)]
         pub fn get_dumped_key(&self, id: ExternalAccountId) -> Result<[u8; 32]> {
             self.ensure_owner()?;
@@ -302,6 +351,9 @@ mod brick_profile {
         }
 
         /// Authorize workflow to use account, only owner is allowed
+        ///
+        /// @category Workflow
+        ///
         #[ink(message)]
         pub fn authorize_workflow(
             &mut self,
@@ -317,12 +369,18 @@ mod brick_profile {
         }
 
         /// Get the authorized external account id of given workflow
+        ///
+        /// @category Workflow
+        ///
         #[ink(message)]
         pub fn get_authorized_account(&self, workflow: WorkflowId) -> Option<ExternalAccountId> {
             self.authorized_account.get(workflow)
         }
 
         /// Called by a scheduler periodically with Query
+        ///
+        /// @category Polling
+        ///
         #[ink(message)]
         pub fn poll(&mut self, workflow_id: WorkflowId, poll_id: String) -> Result<bool> {
             use ink::env::call::{build_call, ExecutionInput, Selector};
@@ -355,6 +413,9 @@ mod brick_profile {
         }
 
         /// Only self-initiated call is allowed
+        ///
+        /// @category Polling
+        ///
         #[ink(message)]
         pub fn get_current_evm_account_address(&self) -> Result<H160> {
             let now_workflow_id = self.ensure_workflow_session()?;
@@ -366,6 +427,9 @@ mod brick_profile {
         }
 
         /// Only self-initiated call is allowed
+        ///
+        /// @category Polling
+        ///
         #[ink(message)]
         pub fn sign_evm_transaction(&self, tx: Vec<u8>) -> Result<Vec<u8>> {
             let now_workflow_id = self.ensure_workflow_session()?;
