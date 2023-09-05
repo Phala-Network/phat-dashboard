@@ -182,6 +182,19 @@ mod brick_profile {
             Ok(id)
         }
 
+        /// Adds a new workflow and authorizes it to use the account, only owner is allowed
+        ///
+        /// @category Workflow
+        #[ink(message)]
+        pub fn add_workflow_and_authorized(&mut self, name: String, commandline: String, account: ExternalAccountId) -> Result<WorkflowId> {
+            self.ensure_owner()?;
+
+            let id = self.next_workflow_id;
+            self.add_workflow(name, commandline)?;
+            self.authorize_workflow(id, account)?;
+            Ok(id)
+        }
+
         /// Gets workflow details, only owner is allowed
         ///
         /// @category Workflow
