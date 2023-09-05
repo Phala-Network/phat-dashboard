@@ -42,7 +42,7 @@ mod action_offchain_rollup {
         /// The JS code that processes the rollup queue request
         script: String,
         /// The configuration that would be passed to the core js script
-        settings: String,
+        settings: Option<String>,
         /// The code hash of the core js script
         code_hash: CodeHash,
     }
@@ -112,7 +112,7 @@ mod action_offchain_rollup {
         /// @ui core_js widget codemirror
         /// @ui core_js options.lang javascript
         #[ink(constructor)]
-        pub fn with_core(core_js: String, core_settings: String, brick_profile: AccountId) -> Self {
+        pub fn with_core(core_js: String, core_settings: Option<String>, brick_profile: AccountId) -> Self {
             let mut this = Self::new(brick_profile);
             this.config_core_inner(core_js, core_settings);
             this
@@ -125,7 +125,7 @@ mod action_offchain_rollup {
             client_rpc: String,
             client_addr: Vec<u8>,
             core_js: String,
-            core_settings: String,
+            core_settings: Option<String>,
             brick_profile: AccountId,
         ) -> Self {
             let mut this = Self::new(brick_profile);
@@ -203,7 +203,7 @@ mod action_offchain_rollup {
         /// @ui core_js options.lang javascript
         ///
         #[ink(message)]
-        pub fn config_core(&mut self, core_js: String, settings: String) -> Result<()> {
+        pub fn config_core(&mut self, core_js: String, settings: Option<String>) -> Result<()> {
             self.ensure_owner()?;
             self.config_core_inner(core_js, settings);
             Ok(())
@@ -236,7 +236,7 @@ mod action_offchain_rollup {
             let Some(mut core) = self.core.get() else {
                 return Err(Error::CoreNotConfigured);
             };
-            core.settings = settings;
+            core.settings = Some(settings);
             self.core.set(&core);
             Ok(())
         }
@@ -387,7 +387,7 @@ mod action_offchain_rollup {
             };
             let log_prefix = logging::tagged_prefix().unwrap_or_default();
             let final_js = build_final_js(script, log_prefix);
-            let args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request)), settings];
+            let args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request)), settings.clone().unwrap_or_default()];
             let output = match js::eval(&final_js, &args) {
                 Ok(output) => output,
                 Err(e) => {
@@ -417,7 +417,7 @@ mod action_offchain_rollup {
             self.client.as_ref().ok_or(Error::ClientNotConfigured)
         }
 
-        fn config_core_inner(&mut self, core_js: String, settings: String) {
+        fn config_core_inner(&mut self, core_js: String, settings: Option<String>) {
             let code_hash = self
                 .env()
                 .hash_bytes::<ink::env::hash::Sha2x256>(core_js.as_bytes());
