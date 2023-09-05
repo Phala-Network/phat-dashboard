@@ -16,12 +16,12 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@devphase/cli@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@devphase/cli/-/cli-0.5.0.tgz#5c6e1dc196df18d8307d921505f82e22a4119778"
-  integrity sha512-90HErL1yDmVgLfPcgSsYvPe8J0PPiUqUCHfm8+4x+3zlZso7wr/1GMxFsWMtzU3aGuOlZ/zCyJzYAL9ECx2v+A==
+"@devphase/cli@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@devphase/cli/-/cli-0.5.1.tgz#28f5fc2f4f649c14222efd5173b022f0179202ec"
+  integrity sha512-O3avRWf3+2JjlDEmjvJ7IS4hitVB0ut/jPxJ0xtzOk86PlTKWae7ZBY2QG+VxF1SI21R3Z0jeho0nldjQM3lvg==
   dependencies:
-    "@devphase/service" "^0.5.0"
+    "@devphase/service" "^0.5.1"
     "@oclif/core" "^2.9.4"
     "@oclif/plugin-help" "^5.2.14"
     "@oclif/plugin-not-found" "^2.3.34"
@@ -30,10 +30,10 @@
     listr "^0.14.3"
     lodash "^4.17.21"
 
-"@devphase/service@^0.5.0":
-  version "0.5.0"
-  resolved "https://registry.yarnpkg.com/@devphase/service/-/service-0.5.0.tgz#e352fb77562b3614cda1fad73d742a3488feda1e"
-  integrity sha512-VB/nyou2XLXmbUZRVdgGBvTR+72XkrIryDVCtH4UWQrMipo1+FiLAajE2wgaFj9cLOn4DXx05TqkxJFR35osRA==
+"@devphase/service@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@devphase/service/-/service-0.5.1.tgz#205245dcd6f025ed4f52206709c18889a8168ba1"
+  integrity sha512-lt1vdZgGIMFTIs3gQEN7mmV4nfb0k7MoeceMNb7HGuZKhaW/qrB/Q6/8mij2V8ftKen7ia+duwmoza5Ap+h/cQ==
   dependencies:
     "@phala/ink-validator" "^0.1.0"
     "@phala/sdk" "^0.4.1"
