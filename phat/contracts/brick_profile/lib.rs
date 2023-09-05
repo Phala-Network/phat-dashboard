@@ -76,6 +76,24 @@ mod brick_profile {
 
     #[derive(Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    pub struct WorkflowInfo {
+        id: WorkflowId,
+        name: String,
+        enabled: bool,
+        commandline: String,
+        authorized_account: Option<ExternalAccountId>,
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    pub struct ExternalAccountInfo {
+        id: ExternalAccountId,
+        address: H160,
+        rpc: String,
+    }
+
+    #[derive(Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub enum Error {
         BadOrigin,
         NotConfigured,
@@ -200,9 +218,38 @@ mod brick_profile {
         /// @category Workflow
         ///
         #[ink(message)]
-        pub fn get_workflow(&self, id: WorkflowId) -> Result<Workflow> {
+        pub fn get_workflow(&self, id: WorkflowId) -> Result<WorkflowInfo> {
             self.ensure_owner()?;
-            self.ensure_workflow(id)
+            let workflow = self.ensure_workflow(id)?;
+            Ok(WorkflowInfo {
+                id: workflow.id,
+                name: workflow.name,
+                enabled: workflow.enabled,
+                commandline: workflow.commandline,
+                authorized_account: self.authorized_account.get(id),
+            })
+        }
+
+        /// Gets all workflows, only owner is allowed
+        ///
+        /// @category Workflow
+        ///
+        #[ink(message)]
+        pub fn get_all_workflow(&self) -> Result<Vec<WorkflowInfo>> {
+            self.ensure_owner()?;
+            let mut workflows = Vec::new();
+            for id in 0..self.next_workflow_id {
+                if let Some(workflow) = self.workflows.get(id) {
+                    workflows.push(WorkflowInfo {
+                        id: workflow.id,
+                        name: workflow.name.clone(),
+                        enabled: workflow.enabled,
+                        commandline: workflow.commandline.clone(),
+                        authorized_account: self.authorized_account.get(id),
+                    });
+                }
+            }
+            Ok(workflows)
         }
 
         /// Enable a workflow, only owner is allowed
@@ -246,6 +293,29 @@ mod brick_profile {
             let account = self.ensure_enabled_external_account(id)?;
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
             Ok(sk.address())
+        }
+
+        /// Get all EVM account addresses, aonly owner is allowed
+        ///
+        /// @category EvmAccount
+        ///
+        #[ink(message)]
+        pub fn get_all_evm_account(&self) -> Result<Vec<ExternalAccountInfo>> {
+            self.ensure_owner()?;
+            let mut accounts = Vec::new();
+            for id in 0..self.next_external_account_id {
+                if let Some(account) = self.external_accounts.get(id) {
+                    if account.enabled {
+                        let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
+                        accounts.push(ExternalAccountInfo {
+                            id: account.id,
+                            address: sk.address(),
+                            rpc: account.rpc.clone(),
+                        });
+                    }
+                }
+            }
+            Ok(accounts)
         }
 
         /// Get the EVM rpc endpoint of given id, only owner is allowed
