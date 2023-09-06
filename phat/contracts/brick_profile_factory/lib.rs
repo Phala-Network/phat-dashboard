@@ -68,7 +68,7 @@ mod brick_profile_factory {
             self.profile_code_hash
         }
 
-        /// Set the code hash of the user profile contract. Only owner.
+        /// Set the code hash of the user profile contract (only owner).
         #[ink(message)]
         pub fn set_profile_code_hash(&mut self, profile_code_hash: Hash) -> Result<()> {
             self.ensure_owner()?;

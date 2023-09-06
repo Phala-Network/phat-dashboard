@@ -139,7 +139,7 @@ mod brick_profile {
             version_tuple!()
         }
 
-        /// Gets the owner of the contract
+        /// Gets the owner of the contract.
         ///
         /// @category Metadata
         ///
@@ -148,7 +148,7 @@ mod brick_profile {
             self.owner
         }
 
-        /// Gets the contract address of Js runner contract
+        /// Gets the contract address of Js runner contract.
         ///
         /// @category Configuration
         ///
@@ -158,7 +158,7 @@ mod brick_profile {
             Ok(config.js_runner.clone())
         }
 
-        /// Configures the workflow executor
+        /// Configures the workflow executor (only owner).
         ///
         /// @category Configuration
         ///
@@ -169,7 +169,7 @@ mod brick_profile {
             Ok(())
         }
 
-        /// Gets the total number of workerflows
+        /// Gets the total number of workerflows.
         ///
         /// @category Workflow
         ///
@@ -178,7 +178,7 @@ mod brick_profile {
             self.next_workflow_id
         }
 
-        /// Get the total number of enabled workflows
+        /// Get the total number of enabled workflows.
         ///
         /// @category Workflow
         ///
@@ -195,7 +195,7 @@ mod brick_profile {
             counts
         }
 
-        /// Adds a new workflow, only owner is allowed
+        /// Adds a new workflow (only owner).
         ///
         /// @category Workflow
         ///
@@ -217,11 +217,16 @@ mod brick_profile {
             Ok(id)
         }
 
-        /// Adds a new workflow and authorizes it to use the account, only owner is allowed
+        /// Adds a new workflow and authorizes it to use the account (only owner).
         ///
         /// @category Workflow
         #[ink(message)]
-        pub fn add_workflow_and_authorize(&mut self, name: String, commandline: String, account: ExternalAccountId) -> Result<WorkflowId> {
+        pub fn add_workflow_and_authorize(
+            &mut self,
+            name: String,
+            commandline: String,
+            account: ExternalAccountId,
+        ) -> Result<WorkflowId> {
             self.ensure_owner()?;
 
             let id = self.next_workflow_id;
@@ -230,7 +235,7 @@ mod brick_profile {
             Ok(id)
         }
 
-        /// Gets workflow details, only owner is allowed
+        /// Gets workflow details (only owner).
         ///
         /// @category Workflow
         ///
@@ -247,7 +252,7 @@ mod brick_profile {
             })
         }
 
-        /// Gets all workflows, only owner is allowed
+        /// Gets all workflows (only owner).
         ///
         /// @category Workflow
         ///
@@ -269,7 +274,7 @@ mod brick_profile {
             Ok(workflows)
         }
 
-        /// Enable a workflow, only owner is allowed
+        /// Enable a workflow (only owner).
         ///
         /// @category Workflow
         ///
@@ -284,7 +289,7 @@ mod brick_profile {
             Ok(())
         }
 
-        /// Disable a workflow, only owner is allowed
+        /// Disable a workflow (only owner).
         ///
         /// @category Workflow
         ///
@@ -301,18 +306,19 @@ mod brick_profile {
 
         // TODO.shelven: merge the following two functions in next major version
 
-        /// Get the EVM account address of given id
+        /// Get the EVM account address of given id (only owner).
         ///
         /// @category EvmAccount
         ///
         #[ink(message)]
         pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
+            self.ensure_owner()?;
             let account = self.ensure_enabled_external_account(id)?;
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
             Ok(sk.address())
         }
 
-        /// Get all EVM account addresses, aonly owner is allowed
+        /// Get all EVM account addresses (only owner).
         ///
         /// @category EvmAccount
         ///
@@ -335,7 +341,7 @@ mod brick_profile {
             Ok(accounts)
         }
 
-        /// Get the EVM rpc endpoint of given id, only owner is allowed
+        /// Get the EVM rpc endpoint of given id (only owner).
         ///
         /// @category EvmAccount
         ///
@@ -346,7 +352,7 @@ mod brick_profile {
             Ok(account.rpc.clone())
         }
 
-        /// Set the EVM rpc endpoint of given id, only owner is allowed
+        /// Set the EVM rpc endpoint of given id (only owner).
         ///
         /// @category EvmAccount
         ///
@@ -359,8 +365,9 @@ mod brick_profile {
             Ok(())
         }
 
-        /// Gets the total number of external accounts
-        /// The external account ids increase from 0 to current count
+        /// Gets the total number of external accounts.
+        ///
+        /// The external account ids increase from 0 to current count.
         ///
         /// @category EvmAccount
         ///
@@ -369,7 +376,7 @@ mod brick_profile {
             self.next_external_account_id
         }
 
-        /// Generates a new EVM account, only owner is allowed
+        /// Generates a new EVM account (only owner).
         ///
         /// @category EvmAccount
         ///
@@ -392,8 +399,9 @@ mod brick_profile {
             Ok(id)
         }
 
-        /// Adds an existing EVM account, only owner is allowed
-        /// This is only used for dev and will be removed in release
+        /// Adds an existing EVM account (only owner).
+        ///
+        /// This is only used for dev and is deprecated in release.
         ///
         /// @category EvmAccount
         ///
@@ -423,7 +431,7 @@ mod brick_profile {
             Ok(id)
         }
 
-        /// Dump an EVM account, this will disable the account, only owner is allowed
+        /// Dump an EVM account, this will disable the account (only owner).
         ///
         /// @category EvmAccount
         ///
@@ -439,7 +447,7 @@ mod brick_profile {
             Ok(())
         }
 
-        /// Get the secret key of a dumped EVM account, only owner is allowed
+        /// Get the secret key of a dumped EVM account (only owner).
         ///
         /// @category EvmAccount
         ///
@@ -450,7 +458,7 @@ mod brick_profile {
             Ok(account.sk)
         }
 
-        /// Authorize workflow to use account, only owner is allowed
+        /// Authorize workflow to use account (only owner).
         ///
         /// @category Workflow
         ///
@@ -468,7 +476,7 @@ mod brick_profile {
             Ok(())
         }
 
-        /// Get the authorized external account id of given workflow
+        /// Get the authorized external account id of given workflow.
         ///
         /// @category Workflow
         ///
@@ -477,7 +485,7 @@ mod brick_profile {
             self.authorized_account.get(workflow)
         }
 
-        /// Called by a scheduler periodically with Query
+        /// Called by a scheduler periodically with Query.
         ///
         /// @category Polling
         ///
@@ -512,7 +520,7 @@ mod brick_profile {
             Ok(call_result)
         }
 
-        /// Only self-initiated call is allowed
+        /// Only self-initiated call is allowed.
         ///
         /// @category Polling
         ///
@@ -526,7 +534,7 @@ mod brick_profile {
             self.get_evm_account_address(account_id)
         }
 
-        /// Only self-initiated call is allowed
+        /// Only self-initiated call is allowed.
         ///
         /// @category Polling
         ///
@@ -567,7 +575,7 @@ mod brick_profile {
             Ok(signed_tx.raw_transaction.0)
         }
 
-        /// Returns BadOrigin error if the caller is not the owner
+        /// Returns BadOrigin error if the caller is not the owner.
         fn ensure_owner(&self) -> Result<()> {
             if self.env().caller() == self.owner {
                 Ok(())

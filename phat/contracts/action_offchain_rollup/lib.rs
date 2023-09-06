@@ -151,7 +151,7 @@ mod action_offchain_rollup {
             version_tuple!()
         }
 
-        /// Gets the owner of the contract
+        /// Gets the owner of the contract.
         ///
         /// @category Metadata
         ///
@@ -160,7 +160,7 @@ mod action_offchain_rollup {
             self.owner
         }
 
-        /// Get the identity of offchain rollup
+        /// Get the identity of offchain rollup.
         ///
         /// @category Configuration
         ///
@@ -177,6 +177,7 @@ mod action_offchain_rollup {
             self.brick_profile
         }
 
+        /// Set the BrickProfile address (only owner).
         ///
         /// @category Metadata
         ///
@@ -187,6 +188,7 @@ mod action_offchain_rollup {
             Ok(())
         }
 
+        /// Get client contract address and RPC endpoint (only owner).
         ///
         /// @category Configuration
         ///
@@ -197,15 +199,17 @@ mod action_offchain_rollup {
             Ok(client.clone())
         }
 
+        /// Get script and settings (only owner).
         ///
         /// @category Configuration
         ///
         #[ink(message)]
         pub fn get_core(&self) -> Option<Core> {
+            self.ensure_owner()?;
             self.core.get()
         }
 
-        /// Configures the core script (admin only)
+        /// Configures the core script (only owner).
         ///
         /// @category Configuration
         ///
@@ -219,7 +223,7 @@ mod action_offchain_rollup {
             Ok(())
         }
 
-        /// Set the core script (admin only)
+        /// Set the core script (only owner).
         ///
         /// @category Configuration
         ///
@@ -236,7 +240,7 @@ mod action_offchain_rollup {
             Ok(())
         }
 
-        /// Set the configuration (admin only)
+        /// Set the configuration (only owner).
         ///
         /// @category Configuration
         ///
@@ -251,7 +255,7 @@ mod action_offchain_rollup {
             Ok(())
         }
 
-        /// Configures the rollup target (admin only)
+        /// Configures the rollup target (only owner).
         ///
         /// @category Configuration
         ///
@@ -276,10 +280,12 @@ mod action_offchain_rollup {
             let Some(Core { script, .. }) = self.core.get() else {
                 return Err(Error::CoreNotConfigured);
             };
-            Ok(build_final_js(script.clone(), logging::tagged_prefix().unwrap_or_default()))
+            Ok(build_final_js(
+                script.clone(),
+                logging::tagged_prefix().unwrap_or_default(),
+            ))
         }
 
-        /// Configures the rollup target (admin only)
         ///
         /// @category Configuration
         ///
@@ -292,23 +298,30 @@ mod action_offchain_rollup {
             }
         }
 
+        /// Get all configuration as once (only owner).
         ///
-        /// Get all configuration as once, it help reduce to total roundtrip when we building dApp on top of it.
+        /// It help reduce to total roundtrip when we building dApp on top of it.
         ///
         /// @category Configuration
         ///
         #[ink(message)]
-        pub fn get_configuration(&self) -> Configuration {
+        pub fn get_configuration(&self) -> Result<Configuration> {
+            self.ensure_owner()?;
             let rpc = self.client.as_ref().map(|c| c.rpc.clone());
             let client_addr = self.client.as_ref().map(|c| c.client_addr);
-            if let Some(Core { script, settings, code_hash }) = self.core.get() {
+            let config = if let Some(Core {
+                script,
+                settings,
+                code_hash,
+            }) = self.core.get()
+            {
                 Configuration {
                     rpc,
                     client_addr,
                     script: Some(script),
                     settings: Some(settings),
                     code_hash: Some(code_hash),
-               }
+                }
             } else {
                 Configuration {
                     rpc,
@@ -317,12 +330,13 @@ mod action_offchain_rollup {
                     settings: None,
                     code_hash: None,
                 }
-            }
+            };
+            Ok(config)
         }
 
-        /// Transfers the ownership of the contract (admin only)
+        /// Transfers the ownership of the contract (only owner).
         ///
-        /// transfer this to non-existent owner to renounce ownership and lock the configuration
+        /// Transfer this to non-existent owner to renounce ownership and lock the configuration
         ///
         /// @category Metadata
         ///
@@ -441,7 +455,7 @@ mod action_offchain_rollup {
             Ok((output, code_hash))
         }
 
-        /// Returns BadOrigin error if the caller is not the owner
+        /// Returns BadOrigin error if the caller is not the owner.
         fn ensure_owner(&self) -> Result<()> {
             if self.env().caller() == self.owner {
                 Ok(())
@@ -450,7 +464,7 @@ mod action_offchain_rollup {
             }
         }
 
-        /// Returns the client config reference or raise the error `ClientNotConfigured`
+        /// Returns the client config reference or raise the error `ClientNotConfigured`.
         fn ensure_client_configured(&self) -> Result<&Client> {
             self.client.as_ref().ok_or(Error::ClientNotConfigured)
         }
