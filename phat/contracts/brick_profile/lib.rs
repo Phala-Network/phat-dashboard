@@ -221,7 +221,7 @@ mod brick_profile {
         ///
         /// @category Workflow
         #[ink(message)]
-        pub fn add_workflow_and_authorized(&mut self, name: String, commandline: String, account: ExternalAccountId) -> Result<WorkflowId> {
+        pub fn add_workflow_and_authorize(&mut self, name: String, commandline: String, account: ExternalAccountId) -> Result<WorkflowId> {
             self.ensure_owner()?;
 
             let id = self.next_workflow_id;
@@ -252,7 +252,7 @@ mod brick_profile {
         /// @category Workflow
         ///
         #[ink(message)]
-        pub fn get_all_workflow(&self) -> Result<Vec<WorkflowInfo>> {
+        pub fn get_all_workflows(&self) -> Result<Vec<WorkflowInfo>> {
             self.ensure_owner()?;
             let mut workflows = Vec::new();
             for id in 0..self.next_workflow_id {
@@ -317,7 +317,7 @@ mod brick_profile {
         /// @category EvmAccount
         ///
         #[ink(message)]
-        pub fn get_all_evm_account(&self) -> Result<Vec<ExternalAccountInfo>> {
+        pub fn get_all_evm_accounts(&self) -> Result<Vec<ExternalAccountInfo>> {
             self.ensure_owner()?;
             let mut accounts = Vec::new();
             for id in 0..self.next_external_account_id {
