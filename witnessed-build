@@ -11,7 +11,7 @@ install_toolchain() {
   echo "::endgroup::"
   PATH="$HOME/.cargo/bin:$PATH"
   echo "::group::Installing cargo-contract"
-  cargo install cargo-contract --git https://github.com/paritytech/cargo-contract.git --rev 096e44078e586381748bdbbea96bbb42996e332c
+  cargo install cargo-contract --git https://github.com/paritytech/cargo-contract.git --rev 632959c5e37e7d86bf09e1966e8c6637321cd9aa
   echo "::endgroup::"
 }
 
