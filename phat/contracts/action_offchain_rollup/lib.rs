@@ -204,9 +204,9 @@ mod action_offchain_rollup {
         /// @category Configuration
         ///
         #[ink(message)]
-        pub fn get_core(&self) -> Option<Core> {
+        pub fn get_core(&self) -> Result<Option<Core>> {
             self.ensure_owner()?;
-            self.core.get()
+            Ok(self.core.get())
         }
 
         /// Configures the core script (only owner).
