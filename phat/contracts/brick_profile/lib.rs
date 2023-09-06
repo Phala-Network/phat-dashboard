@@ -110,6 +110,7 @@ mod brick_profile {
         FailedToGetEthAccounts(String),
         FailedToSignTransaction(String),
         OnlyDumpedAccount,
+        InvalidPollId,
     }
     pub type Result<T> = core::result::Result<T, Error>;
 
@@ -490,6 +491,13 @@ mod brick_profile {
                 return Err(Error::NoPollForTransaction);
             }
 
+            if poll_id.len() > 16 {
+                return Err(Error::InvalidPollId);
+            }
+            // Ensure the poll_id only contains a-zA-Z0-9_- to prevent XSS.
+            if !poll_id.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
+                return Err(Error::InvalidPollId);
+            }
             let _span = logging::enter_span(&format!("poll_id={poll_id}"));
             let profile = hex_fmt::HexFmt(self.env().account_id());
             info!("polling profile 0x{profile}:{workflow_id}");
