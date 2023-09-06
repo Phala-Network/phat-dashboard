@@ -178,6 +178,23 @@ mod brick_profile {
             self.next_workflow_id
         }
 
+        /// Get the total number of enabled workflows
+        ///
+        /// @category Workflow
+        ///
+        #[ink(message)]
+        pub fn enabled_workflow_count(&self) -> u64 {
+            let mut counts = 0;
+            for id in 0..self.next_workflow_id {
+                if let Some(workflow) = self.workflows.get(id) {
+                    if workflow.enabled {
+                        counts += 1;
+                    }
+                }
+            }
+            counts
+        }
+
         /// Adds a new workflow, only owner is allowed
         ///
         /// @category Workflow
