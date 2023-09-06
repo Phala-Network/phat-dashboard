@@ -299,25 +299,20 @@ mod action_offchain_rollup {
         ///
         #[ink(message)]
         pub fn get_configuration(&self) -> Configuration {
-            let mut _rpc = None;
-            let mut _client_addr = None;
-            if self.client.is_some() {
-                _rpc = Some(self.client.as_ref().unwrap().rpc.clone());
-                _client_addr = Some(self.client.as_ref().unwrap().client_addr);
-            }
-            let core = self.core.get();
-            if let Some(Core { script, settings, code_hash }) = core {
+            let rpc = self.client.as_ref().map(|c| c.rpc.clone());
+            let client_addr = self.client.as_ref().map(|c| c.client_addr);
+            if let Some(Core { script, settings, code_hash }) = self.core.get() {
                 Configuration {
-                    rpc: _rpc,
-                    client_addr: _client_addr,
+                    rpc,
+                    client_addr,
                     script: Some(script),
                     settings: Some(settings),
                     code_hash: Some(code_hash),
                }
             } else {
                 Configuration {
-                    rpc: _rpc,
-                    client_addr: _client_addr,
+                    rpc,
+                    client_addr,
                     script: None,
                     settings: None,
                     code_hash: None,
