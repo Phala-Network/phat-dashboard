@@ -68,6 +68,16 @@ mod action_offchain_rollup {
         client_addr: [u8; 20],
     }
 
+    #[derive(Clone, Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
+    pub struct Configuration {
+        rpc: Option<String>,
+        client_addr: Option<[u8; 20]>,
+        script: Option<String>,
+        settings: Option<String>,
+        code_hash: Option<CodeHash>,
+    }
+
     #[derive(Encode, Decode, Debug, PartialEq)]
     #[repr(u8)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
@@ -279,6 +289,34 @@ mod action_offchain_rollup {
                 Ok(true)
             } else {
                 Ok(false)
+            }
+        }
+
+        ///
+        /// Get all configuration as once, it help reduce to total roundtrip when we building dApp on top of it.
+        ///
+        /// @category Configuration
+        ///
+        #[ink(message)]
+        pub fn get_configuration(&self) -> Configuration {
+            let rpc = self.client.as_ref().map(|c| c.rpc.clone());
+            let client_addr = self.client.as_ref().map(|c| c.client_addr);
+            if let Some(Core { script, settings, code_hash }) = self.core.get() {
+                Configuration {
+                    rpc,
+                    client_addr,
+                    script: Some(script),
+                    settings: Some(settings),
+                    code_hash: Some(code_hash),
+               }
+            } else {
+                Configuration {
+                    rpc,
+                    client_addr,
+                    script: None,
+                    settings: None,
+                    code_hash: None,
+                }
             }
         }
 
