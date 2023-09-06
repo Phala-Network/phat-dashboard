@@ -199,11 +199,13 @@ mod action_offchain_rollup {
             Ok(client.clone())
         }
 
+        /// Get script and settings (only owner).
         ///
         /// @category Configuration
         ///
         #[ink(message)]
         pub fn get_core(&self) -> Option<Core> {
+            self.ensure_owner()?;
             self.core.get()
         }
 
