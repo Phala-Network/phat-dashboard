@@ -1,6 +1,6 @@
 [package]
 name = "action_offchain_rollup"
-version = "0.1.2"
+version = "1.0.0"
 authors = ["[your_name] <[your_email]>"]
 edition = "2021"
 
