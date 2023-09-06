@@ -1634,10 +1634,11 @@ checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
 
 [[package]]
 name = "phat_js"
-version = "0.1.0"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cc446ed4b3495e1bb46a23f6bd638f830cbd81210a689e2008506ab0bca0d9a4"
 dependencies = [
  "ink",
- "logging",
  "parity-scale-codec",
  "pink-extension",
  "scale-info",

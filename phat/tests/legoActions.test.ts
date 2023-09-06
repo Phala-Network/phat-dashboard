@@ -51,8 +51,8 @@ describe("Run lego actions", () => {
   let evmTransaction: ActionEvmTransaction.Contract;
   let offchainRollupFactory: ActionOffchainRollup.Factory;
   let offchainRollup: ActionOffchainRollup.Contract;
-  let tagbagFactory: Lego.Factory;
-  let tagbag: Lego.Contract;
+  let tagbagFactory: Tagbag.Factory;
+  let tagbag: Tagbag.Contract;
 
   let api: ApiPromise;
   let alice: KeyringPair;
@@ -86,7 +86,7 @@ describe("Run lego actions", () => {
       clusterId: this.devPhase.mainClusterId,
       contractType: ContractType.IndeterministicInkCode,
     });
-    legoFactory = await this.devPhase.getFactory('lego_rs', { contractType: ContractType.InkCode });
+    legoFactory = await this.devPhase.getFactory('lego', { contractType: ContractType.InkCode });
     tagbagFactory = await this.devPhase.getFactory('tagbag', { contractType: ContractType.InkCode });
     profileFactoryFactory = await this.devPhase.getFactory('brick_profile_factory', { contractType: ContractType.InkCode });
     brickProfileFactory = await this.devPhase.getFactory('brick_profile', { contractType: ContractType.InkCode });

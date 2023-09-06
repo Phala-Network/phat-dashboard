@@ -1,0 +1,9 @@
+[package]
+name = "legojs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[build-dependencies]
+qjsbind = { git = "https://github.com/Phala-Network/qjs-sys.git", branch = "sidevm", features = ["with-polyfills"] }

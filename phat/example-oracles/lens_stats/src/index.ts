@@ -69,14 +69,6 @@ function isHexString(str: string): boolean {
   return regex.test(str.toLowerCase());
 }
 
-function stringToHex(str: string): string {
-  var hex = "";
-  for (var i = 0; i < str.length; i++) {
-    hex += str.charCodeAt(i).toString(16);
-  }
-  return "0x" + hex;
-}
-
 function fetchLensApiStats(lensApi: string, profileId: string): any {
   // profile_id should be like 0x0001
   let headers = {
@@ -98,14 +90,13 @@ function fetchLensApiStats(lensApi: string, profileId: string): any {
             }
         }`,
   });
-  let body = stringToHex(query);
   let response = pink.batchHttpRequest(
     [
       {
         url: lensApi,
         method: "POST",
         headers,
-        body,
+        body: query,
         returnTextBody: true,
       },
     ],

@@ -28,7 +28,7 @@ ethabi = { version = "18.0.0", default-features = false, features = [
 phat_offchain_rollup = { path = "../../crates/rollup", default-features = false, features = ["evm"] }
 pink-kv-session = "0.2"
 
-phat_js = { path = "../../crates/js", default-features = false }
+phat_js = { version = "0.1.3", default-features = false }
 brick_profile = { path = "../../contracts/brick_profile", default-features = false, features = ["ink-as-dependency"] }
 
 hex = { version = "0.4", default-features = false }
