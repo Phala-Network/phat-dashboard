@@ -310,8 +310,8 @@ describe("Run lego actions", () => {
       );
       await checkUntil(async () => {
         const { output } = await offchainRollup.query.getCore(certAlice, {});
-        console.log(`ActionOffchainRollup handler ${JSON.stringify(output)}`);
-        return !output.toJSON().ok;
+        // console.log(`ActionOffchainRollup handler ${JSON.stringify(output)}`);
+        return output.toJSON().ok?.ok?.script;
       }, 1000 * 10);
       console.log("ActionOffchainRollup handler configured");
 

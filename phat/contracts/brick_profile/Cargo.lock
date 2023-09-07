@@ -198,7 +198,7 @@ dependencies = [
 
 [[package]]
 name = "brick_profile"
-version = "0.2.0"
+version = "1.0.0"
 dependencies = [
  "dotenvy",
  "env_logger 0.9.3",

@@ -6,7 +6,10 @@ pub use crate::action_offchain_rollup::*;
 
 #[ink::contract(env = pink_extension::PinkEnvironment)]
 mod action_offchain_rollup {
-    use alloc::{string::String, vec::Vec};
+    use alloc::{
+        string::{String, ToString},
+        vec::Vec,
+    };
     use ink::env::call::{build_call, ExecutionInput, Selector};
     #[cfg(feature = "std")]
     use ink::storage::traits::StorageLayout;
@@ -27,7 +30,7 @@ mod action_offchain_rollup {
     use pink::ResultExt;
 
     use ethabi::Token;
-    use logging::error;
+    use logging::{error, info};
     use phat_js as js;
     use phat_offchain_rollup::{
         clients::evm::{sign_meta_tx, EvmRollupClient},
@@ -39,7 +42,7 @@ mod action_offchain_rollup {
     #[derive(Clone, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub struct Core {
-        /// The JS code that processes the rollup queue request
+        /// The JS code that processes the rollup queue request. For debugging.
         script: String,
         /// The configuration that would be passed to the core js script
         settings: String,
@@ -277,13 +280,10 @@ mod action_offchain_rollup {
         ///
         #[ink(message)]
         pub fn get_core_script(&self) -> Result<String> {
-            let Some(Core { script, .. }) = self.core.get() else {
-                return Err(Error::CoreNotConfigured);
-            };
-            Ok(build_final_js(
-                script.clone(),
-                logging::tagged_prefix().unwrap_or_default(),
-            ))
+            self.core
+                .get()
+                .map(|core| core.script.clone())
+                .ok_or(Error::CoreNotConfigured)
         }
 
         ///
@@ -429,18 +429,37 @@ mod action_offchain_rollup {
         /// Processes a request with the the core js and returns the output.
         fn handle_request(&self, request: &[u8]) -> Result<(Vec<u8>, CodeHash)> {
             let Some(Core {
-                script,
                 settings,
                 code_hash,
+                script,
             }) = self.core.get()
             else {
                 error!("CoreNotConfigured");
                 return Err(Error::CoreNotConfigured);
             };
+            let compiled_core_script =
+                if let Some(compiled_script) = pink::ext().cache_get(&code_hash) {
+                    info!("Using cached core js");
+                    compiled_script
+                } else {
+                    info!("Compiling core js");
+                    let compiled_script = js::compile(&script)
+                        .or(Err(Error::JsError("Failed to compile core js".to_string())))?;
+                    let result = pink::ext().cache_set(&code_hash, &compiled_script);
+                    if let Err(_) = result {
+                        info!("Failed to cache compiled core js");
+                    }
+                    compiled_script
+                };
             let log_prefix = logging::tagged_prefix().unwrap_or_default();
-            let final_js = build_final_js(script, log_prefix);
+            let js_set_prefix = alloc::format!("globalThis.logPrefix = \"{}\";", log_prefix);
+            let scripts = [
+                js::RefValue::String(&js_set_prefix),
+                js::RefValue::Bytes(monkey_patch()),
+                js::RefValue::Bytes(&compiled_core_script),
+            ];
             let args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request)), settings];
-            let output = match js::eval(&final_js, &args) {
+            let output = match js::eval_all(&scripts[..], &args) {
                 Ok(output) => output,
                 Err(e) => {
                     error!("Failed to eval the core js: {}", e);
@@ -451,6 +470,7 @@ mod action_offchain_rollup {
                 js::Output::String(bytes) => hex::decode(bytes.as_str().trim_start_matches("0x"))
                     .map_err(|_| Error::InvalidJsOutput)?,
                 js::Output::Bytes(b) => b,
+                js::Output::Undefined => Vec::new(),
             };
             Ok((output, code_hash))
         }
@@ -543,11 +563,10 @@ mod action_offchain_rollup {
         Ok(None)
     }
 
-    fn build_final_js(script: String, log_prefix: String) -> String {
-        let final_js = alloc::format!(
+    fn monkey_patch() -> &'static [u8] {
+        const INIT_CODE: &[u8] = qjsc::compiled!(
             r#"
             (function(){{
-                const logPrefix = "[{log_prefix}]:";
                 const originLog = console.log;
                 const originWarn = console.warn;
                 const originError = console.error;
@@ -570,9 +589,8 @@ mod action_offchain_rollup {
                     throw new Error("Console API not all implemented, please use console.log instead.");
                 }};
             }}());
-            {script}
         "#
         );
-        final_js
+        INIT_CODE
     }
 }
