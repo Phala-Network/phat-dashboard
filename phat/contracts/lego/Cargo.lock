@@ -530,6 +530,7 @@ name = "lego"
 version = "0.1.0"
 dependencies = [
  "ink",
+ "logging",
  "parity-scale-codec",
  "phat_js",
  "pink-extension",
