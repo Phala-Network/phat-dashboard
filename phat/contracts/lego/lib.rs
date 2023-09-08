@@ -6,7 +6,7 @@ extern crate alloc;
 mod lego {
     use alloc::string::String;
     use phat_js as js;
-    use pink_extension::ResultExt;
+    use logging::ResultExt;
     use this_crate::{version_tuple, VersionTuple};
 
     #[ink(storage)]

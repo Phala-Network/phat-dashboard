@@ -24,7 +24,7 @@ mod action_offchain_rollup {
     use this_crate::{version_tuple, VersionTuple};
 
     // To enable `(result).log_err("Reason")?`
-    use pink::ResultExt;
+    use logging::ResultExt;
 
     use ethabi::Token;
     use logging::error;

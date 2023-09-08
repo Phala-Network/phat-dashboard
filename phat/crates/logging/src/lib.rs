@@ -12,6 +12,26 @@ use alloc::{
 use ink::primitives::AccountId;
 use pink_macro::driver;
 
+/// An extension for Result<T, E> to log error conveniently.
+pub trait ResultExt {
+    /// Log the the error message with `pink::error!` with a tip `msg` in front if the Result is Err.
+    fn log_err(self, msg: &str) -> Self
+    where
+        Self: Sized;
+}
+
+impl<T, E: core::fmt::Debug> ResultExt for Result<T, E> {
+    fn log_err(self, msg: &str) -> Self
+    where
+        Self: Sized,
+    {
+        if let Err(err) = &self {
+            error!("{msg}: {err:?}");
+        }
+        self
+    }
+}
+
 #[driver]
 #[ink::trait_definition]
 pub trait TagStack {

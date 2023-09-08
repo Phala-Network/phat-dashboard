@@ -8,7 +8,7 @@ use kv_session::{
     traits::{BumpVersion, KvSnapshot, QueueIndexCodec},
     RwTracker, Session,
 };
-use pink::ResultExt;
+use logging::ResultExt;
 use pink_extension as pink;
 use pink_extension::AccountId;
 use primitive_types::H256;
