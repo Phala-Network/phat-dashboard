@@ -503,7 +503,10 @@ mod brick_profile {
                 return Err(Error::InvalidPollId);
             }
             // Ensure the poll_id only contains a-zA-Z0-9_- to prevent XSS.
-            if !poll_id.chars().all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-') {
+            if !poll_id
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+            {
                 return Err(Error::InvalidPollId);
             }
             let _span = logging::enter_span(&format!("poll_id={poll_id}"));
@@ -539,7 +542,11 @@ mod brick_profile {
                 .authorized_account
                 .get(now_workflow_id)
                 .ok_or(Error::NoAuthorizedExternalAccount)?;
-            self.get_evm_account_address(account_id)
+            info!("Workflow {now_workflow_id} reads account {account_id} address");
+
+            let account = self.ensure_enabled_external_account(account_id)?;
+            let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
+            Ok(sk.address())
         }
 
         /// Only self-initiated call is allowed.
