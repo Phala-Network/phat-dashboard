@@ -512,7 +512,8 @@ mod action_offchain_rollup {
                 ))))
                 .returns::<brick_profile::Result<H160>>()
                 .invoke()
-                .map_err(|_| Error::BadBrickProfile)?;
+                .log_err("failed to get evm address from profile")
+                .or(Err(Error::BadBrickProfile))?;
 
             let attest_pair = KeyPair::from(attest_key);
             let tx_req = submittable
@@ -531,7 +532,8 @@ mod action_offchain_rollup {
                 )
                 .returns::<brick_profile::Result<Vec<u8>>>()
                 .invoke()
-                .map_err(|_| Error::FailedToSignTransaction)?;
+                .log_err("failed to sign tx from profile")
+                .or(Err(Error::FailedToSignTransaction))?;
 
             // Actually submit the tx (no guarantee for success)
             let eth = Eth::new(PinkHttp::new(rpc));
