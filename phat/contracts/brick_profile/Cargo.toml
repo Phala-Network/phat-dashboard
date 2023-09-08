@@ -1,6 +1,6 @@
 [package]
 name = "brick_profile"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Shelven Zhou <favoring.zhou49@gmail.com>"]
 edition = "2021"
 
