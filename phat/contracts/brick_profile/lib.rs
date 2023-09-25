@@ -486,12 +486,16 @@ mod brick_profile {
             self.authorized_account.get(workflow)
         }
 
-        /// Called by a scheduler periodically with Query.
+        /// Force poll a workflow without checking the workflow enabled status.
+        ///
+        /// # Arguments
+        /// * `workflow_id` - The workflow id.
+        /// * `poll_id` - A unique id for this poll (16 chars max).
         ///
         /// @category Polling
         ///
         #[ink(message)]
-        pub fn poll(&mut self, workflow_id: WorkflowId, poll_id: String) -> Result<bool> {
+        pub fn force_poll(&mut self, workflow_id: WorkflowId, poll_id: String) -> Result<bool> {
             use ink::env::call::{build_call, ExecutionInput, Selector};
             // Trick here: We only allow Query the `poll()` function, so the following `workflow_session` change only
             // lives in this call and is never written back to chain.
@@ -513,7 +517,7 @@ mod brick_profile {
             let profile = hex_fmt::HexFmt(self.env().account_id());
             info!("polling profile 0x{profile}:{workflow_id}");
 
-            let now_workflow = self.ensure_enabled_workflow(workflow_id)?;
+            let now_workflow = self.ensure_workflow(workflow_id)?;
             self.workflow_session.set(&now_workflow.id);
             let js_runner = self.get_js_runner()?;
             let call_result = build_call::<pink::PinkEnvironment>()
@@ -529,6 +533,21 @@ mod brick_profile {
                 .returns::<bool>()
                 .invoke();
             Ok(call_result)
+        }
+
+
+        /// Called by a scheduler periodically with Query.
+        ///
+        /// # Arguments
+        /// * `workflow_id` - The workflow id.
+        /// * `poll_id` - A unique id for this poll (16 chars max).
+        ///
+        /// @category Polling
+        ///
+        #[ink(message)]
+        pub fn poll(&mut self, workflow_id: WorkflowId, poll_id: String) -> Result<bool> {
+            self.ensure_enabled_workflow(workflow_id)?;
+            self.force_poll(workflow_id, poll_id)
         }
 
         /// Only self-initiated call is allowed.
