@@ -35,7 +35,7 @@ cd phat
 # Optional
 yarn devphase contract compile
 
-yarn devphase contract test
+yarn devphase contract test -m=3 # with logger
 ```
 This will call the `function _onMessageReceived(bytes calldata action)` in the pre-deployed smart contract mentioned in [evm/README.md](../evm/README.md).
 
