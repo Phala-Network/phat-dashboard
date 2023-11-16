@@ -18,6 +18,7 @@ mod codebase {
 
     // Importing logging utilities
     use driver::{Error, PhatCodeProvider};
+    use hex_fmt::HexFmt as Hex;
     use pink::{error, info};
 
     #[cfg(feature = "std")]
@@ -138,7 +139,7 @@ mod codebase {
         #[ink(constructor)]
         pub fn new() -> Self {
             let caller = Self::env().caller();
-            info!("Creating new codebase with manager: {caller:?}");
+            info!("Creating new codebase with manager: 0x{:?}", Hex(caller));
             Self {
                 managers: vec![caller],
                 base_info: BaseInfo::default(),
@@ -230,7 +231,7 @@ mod codebase {
             });
             self.base_info.count = self.base_info.count.saturating_add(1);
             self.base_info.total_size = self.base_info.total_size.saturating_add(code.len() as u64);
-            info!("Code uploaded successfully. Hash: {code_hash:?}");
+            info!("Code uploaded successfully. Hash: 0x{:?}", Hex(code_hash));
             Ok(code_hash)
         }
 
@@ -242,18 +243,22 @@ mod codebase {
             let mut removed = vec![];
             for code_hash in codes {
                 let Some(metadata) = self.metadatas.take(code_hash) else {
-                    info!("Removing code hash not found: {code_hash:?}");
+                    info!("Removing code hash not found: 0x{:?}", Hex(code_hash));
                     continue;
                 };
                 if metadata.ref_cnt > 0 {
                     if !force {
                         error!(
-                            "Cannot remove code with non-zero reference count. Hash: {code_hash:?}"
+                            "Cannot remove code with non-zero reference count. Hash: 0x{:?}",
+                            Hex(code_hash)
                         );
                         self.metadatas.insert(code_hash, &metadata);
                         continue;
                     } else {
-                        info!("Removing code with non-zero reference count. Hash: {code_hash:?}");
+                        info!(
+                            "Removing code with non-zero reference count. Hash: 0x{:?}",
+                            Hex(code_hash)
+                        );
                     }
                 }
                 let code = self.codes.take(code_hash);
@@ -291,7 +296,11 @@ mod codebase {
             self.metadatas.insert(code_hash, &metadata);
             self.refs.insert(caller, &code_hash);
             self.base_info.total_ref_cnt = self.base_info.total_ref_cnt.saturating_add(1);
-            info!("Code {code_hash:?} marked as used by {caller:?}.");
+            info!(
+                "Code 0x{:?} marked as used by 0x{:?}.",
+                Hex(code_hash),
+                Hex(caller)
+            );
             Ok(())
         }
 
