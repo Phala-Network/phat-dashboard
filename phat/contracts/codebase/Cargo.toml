@@ -5,7 +5,7 @@ authors = ["[your_name] <[your_email]>"]
 edition = "2021"
 
 [dependencies]
-ink = { version = "4.3.0", default-features = false }
+ink = { version = "4.3.0", default-features = false, features = ["static-buffer-1M"]}
 pink = { version = "0.5.0", package = "pink-extension", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
@@ -30,3 +30,7 @@ std = [
 ]
 ink-as-dependency = []
 e2e-tests = []
+
+[patch.crates-io]
+ink = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer-4.3.0" }
+ink_env = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer-4.3.0" }

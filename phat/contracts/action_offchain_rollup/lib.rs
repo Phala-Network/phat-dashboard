@@ -28,19 +28,18 @@ mod action_offchain_rollup {
 
     use ethabi::Token;
     use logging::error;
+    use phat_codebase_driver::PhatCodeProviderRef;
     use phat_js as js;
     use phat_offchain_rollup::{
         clients::evm::{sign_meta_tx, EvmRollupClient},
         Action,
     };
 
-    type CodeHash = [u8; 32];
+    type CodeHash = Hash;
 
     #[derive(Clone, Encode, Decode)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub struct Core {
-        /// The JS code that processes the rollup queue request
-        script: String,
         /// The configuration that would be passed to the core js script
         settings: String,
         /// The code hash of the core js script
@@ -99,9 +98,15 @@ mod action_offchain_rollup {
 
         InvalidJsOutput,
         JsError(String),
+        NoCodeProvider,
+        CodeNotFound,
     }
 
     type Result<T> = core::result::Result<T, Error>;
+
+    fn get_code_provider() -> Result<PhatCodeProviderRef> {
+        PhatCodeProviderRef::instance().ok_or(Error::NoCodeProvider)
+    }
 
     impl ActionOffchainRollup {
         #[ink(constructor)]
@@ -119,30 +124,30 @@ mod action_offchain_rollup {
             }
         }
 
-        /// @ui core_js widget codemirror
-        /// @ui core_js options.lang javascript
         #[ink(constructor)]
-        pub fn with_core(core_js: String, core_settings: String, brick_profile: AccountId) -> Self {
+        pub fn with_core(
+            code_hash: Hash,
+            core_settings: String,
+            brick_profile: AccountId,
+        ) -> Result<Self> {
             let mut this = Self::new(brick_profile);
-            this.config_core_inner(core_js, core_settings);
-            this
+            this.config_core_inner(code_hash, core_settings)?;
+            Ok(this)
         }
 
-        /// @ui core_js widget codemirror
-        /// @ui core_js options.lang javascript
         #[ink(constructor)]
         pub fn with_configuration(
             client_rpc: String,
             client_addr: Vec<u8>,
-            core_js: String,
+            code_hash: Hash,
             core_settings: String,
             brick_profile: AccountId,
-        ) -> Self {
+        ) -> Result<Self> {
             let mut this = Self::new(brick_profile);
-            this.config_core_inner(core_js, core_settings);
+            this.config_core_inner(code_hash, core_settings)?;
             this.config_client(client_rpc, client_addr)
                 .expect("failed to configure client");
-            this
+            Ok(this)
         }
 
         /// @category Metadata
@@ -217,27 +222,21 @@ mod action_offchain_rollup {
         /// @ui core_js options.lang javascript
         ///
         #[ink(message)]
-        pub fn config_core(&mut self, core_js: String, settings: String) -> Result<()> {
+        pub fn config_core(&mut self, code_hash: Hash, settings: String) -> Result<()> {
             self.ensure_owner()?;
-            self.config_core_inner(core_js, settings);
-            Ok(())
+            self.config_core_inner(code_hash, settings)
         }
 
-        /// Set the core script (only owner).
+        /// Set the core script by given code hash (only owner).
         ///
-        /// @category Configuration
-        ///
-        /// @ui core_js widget codemirror
-        /// @ui core_js options.lang javascript
-        ///
+        /// The code of the hash must be uploaded to `PhatCodeProvider`.
         #[ink(message)]
-        pub fn config_core_script(&mut self, core_js: String) -> Result<()> {
+        pub fn config_core_script(&mut self, code_hash: Hash) -> Result<()> {
             self.ensure_owner()?;
             let Some(core) = self.core.get() else {
                 return Err(Error::CoreNotConfigured);
             };
-            self.config_core_inner(core_js, core.settings);
-            Ok(())
+            self.config_core_inner(code_hash, core.settings)
         }
 
         /// Set the configuration (only owner).
@@ -277,9 +276,11 @@ mod action_offchain_rollup {
         ///
         #[ink(message)]
         pub fn get_core_script(&self) -> Result<String> {
-            let Some(Core { script, .. }) = self.core.get() else {
-                return Err(Error::CoreNotConfigured);
-            };
+            let provider = get_code_provider()?;
+            let script = provider
+                .get_code()
+                .ok_or(Error::FailedToGetStorage)
+                .log_err("failed to get code")?;
             Ok(build_final_js(
                 script.clone(),
                 logging::tagged_prefix().unwrap_or_default(),
@@ -309,8 +310,8 @@ mod action_offchain_rollup {
             self.ensure_owner()?;
             let rpc = self.client.as_ref().map(|c| c.rpc.clone());
             let client_addr = self.client.as_ref().map(|c| c.client_addr);
+            let script = get_code_provider()?.get_code();
             let config = if let Some(Core {
-                script,
                 settings,
                 code_hash,
             }) = self.core.get()
@@ -318,7 +319,7 @@ mod action_offchain_rollup {
                 Configuration {
                     rpc,
                     client_addr,
-                    script: Some(script),
+                    script,
                     settings: Some(settings),
                     code_hash: Some(code_hash),
                 }
@@ -405,7 +406,10 @@ mod action_offchain_rollup {
         pub fn get_answer_with_code_hash(&self, request: Vec<u8>) -> Result<Vec<u8>> {
             let client = self.ensure_client_configured()?;
             let (reply, js_hash) = self.handle_request(&request)?;
-            let data = ethabi::encode(&[Token::Bytes(reply), Token::FixedBytes(js_hash.to_vec())]);
+            let data = ethabi::encode(&[
+                Token::Bytes(reply),
+                Token::FixedBytes(js_hash.as_ref().to_vec()),
+            ]);
             let (tx, sig) = sign_meta_tx(
                 &client.rpc,
                 client.client_addr.into(),
@@ -428,8 +432,10 @@ mod action_offchain_rollup {
 
         /// Processes a request with the the core js and returns the output.
         fn handle_request(&self, request: &[u8]) -> Result<(Vec<u8>, CodeHash)> {
+            let script = get_code_provider()?
+                .get_code()
+                .ok_or(Error::CoreNotConfigured)?;
             let Some(Core {
-                script,
                 settings,
                 code_hash,
             }) = self.core.get()
@@ -451,6 +457,7 @@ mod action_offchain_rollup {
                 js::Output::String(bytes) => hex::decode(bytes.as_str().trim_start_matches("0x"))
                     .map_err(|_| Error::InvalidJsOutput)?,
                 js::Output::Bytes(b) => b,
+                js::Output::Undefined => Vec::new(),
             };
             Ok((output, code_hash))
         }
@@ -469,19 +476,15 @@ mod action_offchain_rollup {
             self.client.as_ref().ok_or(Error::ClientNotConfigured)
         }
 
-        fn config_core_inner(&mut self, core_js: String, settings: String) {
-            let code_hash = self
-                .env()
-                .hash_bytes::<ink::env::hash::Sha2x256>(core_js.as_bytes());
-            // TODO: To avoid wasting storage, we can
-            // - make a generic contract to store k-v pairs.
-            // - use the hash as the key to store the js.
-            // - store only hash in the app contract.
+        fn config_core_inner(&mut self, code_hash: Hash, settings: String) -> Result<()> {
+            get_code_provider()?
+                .use_code(code_hash)
+                .or(Err(Error::CodeNotFound))?;
             self.core.set(&Core {
-                script: core_js,
                 settings,
                 code_hash,
             });
+            Ok(())
         }
     }
 

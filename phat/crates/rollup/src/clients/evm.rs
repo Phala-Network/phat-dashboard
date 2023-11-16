@@ -11,7 +11,6 @@ use kv_session::{
     RwTracker, Session,
 };
 use logging::ResultExt;
-use pink_extension as pink;
 use pink_web3::{
     api::{Eth, Namespace},
     contract::{tokens::Tokenize, Contract, Options},

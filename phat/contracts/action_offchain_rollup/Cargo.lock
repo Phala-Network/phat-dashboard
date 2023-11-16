@@ -14,7 +14,7 @@ dependencies = [
 
 [[package]]
 name = "action_offchain_rollup"
-version = "1.0.1"
+version = "2.0.1"
 dependencies = [
  "brick_profile",
  "dotenvy",
@@ -27,9 +27,10 @@ dependencies = [
  "ink",
  "logging",
  "parity-scale-codec",
+ "phat-codebase-driver",
  "phat_js",
  "phat_offchain_rollup",
- "pink-extension",
+ "pink-extension 0.4.3",
  "pink-extension-runtime",
  "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
  "pink-kv-session",
@@ -226,7 +227,7 @@ dependencies = [
  "ink",
  "logging",
  "parity-scale-codec",
- "pink-extension",
+ "pink-extension 0.4.3",
  "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
  "pink-web3",
  "primitive-types",
@@ -713,7 +714,7 @@ checksum = "89ca545a94061b6365f2c7355b4b32bd20df3ff95f02da9329b34ccc3bd6ee72"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
 ]
 
 [[package]]
@@ -1066,8 +1067,8 @@ dependencies = [
 
 [[package]]
 name = "ink"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "derive_more",
  "ink_env",
@@ -1081,37 +1082,39 @@ dependencies = [
 
 [[package]]
 name = "ink_allocator"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "cfg-if",
 ]
 
 [[package]]
 name = "ink_codegen"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "blake2",
  "derive_more",
  "either",
+ "env_logger",
  "heck",
  "impl-serde",
- "ink_ir 4.2.0 (git+https://github.com/kvinwang/ink.git?branch=config-buffer)",
+ "ink_ir 4.3.0",
  "ink_primitives",
  "itertools",
+ "log",
  "parity-scale-codec",
  "proc-macro2",
  "quote",
  "serde",
  "serde_json",
- "syn 2.0.18",
+ "syn 2.0.39",
 ]
 
 [[package]]
 name = "ink_engine"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "blake2",
  "derive_more",
@@ -1124,8 +1127,8 @@ dependencies = [
 
 [[package]]
 name = "ink_env"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "arrayref",
  "blake2",
@@ -1160,64 +1163,62 @@ dependencies = [
  "itertools",
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
 ]
 
 [[package]]
 name = "ink_ir"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "blake2",
  "either",
- "ink_prelude",
  "itertools",
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
 ]
 
 [[package]]
 name = "ink_macro"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "ink_codegen",
- "ink_ir 4.2.0 (git+https://github.com/kvinwang/ink.git?branch=config-buffer)",
+ "ink_ir 4.3.0",
  "ink_primitives",
  "parity-scale-codec",
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
  "synstructure",
 ]
 
 [[package]]
 name = "ink_metadata"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "derive_more",
  "impl-serde",
  "ink_prelude",
  "ink_primitives",
  "scale-info",
- "schemars",
  "serde",
 ]
 
 [[package]]
 name = "ink_prelude"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "cfg-if",
 ]
 
 [[package]]
 name = "ink_primitives"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "derive_more",
  "ink_prelude",
@@ -1230,8 +1231,8 @@ dependencies = [
 
 [[package]]
 name = "ink_storage"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "array-init",
  "cfg-if",
@@ -1247,8 +1248,8 @@ dependencies = [
 
 [[package]]
 name = "ink_storage_traits"
-version = "4.2.0"
-source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer#a5d3774d342fa484d76707d2a0f789d443032ec9"
+version = "4.3.0"
+source = "git+https://github.com/kvinwang/ink.git?branch=config-buffer-4.3.0#2558e49f53e10aa0450588fc6c4819f0fbaad099"
 dependencies = [
  "ink_metadata",
  "ink_prelude",
@@ -1411,7 +1412,7 @@ version = "0.1.0"
 dependencies = [
  "ink",
  "parity-scale-codec",
- "pink-extension",
+ "pink-extension 0.4.3",
  "pink-extension-macro",
  "scale-info",
 ]
@@ -1529,6 +1530,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_enum"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a015b430d3c108a207fd776d2e2196aaf8b1cf8cf93253e3a097ff3085076a1"
+dependencies = [
+ "num_enum_derive",
+]
+
+[[package]]
+name = "num_enum_derive"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96667db765a921f7b295ffee8b60472b686a51d4f21c2ee4ffdb94c7013b65a6"
+dependencies = [
+ "proc-macro-crate",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.39",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1548,9 +1570,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.5.0"
+version = "3.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ddb756ca205bd108aee3c62c6d3c994e1df84a59b9d6d4a5ea42ee1fd5a9a28"
+checksum = "0dec8a8073036902368c2cdc0387e85ff9a37054d7e7c98e592145e0c92cd4fb"
 dependencies = [
  "arrayvec 0.7.2",
  "bitvec",
@@ -1563,9 +1585,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "3.1.4"
+version = "3.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86b26a931f824dd4eca30b3e43bb4f31cd5f0d3a403c5f5ff27106b805bfde7b"
+checksum = "312270ee71e1cd70289dacf597cab7b207aa107d2f28191c2ae45b2ece18a260"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -1633,13 +1655,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b2a4787296e9989611394c33f193f676704af1686e70b8f8033ab5ba9a35a94"
 
 [[package]]
-name = "phat_js"
+name = "phat-codebase-driver"
 version = "0.1.0"
 dependencies = [
  "ink",
- "logging",
  "parity-scale-codec",
- "pink-extension",
+ "pink-extension 0.5.0",
+ "pink-extension-macro",
+ "scale-info",
+]
+
+[[package]]
+name = "phat_js"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "444690236423d07e452c728013211998cd434f02914b12da0b1a9d1f962f38aa"
+dependencies = [
+ "ink",
+ "parity-scale-codec",
+ "pink-extension 0.5.0",
  "scale-info",
 ]
 
@@ -1652,7 +1686,7 @@ dependencies = [
  "ink",
  "logging",
  "parity-scale-codec",
- "pink-extension",
+ "pink-extension 0.4.3",
  "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
  "pink-kv-session",
  "pink-subrpc",
@@ -1678,7 +1712,7 @@ checksum = "39407670928234ebc5e6e580247dd567ad73a3578460c5990f9503df207e8f07"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
 ]
 
 [[package]]
@@ -1717,17 +1751,32 @@ dependencies = [
 ]
 
 [[package]]
-name = "pink-extension-macro"
-version = "0.4.2"
+name = "pink-extension"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b8dfee165489e2147ef76bb37507f3653a8156b55e2bc6f8992f2847a7556f6"
+checksum = "fe261c26b4018364320cf86615b6c82c068b3aa00ada4de3147842f97a20c548"
+dependencies = [
+ "ink",
+ "log",
+ "num_enum",
+ "parity-scale-codec",
+ "pink-extension-macro",
+ "scale-info",
+ "this-crate",
+]
+
+[[package]]
+name = "pink-extension-macro"
+version = "0.4.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d38ff5c86454de8be6134fcf510009d3a84e9bfc758970755458ba7bafaf496b"
 dependencies = [
  "heck",
- "ink_ir 4.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ink_ir 4.2.0",
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
  "unzip3",
 ]
 
@@ -1741,7 +1790,7 @@ dependencies = [
  "hex_fmt",
  "log",
  "once_cell",
- "pink-extension",
+ "pink-extension 0.4.3",
  "reqwest",
  "reqwest-env-proxy",
  "ring",
@@ -1785,7 +1834,7 @@ dependencies = [
  "hex-literal",
  "impl-serde",
  "parity-scale-codec",
- "pink-extension",
+ "pink-extension 0.4.3",
  "pink-json 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "primitive-types",
  "scale-info",
@@ -1809,7 +1858,7 @@ dependencies = [
  "ink_env",
  "pin-project",
  "pink-erased-serde",
- "pink-extension",
+ "pink-extension 0.4.3",
  "pink-json 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rlp",
  "serde",
@@ -1848,18 +1897,18 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.60"
+version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dec2b086b7a862cf4de201096214fa870344cf922b2b30c167badb3af3195406"
+checksum = "134c189feb4956b20f6f547d2cf727d4c0fe06722b20a0eec87ed445a97f92da"
 dependencies = [
  "unicode-ident",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.28"
+version = "1.0.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b9ab9c7eadfd8df19006f1cf1a4aed13540ed5cbc047010ece5826e10825488"
+checksum = "5267fca4496028628a95160fc423a33e8b2e6af8a5302579e322e4b520293cae"
 dependencies = [
  "proc-macro2",
 ]
@@ -1977,7 +2026,7 @@ checksum = "8d2275aab483050ab2a7364c1a46604865ee7d6906684e08db0f090acf74f9e7"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
 ]
 
 [[package]]
@@ -2166,9 +2215,9 @@ checksum = "f91339c0467de62360649f8d3e185ca8de4224ff281f66000de5eb2a77a79041"
 
 [[package]]
 name = "scale-bits"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8dd7aca73785181cc41f0bbe017263e682b585ca660540ba569133901d013ecf"
+checksum = "036575c29af9b6e4866ffb7fa055dbf623fe7a9cc159b33786de6013a6969d89"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
@@ -2176,22 +2225,23 @@ dependencies = [
 
 [[package]]
 name = "scale-decode"
-version = "0.5.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7e5527e4b3bf079d4c0b2f253418598c380722ba37ef20fac9088081407f2b6"
+checksum = "7789f5728e4e954aaa20cadcc370b99096fb8645fca3c9333ace44bb18f30095"
 dependencies = [
+ "derive_more",
  "parity-scale-codec",
  "scale-bits",
  "scale-decode-derive",
  "scale-info",
- "thiserror",
+ "smallvec",
 ]
 
 [[package]]
 name = "scale-decode-derive"
-version = "0.5.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b38741b2f78e4391b94eac6b102af0f6ea2b0f7fe65adb55d7f4004f507854db"
+checksum = "27873eb6005868f8cc72dcfe109fae664cf51223d35387bc2f28be4c28d94c47"
 dependencies = [
  "darling",
  "proc-macro-crate",
@@ -2202,21 +2252,22 @@ dependencies = [
 
 [[package]]
 name = "scale-encode"
-version = "0.1.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "15546e5efbb45f0fc2291f7e202dee8623274c5d8bbfdf9c6886cc8b44a7ced3"
+checksum = "6d70cb4b29360105483fac1ed567ff95d65224a14dd275b6303ed0a654c78de5"
 dependencies = [
+ "derive_more",
  "parity-scale-codec",
  "scale-encode-derive",
  "scale-info",
- "thiserror",
+ "smallvec",
 ]
 
 [[package]]
 name = "scale-encode-derive"
-version = "0.1.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd983cf0a9effd76138554ead18a6de542d1af175ac12fd5e91836c5c0268082"
+checksum = "995491f110efdc6bea96d6a746140e32bfceb4ea47510750a5467295a4707a25"
 dependencies = [
  "darling",
  "proc-macro-crate",
@@ -2227,52 +2278,27 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.9.0"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35c0a159d0c45c12b20c5a844feb1fe4bea86e28f17b92a5f0c42193634d3782"
+checksum = "7f7d66a1128282b7ef025a8ead62a4a9fcf017382ec53b8ffbf4d7bf77bd3c60"
 dependencies = [
  "bitvec",
  "cfg-if",
  "derive_more",
  "parity-scale-codec",
  "scale-info-derive",
- "schemars",
  "serde",
 ]
 
 [[package]]
 name = "scale-info-derive"
-version = "2.9.0"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "912e55f6d20e0e80d63733872b40e1227c0bce1e1ab81ba67d696339bfd7fd29"
+checksum = "abf2c68b89cafb3b8d918dd07b42be0da66ff202cf1155c5739a4e0c1ea0dc19"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "schemars"
-version = "0.8.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02c613288622e5f0c3fdc5dbd4db1c5fbe752746b1d1a56a0630b78fd00de44f"
-dependencies = [
- "dyn-clone",
- "schemars_derive",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "schemars_derive"
-version = "0.8.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "109da1e6b197438deb6db99952990c7f959572794b80ff93707d55a232545e7c"
-dependencies = [
- "proc-macro2",
- "quote",
- "serde_derive_internals",
  "syn 1.0.109",
 ]
 
@@ -2363,31 +2389,22 @@ checksum = "bebd363326d05ec3e2f532ab7660680f3b02130d780c299bca73469d521bc0ed"
 
 [[package]]
 name = "serde"
-version = "1.0.147"
-source = "git+https://github.com/kvinwang/serde.git?branch=pink#0d6920a81befce8e44b854dc67738b0c640247e6"
+version = "1.0.192"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bca2a08484b285dcb282d0f67b26cadc0df8b19f8c12502c13d966bf9482f001"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.147"
-source = "git+https://github.com/kvinwang/serde.git?branch=pink#0d6920a81befce8e44b854dc67738b0c640247e6"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "serde_derive_internals"
-version = "0.26.0"
+version = "1.0.192"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85bf8229e7920a9f636479437026331ce11aa132b4dde37d121944a44d6e5f3c"
+checksum = "d6c7207fbec9faa48073f3e3074cbe553af6ea512d7c21ba46e434e70ea9fbc1"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.39",
 ]
 
 [[package]]
@@ -2720,9 +2737,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.18"
+version = "2.0.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32d41677bcbe24c20c52e7c70b0d8db04134c5d1066bf98662e2871ad200ea3e"
+checksum = "23e78b90f2fcf45d3e842032ce32e3f2d1545ba6636271dcbf24fa306d87be7a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2737,7 +2754,7 @@ checksum = "285ba80e733fac80aa4270fbcdf83772a79b80aa35c97075320abfee4a915b06"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
  "unicode-xid",
 ]
 
@@ -2779,7 +2796,7 @@ checksum = "f9456a42c5b0d803c8cd86e73dd7cc9edd429499f37a3550d286d5e86720569f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
 ]
 
 [[package]]
@@ -3115,7 +3132,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
  "wasm-bindgen-shared",
 ]
 
@@ -3149,7 +3166,7 @@ checksum = "e128beba882dd1eb6200e1dc92ae6c5dbaa4311aa7bb211ca035779e5efc39f8"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]
@@ -3378,5 +3395,10 @@ checksum = "ce36e65b0d2999d2aafac989fb249189a141aee1f53c612c1f37d72631959f69"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.18",
+ "syn 2.0.39",
 ]
+
+[[patch.unused]]
+name = "serde"
+version = "1.0.147"
+source = "git+https://github.com/kvinwang/serde.git?branch=pink#0d6920a81befce8e44b854dc67738b0c640247e6"
