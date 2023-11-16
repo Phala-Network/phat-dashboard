@@ -1,0 +1,27 @@
+[package]
+name = "testing"
+version = "0.1.0"
+authors = ["[your_name] <[your_email]>"]
+edition = "2021"
+
+[dependencies]
+
+[dev-dependencies]
+hex = "0.4"
+ink = "4.3"
+drink = "0.8"
+drink-pink-runtime = "1.2.6"
+tracing-subscriber = "0.3"
+
+# Contracts
+phat-codebase = { path = "../contracts/codebase", features = ["ink-as-dependency"] }
+lego_rs = { path = "../contracts/lego_rs", features = ["ink-as-dependency"] }
+tagbag = { path = "../contracts/tagbag", features = ["ink-as-dependency"] }
+brick_profile_factory = { path = "../contracts/brick_profile_factory", features = ["ink-as-dependency"] }
+brick_profile = { path = "../contracts/brick_profile", features = ["ink-as-dependency"] }
+action_evm_transaction = { path = "../contracts/action_evm_transaction", features = ["ink-as-dependency"] }
+action_offchain_rollup = { path = "../contracts/action_offchain_rollup", features = ["ink-as-dependency"] }
+
+[patch.crates-io]
+ink = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer-4.3.0" }
+ink_env = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer-4.3.0" }

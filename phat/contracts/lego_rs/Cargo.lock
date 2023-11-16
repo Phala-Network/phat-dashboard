@@ -2798,9 +2798,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.6.4"
+version = "3.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd8e946cc0cc711189c0b0249fb8b599cbeeab9784d83c415719368bb8d4ac64"
+checksum = "0dec8a8073036902368c2cdc0387e85ff9a37054d7e7c98e592145e0c92cd4fb"
 dependencies = [
  "arrayvec 0.7.4",
  "bitvec",
@@ -2931,9 +2931,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pink-extension"
-version = "0.4.4"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74333ed749dd52e97b091654bf5f56f47f0aa8cf62d6324693991988142cc59c"
+checksum = "fe261c26b4018364320cf86615b6c82c068b3aa00ada4de3147842f97a20c548"
 dependencies = [
  "ink",
  "log",
@@ -3487,9 +3487,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info"
-version = "2.9.0"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35c0a159d0c45c12b20c5a844feb1fe4bea86e28f17b92a5f0c42193634d3782"
+checksum = "7f7d66a1128282b7ef025a8ead62a4a9fcf017382ec53b8ffbf4d7bf77bd3c60"
 dependencies = [
  "bitvec",
  "cfg-if",
@@ -3501,9 +3501,9 @@ dependencies = [
 
 [[package]]
 name = "scale-info-derive"
-version = "2.9.0"
+version = "2.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "912e55f6d20e0e80d63733872b40e1227c0bce1e1ab81ba67d696339bfd7fd29"
+checksum = "abf2c68b89cafb3b8d918dd07b42be0da66ff202cf1155c5739a4e0c1ea0dc19"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -3687,8 +3687,8 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.185"
-source = "git+https://github.com/kvinwang/serde.git?branch=patched-v1.0.185#92dc67b627b2c94628d815b074329c4f4a34a986"
+version = "1.0.188"
+source = "git+https://github.com/kvinwang/serde.git?branch=patched-v1.0.188#bf5c222f4f6742270743ecc75539ec6a00c24a03"
 dependencies = [
  "serde_derive",
 ]
@@ -3704,8 +3704,8 @@ dependencies = [
 
 [[package]]
 name = "serde_derive"
-version = "1.0.185"
-source = "git+https://github.com/kvinwang/serde.git?branch=patched-v1.0.185#92dc67b627b2c94628d815b074329c4f4a34a986"
+version = "1.0.188"
+source = "git+https://github.com/kvinwang/serde.git?branch=patched-v1.0.188#bf5c222f4f6742270743ecc75539ec6a00c24a03"
 dependencies = [
  "proc-macro2",
  "quote",

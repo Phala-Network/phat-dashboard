@@ -15,7 +15,7 @@ codebase-driver = { package = "phat-codebase-driver", path = "../../../crates/ph
 
 [dev-dependencies]
 drink = "0.8.0"
-drink-pink-runtime = "1.2.4"
+drink-pink-runtime = "1.2.6"
 tracing-subscriber = "0.3"
 phat-codebase = { path = "..", version = "0.1", features = ["ink-as-dependency"] }
 
@@ -35,4 +35,5 @@ ink-as-dependency = []
 e2e-tests = []
 
 [patch.crates-io]
-drink-pink-runtime = { path = "/home/kvin/codes/chain/phala/drink-pink-runtime" }
+ink = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer-4.3.0" }
+ink_env = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer-4.3.0" }

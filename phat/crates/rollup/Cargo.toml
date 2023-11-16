@@ -12,22 +12,22 @@ ink = { version = "4.3.0", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
-primitive-types = { version = "0.12.1", default-features = false, features = ["codec", "scale-info"] }
+primitive-types = { version = "0.12.2", default-features = false, features = ["codec", "scale-info"] }
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
-pink-extension = { version = "0.4.1", default-features = false, optional = true }
+pink-extension = { version = "0.5.0", default-features = false, optional = true }
 pink-json = { git = "https://github.com/Phala-Network/pink-json.git", branch = "pink", default-features = false, features = ["de-number-as-str"] }
 kv-session = { package = "pink-kv-session", version = "0.2" }
 
 # for EVM rollup
-pink-web3 = { version = "0.20.1", default-features = false, features = ["pink", "signing"], optional = true }
+pink-web3 = { version = "0.21.0", default-features = false, features = ["pink", "signing"], optional = true }
 ethabi = { version = "18.0.0", default-features = false, features = [
     "serde",
     "rlp",
 ], optional = true }
 
 # for Substrate rollup
-subrpc = { package = "pink-subrpc", version = "0.4.1", default-features = false, optional = true }
+subrpc = { package = "pink-subrpc", version = "0.5.0", default-features = false, optional = true }
 logging = { path = "../../crates/logging", default-features = false }
 
 [dev-dependencies]

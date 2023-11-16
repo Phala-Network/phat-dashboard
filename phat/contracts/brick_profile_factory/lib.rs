@@ -8,7 +8,6 @@ pub use brick_profile_factory::*;
 mod brick_profile_factory {
     use alloc::{collections::BTreeMap, format, string::String, vec::Vec};
     use brick_profile::BrickProfileRef;
-    use hex_literal::hex;
     use ink::ToAccountId;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;

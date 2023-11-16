@@ -22,7 +22,7 @@ dependencies = [
  "ethabi",
  "fixed",
  "hex",
- "hex-literal",
+ "hex-literal 0.3.4",
  "hex_fmt",
  "ink",
  "logging",
@@ -30,7 +30,7 @@ dependencies = [
  "phat-codebase-driver",
  "phat_js",
  "phat_offchain_rollup",
- "pink-extension 0.4.3",
+ "pink-extension 0.5.0",
  "pink-extension-runtime",
  "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
  "pink-kv-session",
@@ -181,6 +181,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "blake2b_simd"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23285ad32269793932e830392f2fe2f83e26488fd3ec778883a93c8323735780"
+dependencies = [
+ "arrayref",
+ "arrayvec 0.7.2",
+ "constant_time_eq",
+]
+
+[[package]]
 name = "block-buffer"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -227,7 +238,7 @@ dependencies = [
  "ink",
  "logging",
  "parity-scale-codec",
- "pink-extension 0.4.3",
+ "pink-extension 0.5.0",
  "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
  "pink-web3",
  "primitive-types",
@@ -295,6 +306,12 @@ dependencies = [
  "num-traits",
  "winapi",
 ]
+
+[[package]]
+name = "constant_time_eq"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7144d30dcf0fafbce74250a3963025d8d52177934239851c917d29f1df280c2"
 
 [[package]]
 name = "convert_case"
@@ -876,6 +893,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 
 [[package]]
+name = "hex-literal"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
+
+[[package]]
 name = "hex_fmt"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1412,7 +1435,7 @@ version = "0.1.0"
 dependencies = [
  "ink",
  "parity-scale-codec",
- "pink-extension 0.4.3",
+ "pink-extension 0.5.0",
  "pink-extension-macro",
  "scale-info",
 ]
@@ -1686,7 +1709,7 @@ dependencies = [
  "ink",
  "logging",
  "parity-scale-codec",
- "pink-extension 0.4.3",
+ "pink-extension 0.5.0",
  "pink-json 0.4.0 (git+https://github.com/Phala-Network/pink-json.git?branch=pink)",
  "pink-kv-session",
  "pink-subrpc",
@@ -1825,29 +1848,29 @@ checksum = "3da595e670ee22ac5ae563a55388ce2148d68b993fe09ca0099a247cb55cf790"
 
 [[package]]
 name = "pink-subrpc"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ada84ef47e0fd6b10e0fdee583ed731161a578ee8e2a59e8431802a3fd86b559"
+checksum = "3fbde259c3cb869ab7e27f667c8a3a0226ab37760269224df0941f2d8baf2ffe"
 dependencies = [
  "base58",
  "hex",
- "hex-literal",
+ "hex-literal 0.4.1",
  "impl-serde",
  "parity-scale-codec",
- "pink-extension 0.4.3",
+ "pink-extension 0.5.0",
  "pink-json 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "primitive-types",
  "scale-info",
  "serde",
- "sp-core-hashing",
+ "sp-core-hashing 9.0.0",
  "ss58-registry",
 ]
 
 [[package]]
 name = "pink-web3"
-version = "0.20.2"
+version = "0.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c45b0e3c122279f69ce3625c8895589e39afbf63162d08740f201e4bde89f21d"
+checksum = "f130df064fa37b63137b8f784f7249759978ab897def6c5fa608bf2d1a2eddb8"
 dependencies = [
  "arrayvec 0.7.2",
  "derive_more",
@@ -1858,7 +1881,7 @@ dependencies = [
  "ink_env",
  "pin-project",
  "pink-erased-serde",
- "pink-extension 0.4.3",
+ "pink-extension 0.5.0",
  "pink-json 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rlp",
  "serde",
@@ -1873,9 +1896,9 @@ checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
 
 [[package]]
 name = "primitive-types"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f3486ccba82358b11a77516035647c34ba167dfa53312630de83b12bd4f3d66"
+checksum = "0b34d9fd68ae0b74a41b21c03c2f62847aa0ffea044eee893b4c140b37e244e2"
 dependencies = [
  "fixed-hash",
  "impl-codec",
@@ -2542,11 +2565,11 @@ dependencies = [
  "secp256k1 0.24.3",
  "secrecy",
  "serde",
- "sp-core-hashing",
+ "sp-core-hashing 5.0.0",
  "sp-debug-derive",
  "sp-externalities",
  "sp-runtime-interface",
- "sp-std",
+ "sp-std 5.0.0",
  "sp-storage",
  "ss58-registry",
  "substrate-bip39",
@@ -2567,7 +2590,22 @@ dependencies = [
  "digest 0.10.7",
  "sha2 0.10.6",
  "sha3",
- "sp-std",
+ "sp-std 5.0.0",
+ "twox-hash",
+]
+
+[[package]]
+name = "sp-core-hashing"
+version = "9.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2ee599a8399448e65197f9a6cee338ad192e9023e35e31f22382964c3c174c68"
+dependencies = [
+ "blake2b_simd",
+ "byteorder",
+ "digest 0.10.7",
+ "sha2 0.10.6",
+ "sha3",
+ "sp-std 8.0.0",
  "twox-hash",
 ]
 
@@ -2590,7 +2628,7 @@ checksum = "ef739442230f49d88ece41259e5d886d6b8bc0f4197ef7f1585c39c762ce7ef2"
 dependencies = [
  "environmental",
  "parity-scale-codec",
- "sp-std",
+ "sp-std 5.0.0",
  "sp-storage",
 ]
 
@@ -2606,7 +2644,7 @@ dependencies = [
  "primitive-types",
  "sp-externalities",
  "sp-runtime-interface-proc-macro",
- "sp-std",
+ "sp-std 5.0.0",
  "sp-storage",
  "sp-tracing",
  "sp-wasm-interface",
@@ -2633,6 +2671,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf3fd4c1d304be101e6ebbafd3d4be9a37b320c970ef4e8df188b16873981c93"
 
 [[package]]
+name = "sp-std"
+version = "8.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "53458e3c57df53698b3401ec0934bea8e8cfce034816873c0b0abbd83d7bac0d"
+
+[[package]]
 name = "sp-storage"
 version = "7.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2643,7 +2687,7 @@ dependencies = [
  "ref-cast",
  "serde",
  "sp-debug-derive",
- "sp-std",
+ "sp-std 5.0.0",
 ]
 
 [[package]]
@@ -2653,7 +2697,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e761df87dc940d87720939de8f976d1fc0657e523886ae0d7bf3f7e2e2f0abb6"
 dependencies = [
  "parity-scale-codec",
- "sp-std",
+ "sp-std 5.0.0",
  "tracing",
  "tracing-core",
  "tracing-subscriber",
@@ -2668,7 +2712,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "parity-scale-codec",
- "sp-std",
+ "sp-std 5.0.0",
  "wasmi",
 ]
 
@@ -3400,5 +3444,5 @@ dependencies = [
 
 [[patch.unused]]
 name = "serde"
-version = "1.0.147"
-source = "git+https://github.com/kvinwang/serde.git?branch=pink#0d6920a81befce8e44b854dc67738b0c640247e6"
+version = "1.0.188"
+source = "git+https://github.com/kvinwang/serde.git?branch=patched-v1.0.188#bf5c222f4f6742270743ecc75539ec6a00c24a03"

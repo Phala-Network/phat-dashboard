@@ -5,7 +5,7 @@ authors = ["[your_name] <[your_email]>"]
 edition = "2021"
 
 [dependencies]
-ink = { version = "4.3.0", default-features = false, features = ["static-buffer-1M"]}
+ink = { version = "4.3.0", default-features = false, features = ["static-buffer-512K"]}
 pink = { version = "0.5.0", package = "pink-extension", default-features = false }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }

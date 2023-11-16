@@ -50,15 +50,11 @@ mod example {
 
             let mut session = Session::<PinkRuntime>::new()?;
             let driver_bundle = BundleProvider::PhatCodebase.bundle()?;
-            let mut codebase = CodebaseRef::new()
-                .salt_bytes(&[])
-                .deploy_bundle(&driver_bundle, &mut session)?;
+            let mut codebase = CodebaseRef::new().deploy_bundle(&driver_bundle, &mut session)?;
             session.set_driver("PhatCodeProvider", &codebase)?;
 
             let example_bundle = BundleProvider::local()?;
-            let mut example = ExampleRef::new()
-                .salt_bytes(&[])
-                .deploy_bundle(&example_bundle, &mut session)?;
+            let mut example = ExampleRef::new().deploy_bundle(&example_bundle, &mut session)?;
 
             // Code should be empty at first
             assert_eq!(example.call().get_code().query(&mut session)?, None);

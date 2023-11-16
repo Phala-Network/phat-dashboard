@@ -281,10 +281,7 @@ mod action_offchain_rollup {
                 .get_code()
                 .ok_or(Error::FailedToGetStorage)
                 .log_err("failed to get code")?;
-            Ok(build_final_js(
-                script.clone(),
-                logging::tagged_prefix().unwrap_or_default(),
-            ))
+            Ok(script)
         }
 
         ///
