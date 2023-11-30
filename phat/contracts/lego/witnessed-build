@@ -1,4 +1,0 @@
-#!/bin/sh
-(cd js && yarn && yarn build)
-RUST_LOG=error cargo contract build --max-memory-pages=32 --release --output-json | tee .witness/output.json
-

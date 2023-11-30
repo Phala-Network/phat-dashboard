@@ -1,6 +1,6 @@
 [package]
 name = "action_offchain_rollup"
-version = "1.0.1"
+version = "2.0.1"
 authors = ["[your_name] <[your_email]>"]
 edition = "2021"
 
@@ -9,17 +9,17 @@ edition = "2021"
 overflow-checks = false
 
 [dependencies]
-ink = { version = "4.0.1", default-features = false, features = ["static-buffer-256K"] }
+ink = { version = "4.3.0", default-features = false, features = ["static-buffer-256K"] }
 
 scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
 scale-info = { version = "2", default-features = false, features = ["derive"], optional = true }
-serde = { version = "1.0.140", default-features = false, features = ["derive", "alloc"]}
+serde = { version = "1.0.188", default-features = false, features = ["derive", "alloc"]}
 fixed = { version = "1", default-features = false, features = ["serde"] }
 
 this-crate = "0.1.0"
-pink-extension = { version = "0.4.1", default-features = false }
+pink-extension = { version = "0.5", default-features = false }
 pink-json = { git = "https://github.com/Phala-Network/pink-json.git", branch = "pink", default-features = false, features = ["de-number-as-str"] }
-pink-web3 = { version = "0.20.1", default-features = false, features = ["pink", "signing"] }
+pink-web3 = { version = "0.21.0", default-features = false, features = ["pink", "signing"] }
 ethabi = { version = "18.0.0", default-features = false, features = [
     "serde",
     "rlp",
@@ -28,12 +28,13 @@ ethabi = { version = "18.0.0", default-features = false, features = [
 phat_offchain_rollup = { path = "../../crates/rollup", default-features = false, features = ["evm"] }
 pink-kv-session = "0.2"
 
-phat_js = { path = "../../crates/js", default-features = false }
+phat_js = { version = "0.2", default-features = false }
 brick_profile = { path = "../../contracts/brick_profile", default-features = false, features = ["ink-as-dependency"] }
 
 hex = { version = "0.4", default-features = false }
 hex_fmt = { version = "0.3", default-features = false }
 logging = { path = "../../crates/logging", default-features = false }
+phat-codebase-driver = { path = "../../crates/phat-codebase-driver", default-features = false }
 
 [dev-dependencies]
 dotenvy = "0.15"
@@ -60,11 +61,12 @@ std = [
     "pink-web3/std",
     "ethabi/std",
     "logging/std",
+    "phat-codebase-driver/std",
 ]
 ink-as-dependency = [ "brick_profile/ink-as-dependency" ]
 
 # Leave for `cargo contract` build.
 [patch.crates-io]
-serde = { git = "https://github.com/kvinwang/serde.git", branch = "pink" }
-ink = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer" }
-ink_env = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer" }
+serde = { git = "https://github.com/kvinwang/serde.git", branch = "patched-v1.0.188" }
+ink = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer-4.3.0" }
+ink_env = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer-4.3.0" }

@@ -1,0 +1,39 @@
+[package]
+name = "example"
+version = "0.1.0"
+authors = ["[your_name] <[your_email]>"]
+edition = "2021"
+
+[dependencies]
+ink = { version = "4.3.0", default-features = false }
+pink = { version = "0.5.0", package = "pink-extension", default-features = false }
+
+scale = { package = "parity-scale-codec", version = "3", default-features = false, features = ["derive"] }
+scale-info = { version = "2.6", default-features = false, features = ["derive"], optional = true }
+
+codebase-driver = { package = "phat-codebase-driver", path = "../../../crates/phat-codebase-driver", version = "0.1", default-features = false }
+
+[dev-dependencies]
+drink = "0.8.0"
+drink-pink-runtime = "1.2.6"
+tracing-subscriber = "0.3"
+phat-codebase = { path = "..", version = "0.1", features = ["ink-as-dependency"] }
+
+[lib]
+path = "lib.rs"
+
+[features]
+default = ["std"]
+std = [
+    "ink/std",
+    "pink/std",
+    "codebase-driver/std",
+    "scale/std",
+    "scale-info/std",
+]
+ink-as-dependency = []
+e2e-tests = []
+
+[patch.crates-io]
+ink = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer-4.3.0" }
+ink_env = { git = "https://github.com/kvinwang/ink.git", branch = "config-buffer-4.3.0" }

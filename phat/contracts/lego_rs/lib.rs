@@ -3,6 +3,8 @@
 #[macro_use]
 extern crate alloc;
 
+pub use lego::*;
+
 #[ink::contract]
 mod lego {
     use crate::raw_bytes::RawBytes;

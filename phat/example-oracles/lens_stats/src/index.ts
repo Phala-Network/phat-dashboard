@@ -98,14 +98,13 @@ function fetchLensApiStats(lensApi: string, profileId: string): any {
             }
         }`,
   });
-  let body = stringToHex(query);
   let response = pink.batchHttpRequest(
     [
       {
         url: lensApi,
         method: "POST",
         headers,
-        body,
+        body: query,
         returnTextBody: true,
       },
     ],
