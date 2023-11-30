@@ -38,7 +38,6 @@ async function checkUntil(async_fn, timeout) {
 }
 
 describe("Run lego actions", () => {
-  let systemFactory: PinkSystem.Factory;
   let system: PinkSystem.Contract;
   let qjsFactory: ContractFactory;
   let legoFactory: Lego.Factory;
@@ -59,7 +58,6 @@ describe("Run lego actions", () => {
   let certAlice: PhalaSdk.CertificateData;
   const txConf = { gasLimit: "10000000000000", storageDepositLimit: null };
   let currentStack: string;
-  let systemContract: string;
 
   const rpc = process.env.RPC ?? "http://localhost:8545";
   const ethSecretKey = process.env.PRIVKEY ?? "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
@@ -74,14 +72,7 @@ describe("Run lego actions", () => {
     console.log(`currentStack: ${currentStack}`);
 
     api = this.api;
-    const clusterInfo =
-      await api.query.phalaPhatContracts.clusters(
-        this.devPhase.mainClusterId
-      );
-    systemContract = clusterInfo.unwrap().systemContract.toString();
-    console.log("system contract:", systemContract);
 
-    systemFactory = await this.devPhase.getFactory(`${currentStack}/system.contract`, { contractType: ContractType.InkCode });
     qjsFactory = await this.devPhase.getFactory('qjs', {
       clusterId: this.devPhase.mainClusterId,
       contractType: ContractType.IndeterministicInkCode,
@@ -102,13 +93,11 @@ describe("Run lego actions", () => {
     await offchainRollupFactory.deploy();
 
     alice = this.devPhase.accounts.alice;
-    certAlice = await PhalaSdk.signCertificate({
-      api,
-      pair: alice,
-    });
+    certAlice = await PhalaSdk.signCertificate({ pair: alice, });
     console.log("Signer:", alice.address.toString());
 
-    system = (await systemFactory.attach(systemContract)) as any;
+    system = (await this.devPhase.getSystemContract()) as any;
+    console.log("system contract:", system.address.toString());
 
     // Upgrade pink runtime to latest, so that we can store larger values to the storage
     await TxHandler.handle(
@@ -131,8 +120,8 @@ describe("Run lego actions", () => {
     );
     await checkUntil(async () => {
       const { output } = await system.query["system::getDriver"](
-        certAlice,
-        {},
+        alice.address,
+        { cert: certAlice },
         "JsDelegate"
       );
       return !output.isEmpty;
@@ -143,9 +132,9 @@ describe("Run lego actions", () => {
     this.timeout(500_000_000);
 
     before(async function () {
-      tagbag = await tagbagFactory.instantiate("default", [], {});
+      tagbag = await tagbagFactory.instantiate("default", []);
       // Deploy contracts
-      lego = await legoFactory.instantiate("default", [], {});
+      lego = await legoFactory.instantiate("default", []);
       await TxHandler.handle(
         system.tx["system::setDriver"](
           { gasLimit: "10000000000000" },
@@ -155,11 +144,11 @@ describe("Run lego actions", () => {
         alice,
         true,
       );
-      evmTransaction = await evmTransactionFactory.instantiate("default", [], {});
+      evmTransaction = await evmTransactionFactory.instantiate("default", []);
       // setup BrickProfileFactory
       profileFactory = await profileFactoryFactory.instantiate("new", [brickProfileFactory.metadata.source.hash], { transferToCluster: 1e12 });
       {
-        const { output } = await profileFactory.query.profileCodeHash(certAlice, {});
+        const { output } = await profileFactory.query.profileCodeHash(alice.address, { cert: certAlice });
         console.log(`BrickProfileFactory uses code ${output.asOk}`);
       }
 
@@ -169,12 +158,12 @@ describe("Run lego actions", () => {
       );
       await sleep(1_000);
       await checkUntil(async () => {
-        const { output } = await profileFactory.query.getUserProfileAddress(certAlice, {});
+        const { output } = await profileFactory.query.getUserProfileAddress(alice.address, { cert: certAlice });
         if (output.asOk.isOk) {
           let profileAddress = output.asOk.asOk.toHex();
           brickProfile = await brickProfileFactory.attach(profileAddress);
           console.log(`BrickProfile deployed to ${profileAddress}`);
-          // const result = await brickProfile.query.owner(certAlice, {});
+          // const result = await brickProfile.query.owner(alice.address, { cert: certAlice });
           // console.log(`Profile owner: ${JSON.stringify(result.output)}`);
           return true;
         }
@@ -182,11 +171,11 @@ describe("Run lego actions", () => {
       }, 1000 * 10);
 
       // connect ActionOffchainRollup to BrickProfile
-      offchainRollup = await offchainRollupFactory.instantiate("new", [brickProfile.address], {});
+      offchainRollup = await offchainRollupFactory.instantiate("new", [brickProfile.address]);
       {
-        const { output: profileAddress } = await offchainRollup.query.getBrickProfileAddress(certAlice, {});
+        const { output: profileAddress } = await offchainRollup.query.getBrickProfileAddress(alice.address, { cert: certAlice });
         console.log(`ActionOffchainRollup connects to BrickProfile ${profileAddress.asOk.toHex()}`);
-        const { output: rollupIdentity } = await offchainRollup.query.getAttestAddress(certAlice, {});
+        const { output: rollupIdentity } = await offchainRollup.query.getAttestAddress(alice.address, { cert: certAlice });
         console.log(`>>>>> ActionOffchainRollup identity: ${rollupIdentity.asOk} <<<<<`);
       }
 
@@ -230,15 +219,15 @@ describe("Run lego actions", () => {
         true,
       );
       await checkUntil(async () => {
-        const { output } = await evmTransaction.query.getRpc(certAlice, {});
+        const { output } = await evmTransaction.query.getRpc(alice.address, { cert: certAlice });
         return output.asOk.isOk;
       }, 1000 * 10);
       console.log("ActionEvmTransaction configured");
 
       await checkUntil(async () => {
-        const { output: outputJsRunner } = await brickProfile.query.getJsRunner(certAlice, {});
-        const { output: outputAccountCount } = await brickProfile.query.externalAccountCount(certAlice, {});
-        const { output: outputAccount } = await brickProfile.query.getEvmAccountAddress(certAlice, {}, 0); // 0 for ExternalAccountId
+        const { output: outputJsRunner } = await brickProfile.query.getJsRunner(alice.address, { cert: certAlice });
+        const { output: outputAccountCount } = await brickProfile.query.externalAccountCount(alice.address, { cert: certAlice });
+        const { output: outputAccount } = await brickProfile.query.getEvmAccountAddress(alice.address, { cert: certAlice }, 0); // 0 for ExternalAccountId
         return outputAccountCount.asOk.toPrimitive() === 2
           && outputJsRunner.asOk.isOk && outputAccount.asOk.isOk;
       }, 1000 * 10);
@@ -251,7 +240,7 @@ describe("Run lego actions", () => {
         true,
       );
       await checkUntil(async () => {
-        const { output: outputAccountCount } = await brickProfile.query.externalAccountCount(certAlice, {});
+        const { output: outputAccountCount } = await brickProfile.query.externalAccountCount(alice.address, { cert: certAlice });
         return outputAccountCount.asOk.toPrimitive() === 3;
       }, 1000 * 10);
 
@@ -262,14 +251,14 @@ describe("Run lego actions", () => {
         true,
       );
       await checkUntil(async () => {
-        const { output } = await brickProfile.query.getRpcEndpoint(certAlice, {}, 2);
+        const { output } = await brickProfile.query.getRpcEndpoint(alice.address, { cert: certAlice }, 2);
         return output.asOk.asOk.toString() === mockRpc;
       }, 1000 * 10);
     });
 
     it("can dump secret key", async function () {
       {
-        const { output } = await brickProfile.query.getDumpedKey(certAlice, {}, 2);
+        const { output } = await brickProfile.query.getDumpedKey(alice.address, { cert: certAlice }, 2);
         expect(output.asOk.isErr).to.be.true;
       };
       await TxHandler.handle(
@@ -278,7 +267,7 @@ describe("Run lego actions", () => {
         true,
       );
       await checkUntil(async () => {
-        const { output } = await brickProfile.query.getDumpedKey(certAlice, {}, 2);
+        const { output } = await brickProfile.query.getDumpedKey(alice.address, { cert: certAlice }, 2);
         return output.asOk.isOk;
       }, 1000 * 10);
     });
@@ -296,7 +285,7 @@ describe("Run lego actions", () => {
         true,
       );
       await checkUntil(async () => {
-        const { output } = await offchainRollup.query.getClient(certAlice, {});
+        const { output } = await offchainRollup.query.getClient(alice.address, { cert: certAlice });
         // console.log(`ActionOffchainRollup client ${JSON.stringify(output)}`);
         return output.asOk.isOk;
       }, 1000 * 10);
@@ -309,9 +298,14 @@ describe("Run lego actions", () => {
         true,
       );
       await checkUntil(async () => {
-        const { output } = await offchainRollup.query.getCore(certAlice, {});
-        console.log(`ActionOffchainRollup handler ${JSON.stringify(output)}`);
-        return !output.toJSON().ok;
+        const { output } = await offchainRollup.query.getCore(alice.address, { cert: certAlice });
+        console.log(
+            'ActionOffchainRollup handler',
+            output.toJSON().ok
+                ? JSON.stringify(output.toJSON().ok).length
+                : output.toString()
+        );
+        return !!output.toJSON().ok;
       }, 1000 * 10);
       console.log("ActionOffchainRollup handler configured");
 
@@ -349,11 +343,11 @@ describe("Run lego actions", () => {
         true,
       );
       await checkUntil(async () => {
-        const { output: outputWorkflow0 } = await brickProfile.query.getWorkflow(certAlice, {}, 0); // 0 for WorkflowId
-        const { output: outputWorkflow1 } = await brickProfile.query.getWorkflow(certAlice, {}, 1); // 1 for WorkflowId
-        const { output: outputWorkflowCount } = await brickProfile.query.workflowCount(certAlice, {});
-        const { output: outputAuthorized0 } = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 0); // 0 for WorkflowId
-        const { output: outputAuthorized1 } = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 1); // 1 for WorkflowId
+        const { output: outputWorkflow0 } = await brickProfile.query.getWorkflow(alice.address, { cert: certAlice }, 0); // 0 for WorkflowId
+        const { output: outputWorkflow1 } = await brickProfile.query.getWorkflow(alice.address, { cert: certAlice }, 1); // 1 for WorkflowId
+        const { output: outputWorkflowCount } = await brickProfile.query.workflowCount(alice.address, { cert: certAlice });
+        const { output: outputAuthorized0 } = await brickProfile.query.getAuthorizedAccount(alice.address, { cert: certAlice }, 0); // 0 for WorkflowId
+        const { output: outputAuthorized1 } = await brickProfile.query.getAuthorizedAccount(alice.address, { cert: certAlice }, 1); // 1 for WorkflowId
         // console.log(`brickProfile authorize: ${JSON.stringify(resultAuthorized)}`);
         return outputWorkflowCount.asOk.toPrimitive() === 2
           && outputWorkflow0.asOk.isOk && outputAuthorized0.asOk.toPrimitive() === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
@@ -364,9 +358,9 @@ describe("Run lego actions", () => {
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
       // ATTENTION: the oralce is on-demand so it will only respond when there is request from EVM client
       while (true) {
-        let { output: outputWorkflowCount } = await brickProfile.query.workflowCount(certAlice, {});
+        let { output: outputWorkflowCount } = await brickProfile.query.workflowCount(alice.address, { cert: certAlice });
         for (let i = 0; i < outputWorkflowCount.asOk; i++) {
-          const { output } = await brickProfile.query.poll(certAlice, {}, i, `PID_${sn}`);
+          const { output } = await brickProfile.query.poll(alice.address, { cert: certAlice }, i, `PID_${sn}`);
           sn += 1;
           console.log(`Workflow ${i} triggerred: ${JSON.stringify(output)}`);
         }
@@ -464,17 +458,17 @@ describe("Run lego actions", () => {
         true,
       );
       await checkUntil(async () => {
-        const resultWorkflow = await brickProfile.query.getWorkflow(certAlice, {}, 1); // 1 for WorkflowId
+        const resultWorkflow = await brickProfile.query.getWorkflow(alice.address, { cert: certAlice }, 1); // 1 for WorkflowId
         // console.log(`brickProfile workflow: ${JSON.stringify(resultWorkflow)}`);
-        const resultWorkflowCount = await brickProfile.query.workflowCount(certAlice, {});
-        const resultAuthorized = await brickProfile.query.getAuthorizedAccount(certAlice, {}, 1); // 1 for WorkflowId
+        const resultWorkflowCount = await brickProfile.query.workflowCount(alice.address, { cert: certAlice });
+        const resultAuthorized = await brickProfile.query.getAuthorizedAccount(alice.address, { cert: certAlice }, 1); // 1 for WorkflowId
         // console.log(`brickProfile authorize: ${JSON.stringify(resultAuthorized)}`);
         return !resultWorkflow.output.toJSON().ok.err && resultWorkflowCount.output.toJSON().ok === 2
           && resultAuthorized.output.toJSON().ok === 0 // this 0 means the Workflow_0 is authorized to use ExternalAccount_0
       }, 1000 * 10);
 
       // Trigger the workflow execution, this will be done by our daemon server instead of frontend
-      const result = await brickProfile.query.poll(certAlice, {}, 0);
+      const result = await brickProfile.query.poll(alice.address, { cert: certAlice }, 0);
       console.log(`brickProfile poll: ${JSON.stringify(result)}`);
       expect(!result.output.toJSON().ok.err).to.be.true;
     });
