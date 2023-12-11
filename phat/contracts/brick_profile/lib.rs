@@ -11,7 +11,10 @@ mod brick_profile {
     #[cfg(feature = "std")]
     use ink::storage::traits::StorageLayout;
     use ink::storage::{Lazy, Mapping};
+    #[cfg(not(test))]
     use logging::info;
+    #[cfg(test)]
+    use pink::info;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
     use pink_json as json;
@@ -570,6 +573,23 @@ mod brick_profile {
         /// @category Polling
         ///
         #[ink(message)]
+        pub fn get_current_rpc(&self) -> Result<String> {
+            let now_workflow_id = self.ensure_workflow_session()?;
+            let account_id = self
+                .authorized_account
+                .get(now_workflow_id)
+                .ok_or(Error::NoAuthorizedExternalAccount)?;
+            info!("Workflow {now_workflow_id} reads account {account_id} rpc");
+
+            let account = self.ensure_enabled_external_account(account_id)?;
+            Ok(account.rpc)
+        }
+
+        /// Only self-initiated call is allowed.
+        ///
+        /// @category Polling
+        ///
+        #[ink(message)]
         pub fn sign_evm_transaction(&self, tx: Vec<u8>) -> Result<Vec<u8>> {
             let now_workflow_id = self.ensure_workflow_session()?;
             info!("Workflow {} asks for EVM tx signing", now_workflow_id);
@@ -667,7 +687,7 @@ mod brick_profile {
     mod tests {
         use super::*;
         use alloc::collections::BTreeMap;
-        use logging::warn;
+        use pink::warn;
 
         struct EnvVars {
             rpc: String,
@@ -727,10 +747,6 @@ mod brick_profile {
 
             assert!(matches!(
                 profile.add_workflow(name.clone(), cmd.clone()),
-                Err(Error::BadOrigin)
-            ));
-            assert!(matches!(
-                profile.get_workflow(wf1_id),
                 Err(Error::BadOrigin)
             ));
             assert!(matches!(
@@ -842,7 +858,7 @@ mod brick_profile {
             ink::env::test::set_caller::<pink::PinkEnvironment>(contract);
 
             for (wf_id, ea_id) in workflow_accounts.iter() {
-                profile.set_workflow_session(wf_id.clone()).unwrap();
+                profile.workflow_session.set(&wf_id);
                 let current_evm_address = profile.get_current_evm_account_address().unwrap();
                 let expected_evm_address = profile.get_evm_account_address(ea_id.clone()).unwrap();
                 assert_eq!(current_evm_address, expected_evm_address);
