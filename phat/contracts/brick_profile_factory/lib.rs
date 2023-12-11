@@ -97,14 +97,7 @@ mod brick_profile_factory {
         pub fn force_create_user_profile(&mut self) -> Result<Option<AccountId>> {
             let caller = self.env().caller();
 
-            let random = signing::derive_sr25519_key(&self.nonce.to_be_bytes());
-            let user_profile = BrickProfileRef::new(caller)
-                .endowment(0)
-                .salt_bytes(&random[..4])
-                .code_hash(self.profile_code_hash)
-                .try_instantiate()
-                .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?
-                .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?;
+            let user_profile = self.instantiate_profile()?;
 
             let old_user_profile = self
                 .users
@@ -117,13 +110,55 @@ mod brick_profile_factory {
 
         /// Instantiate a user profile contract for caller. Only once for each account.
         #[ink(message)]
-        pub fn create_user_profile(&mut self) -> Result<Option<AccountId>> {
+        pub fn create_user_profile(&mut self) -> Result<()> {
             let caller = self.env().caller();
             if self.users.contains_key(&caller) {
                 return Err(Error::NoDuplicatedUserProfile);
             }
 
-            self.force_create_user_profile()
+            self.force_create_user_profile()?;
+            Ok(())
+        }
+
+        /// Instantiate and setup a user profile contract for caller, overwrite the existing one.
+        /// This configures the js runner and generates the first evm account.
+        /// Return old user profile contract if there is.
+        #[ink(message)]
+        pub fn force_setup_user_profile(
+            &mut self,
+            js_runner: AccountId,
+            rpc: String,
+        ) -> Result<Option<AccountId>> {
+            let caller = self.env().caller();
+
+            let mut user_profile = self.instantiate_profile()?;
+            user_profile
+                .config(js_runner)
+                .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?;
+            user_profile
+                .generate_evm_account(rpc)
+                .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?;
+
+            let old_user_profile = self
+                .users
+                .insert(caller, user_profile)
+                .map(|p| p.to_account_id());
+            self.nonce += 1;
+
+            Ok(old_user_profile)
+        }
+
+        /// Instantiate and setup a user profile contract for caller. Only once for each account.
+        /// This configures the js runner and generates the first evm account.
+        #[ink(message)]
+        pub fn setup_user_profile(&mut self, js_runner: AccountId, rpc: String) -> Result<()> {
+            let caller = self.env().caller();
+            if self.users.contains_key(&caller) {
+                return Err(Error::NoDuplicatedUserProfile);
+            }
+
+            self.force_setup_user_profile(js_runner, rpc)?;
+            Ok(())
         }
 
         /// Get the user profile contract address.
@@ -144,6 +179,21 @@ mod brick_profile_factory {
                 .map(|kv| (kv.0, kv.1.to_account_id()))
                 .collect();
             Ok(profiles)
+        }
+
+        fn instantiate_profile(&self) -> Result<BrickProfileRef> {
+            let caller = self.env().caller();
+
+            let random = signing::derive_sr25519_key(&self.nonce.to_be_bytes());
+            let user_profile = BrickProfileRef::new(caller)
+                .endowment(0)
+                .salt_bytes(&random[..4])
+                .code_hash(self.profile_code_hash)
+                .try_instantiate()
+                .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?
+                .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?;
+
+            Ok(user_profile)
         }
 
         /// Return BadOrigin error if the caller is not the owner.
