@@ -23,6 +23,7 @@ mod brick_profile {
         transports::{pink_http::PinkHttp, resolve_ready},
         types::{TransactionParameters, TransactionRequest, H160},
     };
+    use primitive_types::U256;
     use scale::{Decode, Encode};
     use this_crate::{version_tuple, VersionTuple};
 
@@ -114,6 +115,7 @@ mod brick_profile {
         FailedToSignTransaction(String),
         OnlyDumpedAccount,
         InvalidPollId,
+        FailedToReadChainId(String),
     }
     pub type Result<T> = core::result::Result<T, Error>;
 
@@ -365,6 +367,23 @@ mod brick_profile {
             account.rpc = rpc;
             self.external_accounts.insert(id, &account);
             Ok(())
+        }
+
+        /// Get EVM chain id of given id (only owner).
+        ///
+        /// @category EvmAccount
+        ///
+        #[ink(message)]
+        pub fn get_chain_id(&self, id: ExternalAccountId) -> Result<U256> {
+            self.ensure_owner()?;
+            let account = self.ensure_enabled_external_account(id)?;
+
+            let phttp = PinkHttp::new(account.rpc.clone());
+            let web3 = pink_web3::Web3::new(phttp);
+            let chain_id = resolve_ready(web3.eth().chain_id())
+                .map_err(|err| Error::FailedToReadChainId(format!("{:?}", err)))?;
+
+            Ok(chain_id)
         }
 
         /// Gets the total number of external accounts.
