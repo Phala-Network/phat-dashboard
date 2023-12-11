@@ -1,5 +1,6 @@
 #[cfg(test)]
 mod tests {
+    use ink::primitives::AccountId;
     use ink::{codegen::TraitCallBuilder, env::call::FromAccountId, ToAccountId};
 
     use drink::session::Session;
@@ -71,11 +72,51 @@ mod tests {
             .submit_tx(&mut session)?
             .expect("Failed to create profile");
 
-        let profile_address = profile_factory
+        let mut profile_address = profile_factory
             .call()
             .get_user_profile_address()
             .query(&mut session)?
             .expect("No profile address");
+
+        {
+            // It can overwrite existing profile
+
+            let last_profile_address = profile_address.clone();
+
+            profile_factory
+                .call_mut()
+                .force_create_user_profile()
+                .submit_tx(&mut session)?
+                .expect("Failed to create new profile");
+
+            profile_address = profile_factory
+                .call()
+                .get_user_profile_address()
+                .query(&mut session)?
+                .expect("No profile address");
+            assert_ne!(last_profile_address, profile_address);
+        }
+        {
+            // It can import profiles
+
+            let old_profiles = vec![
+                (AccountId::from([0u8; 32]), AccountId::from([1u8; 32])),
+                (AccountId::from([2u8; 32]), AccountId::from([3u8; 32])),
+            ];
+            profile_factory
+                .call_mut()
+                .import_user_profiles(old_profiles)
+                .submit_tx(&mut session)?
+                .expect("Failed to import profiles");
+
+            let all_profiles = profile_factory
+                .call()
+                .get_user_profiles()
+                .query(&mut session)?
+                .expect("No profiles found");
+            assert_eq!(all_profiles.len(), 3);
+        }
+
         let mut brick_profile = BrickProfileRef::from_account_id(profile_address);
 
         let mut offchain_rollup = ActionOffchainRollupRef::new(profile_address)
@@ -205,10 +246,24 @@ mod tests {
 
             // STEP 3: assume user has deployed the smart contract client
 
+            let rollup_profile = offchain_rollup
+                .call()
+                .get_brick_profile_address()
+                .query(&mut session)?;
+            let rollup_identity = offchain_rollup
+                .call()
+                .get_attest_address()
+                .query(&mut session)?;
+            println!(
+                "ActionOffchainRollup with identity 0x{} connects to profile 0x{}",
+                hex::encode(rollup_identity),
+                hex::encode(rollup_profile)
+            );
+
             // config ActionOffchainRollup client
             offchain_rollup
                 .call_mut()
-                .config_client(rpc.clone(), anchor_addr)
+                .config_client(anchor_addr)
                 .submit_tx(&mut session)?
                 .expect("Failed to config ActionOffchainRollup client");
             println!("ActionOffchainRollup client configured");
