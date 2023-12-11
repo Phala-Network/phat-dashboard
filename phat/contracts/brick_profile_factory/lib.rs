@@ -8,6 +8,7 @@ pub use brick_profile_factory::*;
 mod brick_profile_factory {
     use alloc::{collections::BTreeMap, format, string::String, vec::Vec};
     use brick_profile::BrickProfileRef;
+    use ink::env::call::FromAccountId;
     use ink::ToAccountId;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
@@ -18,7 +19,7 @@ mod brick_profile_factory {
     pub struct BrickProfileFactory {
         owner: AccountId,
         profile_code_hash: Hash,
-        user_count: u64,
+        nonce: u64,
         users: BTreeMap<AccountId, BrickProfileRef>,
     }
 
@@ -39,7 +40,7 @@ mod brick_profile_factory {
             Self {
                 owner: caller,
                 profile_code_hash,
-                user_count: 0,
+                nonce: 0,
                 users: Default::default(),
             }
         }
@@ -58,7 +59,7 @@ mod brick_profile_factory {
         /// Get the user profile number.
         #[ink(message)]
         pub fn user_count(&self) -> u64 {
-            self.user_count
+            self.users.len() as u64
         }
 
         /// Get the code hash of the user profile contract.
@@ -75,16 +76,28 @@ mod brick_profile_factory {
             Ok(())
         }
 
-        /// Instantiate a user profile contract for caller. Only once for each account.
+        /// Import user profile addresses (only owner). This will overwrite existing addresses.
         #[ink(message)]
-        pub fn create_user_profile(&mut self) -> Result<()> {
+        pub fn import_user_profiles(
+            &mut self,
+            profiles: Vec<(AccountId, AccountId)>,
+        ) -> Result<()> {
+            self.ensure_owner()?;
+            self.users.extend(
+                profiles
+                    .into_iter()
+                    .map(|kv| (kv.0, BrickProfileRef::from_account_id(kv.1.into()))),
+            );
+            Ok(())
+        }
+
+        /// Instantiate a user profile contract for caller, overwrite the existing one.
+        /// Return old user profile contract if there is.
+        #[ink(message)]
+        pub fn force_create_user_profile(&mut self) -> Result<Option<AccountId>> {
             let caller = self.env().caller();
 
-            if self.users.contains_key(&caller) {
-                return Err(Error::NoDuplicatedUserProfile);
-            }
-
-            let random = signing::derive_sr25519_key(&self.user_count.to_be_bytes());
+            let random = signing::derive_sr25519_key(&self.nonce.to_be_bytes());
             let user_profile = BrickProfileRef::new(caller)
                 .endowment(0)
                 .salt_bytes(&random[..4])
@@ -93,10 +106,24 @@ mod brick_profile_factory {
                 .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?
                 .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?;
 
-            self.users.insert(caller, user_profile);
-            self.user_count += 1;
+            let old_user_profile = self
+                .users
+                .insert(caller, user_profile)
+                .map(|p| p.to_account_id());
+            self.nonce += 1;
 
-            Ok(())
+            Ok(old_user_profile)
+        }
+
+        /// Instantiate a user profile contract for caller. Only once for each account.
+        #[ink(message)]
+        pub fn create_user_profile(&mut self) -> Result<Option<AccountId>> {
+            let caller = self.env().caller();
+            if self.users.contains_key(&caller) {
+                return Err(Error::NoDuplicatedUserProfile);
+            }
+
+            self.force_create_user_profile()
         }
 
         /// Get the user profile contract address.
