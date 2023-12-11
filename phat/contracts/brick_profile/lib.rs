@@ -236,13 +236,12 @@ mod brick_profile {
             Ok(id)
         }
 
-        /// Gets workflow details (only owner).
+        /// Gets workflow details.
         ///
         /// @category Workflow
         ///
         #[ink(message)]
         pub fn get_workflow(&self, id: WorkflowId) -> Result<WorkflowInfo> {
-            self.ensure_owner()?;
             let workflow = self.ensure_workflow(id)?;
             Ok(WorkflowInfo {
                 id: workflow.id,
@@ -253,13 +252,12 @@ mod brick_profile {
             })
         }
 
-        /// Gets all workflows (only owner).
+        /// Gets all workflows.
         ///
         /// @category Workflow
         ///
         #[ink(message)]
         pub fn get_all_workflows(&self) -> Result<Vec<WorkflowInfo>> {
-            self.ensure_owner()?;
             let mut workflows = Vec::new();
             for id in 0..self.next_workflow_id {
                 if let Some(workflow) = self.workflows.get(id) {
@@ -534,7 +532,6 @@ mod brick_profile {
                 .invoke();
             Ok(call_result)
         }
-
 
         /// Called by a scheduler periodically with Query.
         ///
