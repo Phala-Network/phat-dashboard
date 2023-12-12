@@ -195,13 +195,12 @@ mod action_offchain_rollup {
             Ok(())
         }
 
-        /// Get client contract address (only owner).
+        /// Get client contract address.
         ///
         /// @category Configuration
         ///
         #[ink(message)]
         pub fn get_client(&self) -> Result<[u8; 20]> {
-            self.ensure_owner()?;
             let client_addr = self.client_addr.clone().ok_or(Error::ClientNotConfigured)?;
             Ok(client_addr)
         }
