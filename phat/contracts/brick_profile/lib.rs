@@ -308,27 +308,23 @@ mod brick_profile {
             Ok(())
         }
 
-        // TODO.shelven: merge the following two functions in next major version
-
-        /// Get the EVM account address of given id (only owner).
+        /// Get the EVM account address of given id.
         ///
         /// @category EvmAccount
         ///
         #[ink(message)]
         pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
-            self.ensure_owner()?;
             let account = self.ensure_enabled_external_account(id)?;
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
             Ok(sk.address())
         }
 
-        /// Get all EVM account addresses (only owner).
+        /// Get all EVM account addresses.
         ///
         /// @category EvmAccount
         ///
         #[ink(message)]
         pub fn get_all_evm_accounts(&self) -> Result<Vec<ExternalAccountInfo>> {
-            self.ensure_owner()?;
             let mut accounts = Vec::new();
             for id in 0..self.next_external_account_id {
                 if let Some(account) = self.external_accounts.get(id) {
