@@ -103,7 +103,6 @@ mod brick_profile_factory {
                 .users
                 .insert(caller, user_profile)
                 .map(|p| p.to_account_id());
-            self.nonce += 1;
 
             Ok(old_user_profile)
         }
@@ -143,7 +142,6 @@ mod brick_profile_factory {
                 .users
                 .insert(caller, user_profile)
                 .map(|p| p.to_account_id());
-            self.nonce += 1;
 
             Ok(old_user_profile)
         }
@@ -181,7 +179,7 @@ mod brick_profile_factory {
             Ok(profiles)
         }
 
-        fn instantiate_profile(&self) -> Result<BrickProfileRef> {
+        fn instantiate_profile(&mut self) -> Result<BrickProfileRef> {
             let caller = self.env().caller();
 
             let random = signing::derive_sr25519_key(&self.nonce.to_be_bytes());
@@ -192,6 +190,7 @@ mod brick_profile_factory {
                 .try_instantiate()
                 .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?
                 .map_err(|e| Error::FailedToCreateProfile(format!("{:?}", e)))?;
+            self.nonce += 1;
 
             Ok(user_profile)
         }
