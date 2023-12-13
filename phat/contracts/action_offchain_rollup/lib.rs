@@ -6,12 +6,12 @@ pub use crate::action_offchain_rollup::*;
 
 #[ink::contract(env = pink_extension::PinkEnvironment)]
 mod action_offchain_rollup {
-    use alloc::{string::String, vec::Vec};
-    use ink::env::call::{build_call, ExecutionInput, Selector};
+    use alloc::{format, string::String, vec::Vec};
+    use ink::env::call::FromAccountId;
     #[cfg(feature = "std")]
     use ink::storage::traits::StorageLayout;
     use ink::storage::Lazy;
-    use pink_extension as pink;
+    use ink::ToAccountId;
     use pink_extension::chain_extension::signing;
     use pink_web3::{
         api::{Eth, Namespace},
@@ -26,6 +26,7 @@ mod action_offchain_rollup {
     // To enable `(result).log_err("Reason")?`
     use logging::ResultExt;
 
+    use brick_profile::BrickProfileRef;
     use ethabi::Token;
     use logging::error;
     use phat_codebase_driver::PhatCodeProviderRef;
@@ -52,8 +53,9 @@ mod action_offchain_rollup {
         /// Key for signing the rollup tx
         attest_key: [u8; 32],
         /// BrickProfile address to ask for tx signing (to pay gas fee)
-        brick_profile: AccountId,
-        client: Option<Client>,
+        brick_profile: BrickProfileRef,
+        /// The client smart contract address on the target blockchain
+        client_addr: Option<[u8; 20]>,
         /// The JS code that processes the rollup queue request
         core: Lazy<Core>,
     }
@@ -70,7 +72,6 @@ mod action_offchain_rollup {
     #[derive(Clone, Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub struct Configuration {
-        rpc: Option<String>,
         client_addr: Option<[u8; 20]>,
         script: Option<String>,
         settings: Option<String>,
@@ -100,6 +101,8 @@ mod action_offchain_rollup {
         JsError(String),
         NoCodeProvider,
         CodeNotFound,
+
+        ProfileError(String),
     }
 
     type Result<T> = core::result::Result<T, Error>;
@@ -118,8 +121,8 @@ mod action_offchain_rollup {
                 attest_key: random[..32]
                     .try_into()
                     .expect("random is long enough; qed."),
-                brick_profile,
-                client: None,
+                brick_profile: BrickProfileRef::from_account_id(brick_profile),
+                client_addr: None,
                 core: Default::default(),
             }
         }
@@ -137,7 +140,6 @@ mod action_offchain_rollup {
 
         #[ink(constructor)]
         pub fn with_configuration(
-            client_rpc: String,
             client_addr: Vec<u8>,
             code_hash: Hash,
             core_settings: String,
@@ -145,7 +147,7 @@ mod action_offchain_rollup {
         ) -> Result<Self> {
             let mut this = Self::new(brick_profile);
             this.config_core_inner(code_hash, core_settings)?;
-            this.config_client(client_rpc, client_addr)
+            this.config_client(client_addr)
                 .expect("failed to configure client");
             Ok(this)
         }
@@ -179,7 +181,7 @@ mod action_offchain_rollup {
         ///
         #[ink(message)]
         pub fn get_brick_profile_address(&self) -> AccountId {
-            self.brick_profile
+            self.brick_profile.to_account_id()
         }
 
         /// Set the BrickProfile address (only owner).
@@ -189,19 +191,18 @@ mod action_offchain_rollup {
         #[ink(message)]
         pub fn set_brick_profile_address(&mut self, brick_profile: AccountId) -> Result<()> {
             self.ensure_owner()?;
-            self.brick_profile = brick_profile;
+            self.brick_profile = BrickProfileRef::from_account_id(brick_profile);
             Ok(())
         }
 
-        /// Get client contract address and RPC endpoint (only owner).
+        /// Get client contract address.
         ///
         /// @category Configuration
         ///
         #[ink(message)]
-        pub fn get_client(&self) -> Result<Client> {
-            self.ensure_owner()?;
-            let client = self.ensure_client_configured()?;
-            Ok(client.clone())
+        pub fn get_client(&self) -> Result<[u8; 20]> {
+            let client_addr = self.client_addr.clone().ok_or(Error::ClientNotConfigured)?;
+            Ok(client_addr)
         }
 
         /// Get script and settings (only owner).
@@ -259,14 +260,13 @@ mod action_offchain_rollup {
         /// @category Configuration
         ///
         #[ink(message)]
-        pub fn config_client(&mut self, rpc: String, client_addr: Vec<u8>) -> Result<()> {
+        pub fn config_client(&mut self, client_addr: Vec<u8>) -> Result<()> {
             self.ensure_owner()?;
-            self.client = Some(Client {
-                rpc,
-                client_addr: client_addr
+            self.client_addr = Some(
+                client_addr
                     .try_into()
                     .or(Err(Error::InvalidAddressLength))?,
-            });
+            );
             Ok(())
         }
 
@@ -289,7 +289,7 @@ mod action_offchain_rollup {
         ///
         #[ink(message)]
         pub fn is_ready(&self) -> Result<bool> {
-            if self.client.is_some() && self.core.get().is_some() {
+            if self.client_addr.is_some() && self.core.get().is_some() {
                 Ok(true)
             } else {
                 Ok(false)
@@ -305,8 +305,7 @@ mod action_offchain_rollup {
         #[ink(message)]
         pub fn get_configuration(&self) -> Result<Configuration> {
             self.ensure_owner()?;
-            let rpc = self.client.as_ref().map(|c| c.rpc.clone());
-            let client_addr = self.client.as_ref().map(|c| c.client_addr);
+            let client_addr = self.client_addr;
             let script = get_code_provider()?.get_code();
             let config = if let Some(Core {
                 settings,
@@ -314,7 +313,6 @@ mod action_offchain_rollup {
             }) = self.core.get()
             {
                 Configuration {
-                    rpc,
                     client_addr,
                     script,
                     settings: Some(settings),
@@ -322,7 +320,6 @@ mod action_offchain_rollup {
                 }
             } else {
                 Configuration {
-                    rpc,
                     client_addr,
                     script: None,
                     settings: None,
@@ -354,7 +351,7 @@ mod action_offchain_rollup {
             use pink_kv_session::traits::QueueSession;
             let client = self.ensure_client_configured()?;
 
-            let mut rollup_client = connect(client)?;
+            let mut rollup_client = connect(&client)?;
             // Get a request if presents
             let request = rollup_client
                 .session()
@@ -368,7 +365,7 @@ mod action_offchain_rollup {
             maybe_submit_tx(
                 rollup_client,
                 self.attest_key,
-                self.brick_profile,
+                &self.brick_profile,
                 client.rpc.clone(),
             )
         }
@@ -459,6 +456,13 @@ mod action_offchain_rollup {
             Ok((output, code_hash))
         }
 
+        /// This is only available when called by profile
+        fn get_profile_rpc(&self) -> Result<String> {
+            self.brick_profile
+                .get_current_rpc()
+                .map_err(|err| Error::ProfileError(format!("{:?}", err)))
+        }
+
         /// Returns BadOrigin error if the caller is not the owner.
         fn ensure_owner(&self) -> Result<()> {
             if self.env().caller() == self.owner {
@@ -469,8 +473,12 @@ mod action_offchain_rollup {
         }
 
         /// Returns the client config reference or raise the error `ClientNotConfigured`.
-        fn ensure_client_configured(&self) -> Result<&Client> {
-            self.client.as_ref().ok_or(Error::ClientNotConfigured)
+        fn ensure_client_configured(&self) -> Result<Client> {
+            let client = Client {
+                rpc: self.get_profile_rpc()?,
+                client_addr: self.client_addr.clone().ok_or(Error::ClientNotConfigured)?,
+            };
+            Ok(client)
         }
 
         fn config_core_inner(&mut self, code_hash: Hash, settings: String) -> Result<()> {
@@ -495,7 +503,7 @@ mod action_offchain_rollup {
     fn maybe_submit_tx(
         rollup_client: EvmRollupClient,
         attest_key: [u8; 32],
-        brick_profile: AccountId,
+        brick_profile: &BrickProfileRef,
         rpc: String,
     ) -> Result<Option<Vec<u8>>> {
         let maybe_submittable = rollup_client
@@ -504,14 +512,8 @@ mod action_offchain_rollup {
             .or(Err(Error::FailedToCommitTx))?;
         if let Some(submittable) = maybe_submittable {
             // get BrickProfile info
-            let from_address = build_call::<pink::PinkEnvironment>()
-                .call(brick_profile)
-                .transferred_value(0)
-                .exec_input(ExecutionInput::new(Selector::new(ink::selector_bytes!(
-                    "get_current_evm_account_address"
-                ))))
-                .returns::<brick_profile::Result<H160>>()
-                .invoke()
+            let from_address = brick_profile
+                .get_current_evm_account_address()
                 .log_err("failed to get evm address from profile")
                 .or(Err(Error::BadBrickProfile))?;
 
@@ -521,17 +523,8 @@ mod action_offchain_rollup {
                 .log_err("failed to build rollup meta-tx")
                 .or(Err(Error::FailedToCreateTransaction))?;
 
-            let signed_tx = build_call::<pink::PinkEnvironment>()
-                .call(brick_profile)
-                .transferred_value(0)
-                .exec_input(
-                    ExecutionInput::new(Selector::new(ink::selector_bytes!(
-                        "sign_evm_transaction"
-                    )))
-                    .push_arg(tx_req),
-                )
-                .returns::<brick_profile::Result<Vec<u8>>>()
-                .invoke()
+            let signed_tx = brick_profile
+                .sign_evm_transaction(tx_req)
                 .log_err("failed to sign tx from profile")
                 .or(Err(Error::FailedToSignTransaction))?;
 

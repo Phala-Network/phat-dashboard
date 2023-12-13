@@ -11,7 +11,10 @@ mod brick_profile {
     #[cfg(feature = "std")]
     use ink::storage::traits::StorageLayout;
     use ink::storage::{Lazy, Mapping};
+    #[cfg(not(test))]
     use logging::info;
+    #[cfg(test)]
+    use pink::info;
     use pink_extension as pink;
     use pink_extension::chain_extension::signing;
     use pink_json as json;
@@ -20,6 +23,7 @@ mod brick_profile {
         transports::{pink_http::PinkHttp, resolve_ready},
         types::{TransactionParameters, TransactionRequest, H160},
     };
+    use primitive_types::U256;
     use scale::{Decode, Encode};
     use this_crate::{version_tuple, VersionTuple};
 
@@ -111,6 +115,7 @@ mod brick_profile {
         FailedToSignTransaction(String),
         OnlyDumpedAccount,
         InvalidPollId,
+        FailedToReadChainId(String),
     }
     pub type Result<T> = core::result::Result<T, Error>;
 
@@ -236,13 +241,12 @@ mod brick_profile {
             Ok(id)
         }
 
-        /// Gets workflow details (only owner).
+        /// Gets workflow details.
         ///
         /// @category Workflow
         ///
         #[ink(message)]
         pub fn get_workflow(&self, id: WorkflowId) -> Result<WorkflowInfo> {
-            self.ensure_owner()?;
             let workflow = self.ensure_workflow(id)?;
             Ok(WorkflowInfo {
                 id: workflow.id,
@@ -253,13 +257,12 @@ mod brick_profile {
             })
         }
 
-        /// Gets all workflows (only owner).
+        /// Gets all workflows.
         ///
         /// @category Workflow
         ///
         #[ink(message)]
         pub fn get_all_workflows(&self) -> Result<Vec<WorkflowInfo>> {
-            self.ensure_owner()?;
             let mut workflows = Vec::new();
             for id in 0..self.next_workflow_id {
                 if let Some(workflow) = self.workflows.get(id) {
@@ -305,27 +308,23 @@ mod brick_profile {
             Ok(())
         }
 
-        // TODO.shelven: merge the following two functions in next major version
-
-        /// Get the EVM account address of given id (only owner).
+        /// Get the EVM account address of given id.
         ///
         /// @category EvmAccount
         ///
         #[ink(message)]
         pub fn get_evm_account_address(&self, id: ExternalAccountId) -> Result<H160> {
-            self.ensure_owner()?;
             let account = self.ensure_enabled_external_account(id)?;
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
             Ok(sk.address())
         }
 
-        /// Get all EVM account addresses (only owner).
+        /// Get all EVM account addresses.
         ///
         /// @category EvmAccount
         ///
         #[ink(message)]
         pub fn get_all_evm_accounts(&self) -> Result<Vec<ExternalAccountInfo>> {
-            self.ensure_owner()?;
             let mut accounts = Vec::new();
             for id in 0..self.next_external_account_id {
                 if let Some(account) = self.external_accounts.get(id) {
@@ -364,6 +363,23 @@ mod brick_profile {
             account.rpc = rpc;
             self.external_accounts.insert(id, &account);
             Ok(())
+        }
+
+        /// Get EVM chain id of given id (only owner).
+        ///
+        /// @category EvmAccount
+        ///
+        #[ink(message)]
+        pub fn get_chain_id(&self, id: ExternalAccountId) -> Result<U256> {
+            self.ensure_owner()?;
+            let account = self.ensure_enabled_external_account(id)?;
+
+            let phttp = PinkHttp::new(account.rpc.clone());
+            let web3 = pink_web3::Web3::new(phttp);
+            let chain_id = resolve_ready(web3.eth().chain_id())
+                .map_err(|err| Error::FailedToReadChainId(format!("{:?}", err)))?;
+
+            Ok(chain_id)
         }
 
         /// Gets the total number of external accounts.
@@ -535,7 +551,6 @@ mod brick_profile {
             Ok(call_result)
         }
 
-
         /// Called by a scheduler periodically with Query.
         ///
         /// # Arguments
@@ -566,6 +581,23 @@ mod brick_profile {
             let account = self.ensure_enabled_external_account(account_id)?;
             let sk = pink_web3::keys::pink::KeyPair::from(account.sk);
             Ok(sk.address())
+        }
+
+        /// Only self-initiated call is allowed.
+        ///
+        /// @category Polling
+        ///
+        #[ink(message)]
+        pub fn get_current_rpc(&self) -> Result<String> {
+            let now_workflow_id = self.ensure_workflow_session()?;
+            let account_id = self
+                .authorized_account
+                .get(now_workflow_id)
+                .ok_or(Error::NoAuthorizedExternalAccount)?;
+            info!("Workflow {now_workflow_id} reads account {account_id} rpc");
+
+            let account = self.ensure_enabled_external_account(account_id)?;
+            Ok(account.rpc)
         }
 
         /// Only self-initiated call is allowed.
@@ -670,7 +702,7 @@ mod brick_profile {
     mod tests {
         use super::*;
         use alloc::collections::BTreeMap;
-        use logging::warn;
+        use pink::warn;
 
         struct EnvVars {
             rpc: String,
@@ -730,10 +762,6 @@ mod brick_profile {
 
             assert!(matches!(
                 profile.add_workflow(name.clone(), cmd.clone()),
-                Err(Error::BadOrigin)
-            ));
-            assert!(matches!(
-                profile.get_workflow(wf1_id),
                 Err(Error::BadOrigin)
             ));
             assert!(matches!(
@@ -845,7 +873,7 @@ mod brick_profile {
             ink::env::test::set_caller::<pink::PinkEnvironment>(contract);
 
             for (wf_id, ea_id) in workflow_accounts.iter() {
-                profile.set_workflow_session(wf_id.clone()).unwrap();
+                profile.workflow_session.set(&wf_id);
                 let current_evm_address = profile.get_current_evm_account_address().unwrap();
                 let expected_evm_address = profile.get_evm_account_address(ea_id.clone()).unwrap();
                 assert_eq!(current_evm_address, expected_evm_address);
