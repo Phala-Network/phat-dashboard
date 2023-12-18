@@ -7,7 +7,7 @@ mod tests {
     use drink_pink_runtime::{Callable, DeployBundle, PinkRuntime, SessionExt};
 
     use action_evm_transaction::ActionEvmTransactionRef;
-    use action_offchain_rollup::ActionOffchainRollupRef;
+    use action_offchain_rollup::{ActionOffchainRollupRef, Core, JsDriver};
     use brick_profile::BrickProfileRef;
     use brick_profile_factory::BrickProfileFactoryRef;
     use lego_rs::LegoRef;
@@ -24,7 +24,7 @@ mod tests {
         tracing_subscriber::fmt::init();
         let rpc = std::env::var("RPC").unwrap_or_else(|_| "http://localhost:8545".into());
         let lens_api =
-            std::env::var("LENS").unwrap_or_else(|_| "https://api-mumbai.lens.dev/".into());
+            std::env::var("LENS").unwrap_or_else(|_| "https://api-v2-mumbai-live.lens.dev".into());
         let anchor_addr = std::env::var("ANCHOR")
             .unwrap_or_else(|_| "0xb037f1EDD1474D028984D6594F7E848CDD3FAdE3".into());
         println!("RPC={}", rpc);
@@ -275,7 +275,11 @@ mod tests {
                 .expect("Failed to upload core.js");
             offchain_rollup
                 .call_mut()
-                .config_core(code_hash, lens_api.clone())
+                .config_core(Core {
+                    driver: JsDriver::AsyncJsRuntime,
+                    code_hash,
+                    settings: lens_api.clone(),
+                })
                 .submit_tx(&mut session)?
                 .expect("Failed to config core.js");
             let actual_core_js = offchain_rollup

@@ -1,29 +1,12 @@
 import "@phala/pink-env";
 import { Coders, Result } from "@phala/ethers";
 
-if (globalThis.pink === undefined) {
+if (globalThis.scriptArgs === undefined) {
   // Mock it to run in nodejs
   globalThis.scriptArgs = [
-    "0x00000000000000000000000000000000000000000000000000000000000004d2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000073078303030303200000000000000000000000000000000000000000000000000",
+    "0x00000000000000000000000000000000000000000000000000000000000004d2000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000043078303100000000000000000000000000000000000000000000000000000000",
+    "https://api-v2-mumbai-live.lens.dev"
   ];
-  globalThis.pink = {
-    batchHttpRequest(args: any[], timeout_ms?: number) {
-      return [
-        {
-          statusCode: 200,
-          body: JSON.stringify({
-            data: {
-              profile: {
-                stats: {
-                  totalCollects: 12345,
-                },
-              },
-            },
-          }),
-        },
-      ];
-    },
-  } as any;
 }
 
 // eth abi coder
@@ -69,56 +52,37 @@ function isHexString(str: string): boolean {
   return regex.test(str.toLowerCase());
 }
 
-function stringToHex(str: string): string {
-  var hex = "";
-  for (var i = 0; i < str.length; i++) {
-    hex += str.charCodeAt(i).toString(16);
-  }
-  return "0x" + hex;
-}
-
-function fetchLensApiStats(lensApi: string, profileId: string): any {
+async function fetchLensApiStats(lensApi: string, profileId: string): Promise<any> {
   // profile_id should be like 0x0001
-  let headers = {
+  const headers = {
     "Content-Type": "application/json",
     "User-Agent": "phat-contract",
   };
-  let query = JSON.stringify({
+  const query = JSON.stringify({
     query: `query Profile {
-            profile(request: { profileId: \"${profileId}\" }) {
+            profile(request: { forProfileId: \"${profileId}\" }) {
                 stats {
-                    totalFollowers
-                    totalFollowing
-                    totalPosts
-                    totalComments
-                    totalMirrors
-                    totalPublications
-                    totalCollects
+                    followers
+                    posts
+                    comments
+                    mirrors
+                    publications
                 }
             }
         }`,
   });
-  let response = pink.batchHttpRequest(
-    [
-      {
-        url: lensApi,
-        method: "POST",
-        headers,
-        body: query,
-        returnTextBody: true,
-      },
-    ],
-    2000
-  )[0];
-  if (response.statusCode != 200) {
-    console.log(
-      `Fail to read Lens api with status code: ${response.statusCode}, error: ${
-        response.error || response.body
-      }}`
-    );
+  const response = await fetch(lensApi, {
+    method: "POST",
+    headers,
+    body: query,
+  });
+
+  if (response.status != 200) {
+    let body = await response.text();
+    console.log(`Fail to read Lens api with status code: ${response.status}, body: ${body}`);
     throw Error.FailedToFetchData;
   }
-  let respBody = response.body;
+  let respBody = await response.text();
   if (typeof respBody !== "string") {
     throw Error.FailedToDecode;
   }
@@ -143,7 +107,7 @@ function encodeError(rid: number, error: Error): string {
   return encodeReply([TYPE_ERROR, rid, errorToCode(error)]);
 }
 
-function handleRequest(rawReq: string, lensApi: string): string {
+async function main(rawReq: string, lensApi: string): Promise<string> {
   console.log(`handle req: ${rawReq}`);
   let decoded;
   try {
@@ -160,8 +124,8 @@ function handleRequest(rawReq: string, lensApi: string): string {
   console.log(`Request received for profile ${profileId}`);
 
   try {
-    const respData = fetchLensApiStats(lensApi, profileId);
-    let stats = respData.data.profile.stats.totalCollects;
+    const respData = await fetchLensApiStats(lensApi, profileId);
+    let stats = respData.data.profile.stats.posts;
     console.log("response:", [TYPE_RESPONSE, rid, stats]);
     // Respond
     return encodeReply([TYPE_RESPONSE, rid, stats]);
@@ -181,4 +145,7 @@ function setOutput(output: any) {
   (globalThis as any).scriptOutput = output;
 }
 
-setOutput(handleRequest(scriptArgs[0], scriptArgs[1]));
+main(scriptArgs[0], scriptArgs[1])
+  .then(setOutput)
+  .catch(setOutput)
+  .finally(process.exit);
