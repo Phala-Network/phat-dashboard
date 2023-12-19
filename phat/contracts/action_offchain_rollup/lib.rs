@@ -41,11 +41,9 @@ mod action_offchain_rollup {
     #[derive(Clone, Copy, Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub enum JsDriver {
-        /// The first version of JS driver, which is implemented in pink contract.
+        /// The JS driver implemented in pink contract. Support cross contract call but no async.
         JsDelegate,
-        /// Deprecated. Use JsDelegate if cross contract call is needed. Otherwise use AsyncJsRuntime.
-        JsDelegate2,
-        /// The SideVM based QuickJS runtime.
+        /// The SideVM based QuickJS runtime. Support async but no cross contract call.
         AsyncJsRuntime,
     }
 
@@ -511,7 +509,6 @@ mod action_offchain_rollup {
         fn js_eval(&self, driver: JsDriver, script: &str, args: &[String]) -> Result<js::JsValue> {
             let driver = match driver {
                 JsDriver::JsDelegate => get_driver("JsDelegate".into())?,
-                JsDriver::JsDelegate2 => get_driver("JsDelegate2".into())?,
                 JsDriver::AsyncJsRuntime => return Ok(js::eval_async_js(script, args)),
             };
             js::eval_with(driver, script, args)
