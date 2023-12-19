@@ -7,7 +7,7 @@ mod tests {
     use drink_pink_runtime::{Callable, DeployBundle, PinkRuntime, SessionExt};
 
     use action_evm_transaction::ActionEvmTransactionRef;
-    use action_offchain_rollup::{ActionOffchainRollupRef, Core, JsDriver};
+    use action_offchain_rollup::{ActionOffchainRollupRef, Core, JsDriver, JsCode};
     use brick_profile::BrickProfileRef;
     use brick_profile_factory::BrickProfileFactoryRef;
     use lego_rs::LegoRef;
@@ -280,6 +280,11 @@ mod tests {
                     code_hash,
                     settings: lens_api.clone(),
                 })
+                .submit_tx(&mut session)?
+                .expect("Failed to config core.js");
+            offchain_rollup
+                .call_mut()
+                .config_core_script(JsCode::CodeHash(code_hash))
                 .submit_tx(&mut session)?
                 .expect("Failed to config core.js");
             let actual_core_js = offchain_rollup

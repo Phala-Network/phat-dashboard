@@ -29,7 +29,7 @@ dependencies = [
 
 [[package]]
 name = "action_offchain_rollup"
-version = "2.0.1"
+version = "2.1.0"
 dependencies = [
  "brick_profile",
  "ethabi",

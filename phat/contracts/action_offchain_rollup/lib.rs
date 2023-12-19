@@ -49,6 +49,13 @@ mod action_offchain_rollup {
 
     #[derive(Clone, Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
+    pub enum JsCode {
+        Source(String),
+        CodeHash(CodeHash),
+    }
+
+    #[derive(Clone, Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub struct Core {
         /// The configuration that would be passed to the core js script
         pub settings: String,
@@ -116,6 +123,7 @@ mod action_offchain_rollup {
 
         ProfileError(String),
         JsDriverNotFound,
+        FailedToUploadCode,
     }
 
     type Result<T> = core::result::Result<T, Error>;
@@ -233,14 +241,24 @@ mod action_offchain_rollup {
             self.config_core_inner(core)
         }
 
-        /// Set the core script by given code hash (only owner).
+        /// Set the core script (only owner).
         ///
-        /// The code of the hash must be uploaded to `PhatCodeProvider`.
+        /// The code of the hash must be uploaded to `PhatCodeProvider` if using JsCode::CodeHash.
         #[ink(message)]
-        pub fn config_core_script(&mut self, code_hash: Hash) -> Result<()> {
+        pub fn config_core_script(&mut self, script: JsCode) -> Result<()> {
             self.ensure_owner()?;
             let Some(mut core) = self.core.get() else {
                 return Err(Error::CoreNotConfigured);
+            };
+            let code_hash = match script {
+                JsCode::Source(script) => {
+                    let mut provider = get_code_provider()?;
+                    provider
+                        .upload_code(script)
+                        .log_err("failed to upload code")
+                        .or(Err(Error::FailedToUploadCode))?
+                }
+                JsCode::CodeHash(code_hash) => code_hash,
             };
             core.code_hash = code_hash;
             self.config_core_inner(core)
