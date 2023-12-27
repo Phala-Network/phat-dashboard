@@ -10,7 +10,7 @@ edition = "2021"
 hex = "0.4"
 ink = "4.3"
 drink = "0.8"
-drink-pink-runtime = "1.2.13"
+drink-pink-runtime = "1.2.14"
 tracing-subscriber = "0.3"
 
 # Contracts

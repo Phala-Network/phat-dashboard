@@ -1473,9 +1473,9 @@ dependencies = [
 
 [[package]]
 name = "drink-pink-runtime"
-version = "1.2.13"
+version = "1.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b81f2652eb2326034a89ee32f4417f442916f62f16f09528a47b99b2366019d"
+checksum = "2ddd9102e63f3a432c61079fa3c9262a6bef21dbd822c6125da2727af24c88d4"
 dependencies = [
  "anyhow",
  "drink",
