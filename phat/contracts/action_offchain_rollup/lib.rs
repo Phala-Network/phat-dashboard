@@ -38,13 +38,31 @@ mod action_offchain_rollup {
 
     type CodeHash = Hash;
 
-    #[derive(Clone, Encode, Decode)]
+    #[derive(Clone, Copy, Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
+    pub enum JsDriver {
+        /// The JS driver implemented in pink contract. Support cross contract call but no async.
+        JsDelegate,
+        /// The SideVM based QuickJS runtime. Support async but no cross contract call.
+        AsyncJsRuntime,
+    }
+
+    #[derive(Clone, Encode, Decode, Debug)]
+    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
+    pub enum JsCode {
+        Source(String),
+        CodeHash(CodeHash),
+    }
+
+    #[derive(Clone, Encode, Decode, Debug)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo, StorageLayout))]
     pub struct Core {
         /// The configuration that would be passed to the core js script
-        settings: String,
+        pub settings: String,
         /// The code hash of the core js script
-        code_hash: CodeHash,
+        pub code_hash: CodeHash,
+        /// The driver contract used to eval the core js script
+        pub driver: JsDriver,
     }
 
     #[ink(storage)]
@@ -76,6 +94,7 @@ mod action_offchain_rollup {
         script: Option<String>,
         settings: Option<String>,
         code_hash: Option<CodeHash>,
+        js_driver: Option<JsDriver>,
     }
 
     #[derive(Encode, Decode, Debug, PartialEq)]
@@ -103,6 +122,8 @@ mod action_offchain_rollup {
         CodeNotFound,
 
         ProfileError(String),
+        JsDriverNotFound,
+        FailedToUploadCode,
     }
 
     type Result<T> = core::result::Result<T, Error>;
@@ -128,25 +149,20 @@ mod action_offchain_rollup {
         }
 
         #[ink(constructor)]
-        pub fn with_core(
-            code_hash: Hash,
-            core_settings: String,
-            brick_profile: AccountId,
-        ) -> Result<Self> {
+        pub fn with_core(brick_profile: AccountId, core: Core) -> Result<Self> {
             let mut this = Self::new(brick_profile);
-            this.config_core_inner(code_hash, core_settings)?;
+            this.config_core_inner(core)?;
             Ok(this)
         }
 
         #[ink(constructor)]
         pub fn with_configuration(
             client_addr: Vec<u8>,
-            code_hash: Hash,
-            core_settings: String,
             brick_profile: AccountId,
+            core: Core,
         ) -> Result<Self> {
             let mut this = Self::new(brick_profile);
-            this.config_core_inner(code_hash, core_settings)?;
+            this.config_core_inner(core)?;
             this.config_client(client_addr)
                 .expect("failed to configure client");
             Ok(this)
@@ -201,7 +217,7 @@ mod action_offchain_rollup {
         ///
         #[ink(message)]
         pub fn get_client(&self) -> Result<[u8; 20]> {
-            let client_addr = self.client_addr.clone().ok_or(Error::ClientNotConfigured)?;
+            let client_addr = self.client_addr.ok_or(Error::ClientNotConfigured)?;
             Ok(client_addr)
         }
 
@@ -219,25 +235,33 @@ mod action_offchain_rollup {
         ///
         /// @category Configuration
         ///
-        /// @ui core_js widget codemirror
-        /// @ui core_js options.lang javascript
-        ///
         #[ink(message)]
-        pub fn config_core(&mut self, code_hash: Hash, settings: String) -> Result<()> {
+        pub fn config_core(&mut self, core: Core) -> Result<()> {
             self.ensure_owner()?;
-            self.config_core_inner(code_hash, settings)
+            self.config_core_inner(core)
         }
 
-        /// Set the core script by given code hash (only owner).
+        /// Set the core script (only owner).
         ///
-        /// The code of the hash must be uploaded to `PhatCodeProvider`.
+        /// The code of the hash must be uploaded to `PhatCodeProvider` if using JsCode::CodeHash.
         #[ink(message)]
-        pub fn config_core_script(&mut self, code_hash: Hash) -> Result<()> {
+        pub fn config_core_script(&mut self, script: JsCode) -> Result<()> {
             self.ensure_owner()?;
-            let Some(core) = self.core.get() else {
+            let Some(mut core) = self.core.get() else {
                 return Err(Error::CoreNotConfigured);
             };
-            self.config_core_inner(code_hash, core.settings)
+            let code_hash = match script {
+                JsCode::Source(script) => {
+                    let mut provider = get_code_provider()?;
+                    provider
+                        .upload_code(script)
+                        .log_err("failed to upload code")
+                        .or(Err(Error::FailedToUploadCode))?
+                }
+                JsCode::CodeHash(code_hash) => code_hash,
+            };
+            core.code_hash = code_hash;
+            self.config_core_inner(core)
         }
 
         /// Set the configuration (only owner).
@@ -310,6 +334,7 @@ mod action_offchain_rollup {
             let config = if let Some(Core {
                 settings,
                 code_hash,
+                driver,
             }) = self.core.get()
             {
                 Configuration {
@@ -317,6 +342,7 @@ mod action_offchain_rollup {
                     script,
                     settings: Some(settings),
                     code_hash: Some(code_hash),
+                    js_driver: Some(driver),
                 }
             } else {
                 Configuration {
@@ -324,6 +350,7 @@ mod action_offchain_rollup {
                     script: None,
                     settings: None,
                     code_hash: None,
+                    js_driver: None,
                 }
             };
             Ok(config)
@@ -432,6 +459,7 @@ mod action_offchain_rollup {
             let Some(Core {
                 settings,
                 code_hash,
+                driver,
             }) = self.core.get()
             else {
                 error!("CoreNotConfigured");
@@ -440,18 +468,25 @@ mod action_offchain_rollup {
             let log_prefix = logging::tagged_prefix().unwrap_or_default();
             let final_js = build_final_js(script, log_prefix);
             let args = alloc::vec![alloc::format!("0x{}", hex_fmt::HexFmt(request)), settings];
-            let output = match js::eval(&final_js, &args) {
+            let output = match self.js_eval(driver, &final_js, &args) {
                 Ok(output) => output,
                 Err(e) => {
-                    error!("Failed to eval the core js: {}", e);
-                    return Err(Error::JsError(e));
+                    error!("Failed to eval the core js: {e:?}");
+                    return Err(Error::JsError(format!("{e:?}")));
                 }
             };
+            use js::JsValue as Output;
             let output = match output {
-                js::Output::String(bytes) => hex::decode(bytes.as_str().trim_start_matches("0x"))
+                Output::String(bytes) => hex::decode(bytes.as_str().trim_start_matches("0x"))
                     .map_err(|_| Error::InvalidJsOutput)?,
-                js::Output::Bytes(b) => b,
-                js::Output::Undefined => Vec::new(),
+                Output::Bytes(b) => b,
+                Output::Undefined | Output::Null => Vec::new(),
+                Output::Other(obj) => {
+                    return Err(Error::JsError(format!("Invalid output: {obj:?}")));
+                }
+                Output::Exception(err) => {
+                    return Err(Error::JsError(format!("JsException: {err:?}")));
+                }
             };
             Ok((output, code_hash))
         }
@@ -476,20 +511,27 @@ mod action_offchain_rollup {
         fn ensure_client_configured(&self) -> Result<Client> {
             let client = Client {
                 rpc: self.get_profile_rpc()?,
-                client_addr: self.client_addr.clone().ok_or(Error::ClientNotConfigured)?,
+                client_addr: self.client_addr.ok_or(Error::ClientNotConfigured)?,
             };
             Ok(client)
         }
 
-        fn config_core_inner(&mut self, code_hash: Hash, settings: String) -> Result<()> {
+        fn config_core_inner(&mut self, core: Core) -> Result<()> {
             get_code_provider()?
-                .use_code(code_hash)
+                .use_code(core.code_hash)
                 .or(Err(Error::CodeNotFound))?;
-            self.core.set(&Core {
-                settings,
-                code_hash,
-            });
+            self.core.set(&core);
             Ok(())
+        }
+
+        fn js_eval(&self, driver: JsDriver, script: &str, args: &[String]) -> Result<js::JsValue> {
+            let driver = match driver {
+                JsDriver::JsDelegate => get_driver("JsDelegate".into())?,
+                JsDriver::AsyncJsRuntime => return Ok(js::eval_async_js(script, args)),
+            };
+            js::eval_with(driver, script, args)
+                .map(Into::into)
+                .map_err(Error::JsError)
         }
     }
 
@@ -569,5 +611,11 @@ mod action_offchain_rollup {
         "#
         );
         final_js
+    }
+
+    fn get_driver(driver: String) -> Result<Hash> {
+        let system = pink_extension::system::SystemRef::instance();
+        let delegate = system.get_driver(driver).ok_or(Error::JsDriverNotFound)?;
+        Ok(phat_js::ConvertTo::convert_to(&delegate))
     }
 }

@@ -7,7 +7,7 @@ mod tests {
     use drink_pink_runtime::{Callable, DeployBundle, PinkRuntime, SessionExt};
 
     use action_evm_transaction::ActionEvmTransactionRef;
-    use action_offchain_rollup::ActionOffchainRollupRef;
+    use action_offchain_rollup::{ActionOffchainRollupRef, Core, JsDriver};
     use brick_profile::BrickProfileRef;
     use brick_profile_factory::BrickProfileFactoryRef;
     use lego_rs::LegoRef;
@@ -24,7 +24,7 @@ mod tests {
         tracing_subscriber::fmt::init();
         let rpc = std::env::var("RPC").unwrap_or_else(|_| "http://localhost:8545".into());
         let lens_api =
-            std::env::var("LENS").unwrap_or_else(|_| "https://api-mumbai.lens.dev/".into());
+            std::env::var("LENS").unwrap_or_else(|_| "https://api-v2-mumbai-live.lens.dev".into());
         let anchor_addr = std::env::var("ANCHOR")
             .unwrap_or_else(|_| "0xb037f1EDD1474D028984D6594F7E848CDD3FAdE3".into());
         println!("RPC={}", rpc);
@@ -267,15 +267,19 @@ mod tests {
                 .submit_tx(&mut session)?
                 .expect("Failed to config ActionOffchainRollup client");
             println!("ActionOffchainRollup client configured");
-            let core_js = include_str!("../../example-oracles/lens_stats/dist/index.js");
-            let code_hash = codebase
+            let async_core_js = include_str!("../../example-oracles/lens_stats_async/dist/index.js");
+            let async_code_hash = codebase
                 .call_mut()
-                .upload(core_js.into())
+                .upload(async_core_js.into())
                 .submit_tx(&mut session)?
-                .expect("Failed to upload core.js");
+                .expect("Failed to upload async core.js");
             offchain_rollup
                 .call_mut()
-                .config_core(code_hash, lens_api.clone())
+                .config_core(Core {
+                    driver: JsDriver::AsyncJsRuntime,
+                    code_hash: async_code_hash,
+                    settings: lens_api.clone(),
+                })
                 .submit_tx(&mut session)?
                 .expect("Failed to config core.js");
             let actual_core_js = offchain_rollup
@@ -283,7 +287,7 @@ mod tests {
                 .get_core_script()
                 .query(&mut session)?
                 .expect("Failed to get core.js");
-            assert_eq!(actual_core_js, core_js);
+            assert_eq!(actual_core_js, async_core_js);
             println!("ActionOffchainRollup core.js configured");
 
             // STEP 4: add the workflow, the WorkflowId increases from 0
@@ -334,9 +338,44 @@ mod tests {
                 let ret = brick_profile
                     .call_mut()
                     .poll(i, poll_id)
-                    .query(&mut session)?
-                    .expect("Failed to poll");
-                println!("poll workflow[{i}] output {ret}");
+                    .bare_query(&mut session);
+                println!("poll workflow[{i}] output {ret:?}");
+                ret.result.expect("Failed to poll workflow");
+            }
+
+            // The js using JsDelegate should work as well
+            let core_js = include_str!("../../example-oracles/lens_stats/dist/index.js");
+            let code_hash = codebase
+                .call_mut()
+                .upload(core_js.into())
+                .submit_tx(&mut session)?
+                .expect("Failed to upload core.js");
+            offchain_rollup
+                .call_mut()
+                .config_core(Core {
+                    driver: JsDriver::JsDelegate,
+                    code_hash,
+                    settings: lens_api.clone(),
+                })
+                .submit_tx(&mut session)?
+                .expect("Failed to config core.js");
+            let actual_core_js = offchain_rollup
+                .call()
+                .get_core_script()
+                .query(&mut session)?
+                .expect("Failed to get core.js");
+            assert_eq!(actual_core_js, core_js);
+            println!("ActionOffchainRollup core.js using JsDelegate configured");
+
+            // Poll the workflows for one round
+            for i in 0..count {
+                let poll_id = format!("POLL_ID_{}", i + count);
+                let ret = brick_profile
+                    .call_mut()
+                    .poll(i, poll_id)
+                    .bare_query(&mut session);
+                println!("poll workflow[{i}] output {ret:?}");
+                ret.result.expect("Failed to poll workflow");
             }
         }
 
