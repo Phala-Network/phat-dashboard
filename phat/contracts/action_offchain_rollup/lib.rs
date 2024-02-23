@@ -4,7 +4,7 @@ extern crate alloc;
 
 pub use crate::action_offchain_rollup::*;
 
-#[ink::contract(env = pink_extension::PinkEnvironment)]
+#[ink::contract(env = pink::PinkEnvironment)]
 mod action_offchain_rollup {
     use alloc::{format, string::String, vec::Vec};
     use ink::env::call::FromAccountId;
@@ -12,7 +12,7 @@ mod action_offchain_rollup {
     use ink::storage::traits::StorageLayout;
     use ink::storage::Lazy;
     use ink::ToAccountId;
-    use pink_extension::chain_extension::signing;
+    use pink::chain_extension::signing;
     use pink_web3::{
         api::{Eth, Namespace},
         keys::pink::KeyPair,
@@ -614,7 +614,7 @@ mod action_offchain_rollup {
     }
 
     fn get_driver(driver: String) -> Result<Hash> {
-        let system = pink_extension::system::SystemRef::instance();
+        let system = pink::system::SystemRef::instance();
         let delegate = system.get_driver(driver).ok_or(Error::JsDriverNotFound)?;
         Ok(phat_js::ConvertTo::convert_to(&delegate))
     }

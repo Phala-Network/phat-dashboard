@@ -36,7 +36,7 @@ mod example {
         use ink::codegen::TraitCallBuilder;
 
         use drink::session::Session;
-        use drink_pink_runtime::{Callable, DeployBundle, PinkRuntime, SessionExt};
+        use pink_drink::{Callable, DeployBundle, PinkRuntime, SessionExt};
 
         use super::ExampleRef;
         use phat_codebase::{BaseInfo, CodebaseRef};

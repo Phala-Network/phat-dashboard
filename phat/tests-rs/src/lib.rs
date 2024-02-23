@@ -4,7 +4,7 @@ mod tests {
     use ink::{codegen::TraitCallBuilder, env::call::FromAccountId, ToAccountId};
 
     use drink::session::Session;
-    use drink_pink_runtime::{Callable, DeployBundle, PinkRuntime, SessionExt};
+    use pink_drink::{Callable, DeployBundle, PinkRuntime, SessionExt};
 
     use action_evm_transaction::ActionEvmTransactionRef;
     use action_offchain_rollup::{ActionOffchainRollupRef, Core, JsDriver};

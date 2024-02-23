@@ -23,7 +23,7 @@ pub enum Error {
 
 type Result<T> = core::result::Result<T, Error>;
 
-#[pink_macro::driver]
+#[pink::driver]
 #[ink::trait_definition]
 pub trait PhatCodeProvider {
     /// Uploads a new piece of code.
