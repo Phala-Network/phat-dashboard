@@ -14,12 +14,12 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
-"@devphase/cli@^0.6.5":
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/@devphase/cli/-/cli-0.6.5.tgz#2372b0f853c664573a1f7a9bf351ae45d1789683"
-  integrity sha512-nTHOJC7oo6sxWqUwz1Y1cjyHTUk6UCVzb6hCvyjl06ZiljV86VGddkhEZzg3DyTQ6uarFZQgO6VLNmkQm76dgQ==
+"@devphase/cli@^0.6.11":
+  version "0.6.11"
+  resolved "https://registry.yarnpkg.com/@devphase/cli/-/cli-0.6.11.tgz#f71b485b51cbab0563caa8bfb13bf5cc64a818c8"
+  integrity sha512-MSqOfG5sD4MbVJrXKn61wrytkfnbEX72e7Zg7TBrojvrd6wDsGwQi+4a5nuOix1FcOqZv/D2NkLAhunTjOesJA==
   dependencies:
-    "@devphase/service" "^0.6.5"
+    "@devphase/service" "^0.6.11"
     "@oclif/core" "^2.9.4"
     "@oclif/plugin-help" "^5.2.14"
     "@oclif/plugin-not-found" "^2.3.34"
@@ -28,13 +28,13 @@
     listr "^0.14.3"
     lodash "^4.17.21"
 
-"@devphase/service@^0.6.5":
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/@devphase/service/-/service-0.6.5.tgz#eac41aee4d994dd5c23ed846981ee392b6cc6ac6"
-  integrity sha512-vPgcpZnyst/zG8COYoe4TYSeqcfdEZSXGVpehofFMfTrIqfKSGp8NlnXytFc+ZZZC7LLERbCyXTgJdq7ct7IWA==
+"@devphase/service@^0.6.11":
+  version "0.6.11"
+  resolved "https://registry.yarnpkg.com/@devphase/service/-/service-0.6.11.tgz#9a09ee6b51837abd03b04a704b7fe876fb477594"
+  integrity sha512-9JZdKCeeFTBaUyBIt515N9hnEZxjHLOHO6RyOy6VMnnod6MLLL9WZYE9bmYXJEQv2Mxha24DMXnRJs099jl3Tg==
   dependencies:
     "@phala/ink-validator" "^0.1.0"
-    "@phala/sdk" "^0.5.4-nightly-20231020"
+    "@phala/sdk" "^0.5.4-nightly-20231101-1"
     "@phala/typedefs" "^0.2.33"
     "@types/chai" "^4.3.5"
     "@types/mocha" "^10.0.1"
@@ -51,7 +51,6 @@
     mocha "^10.2.0"
     prompts "^2.4.2"
     ts-morph "^16.0.0"
-    tsconfig-paths "^4.2.0"
 
 "@jridgewell/resolve-uri@^3.0.3":
   version "3.1.0"
@@ -200,10 +199,10 @@
   resolved "https://registry.yarnpkg.com/@phala/ink-validator/-/ink-validator-0.1.0.tgz#c8e550bc366c60567e935c88eafedbe8c6af313a"
   integrity sha512-COEsHwHdPFnJQQFgoBFj/HPpATBz19cYb3QHd8YRfvJChCKGjyKeuepjX+O7+BHPe4wGIaaIPQoQovhvwIAltg==
 
-"@phala/sdk@^0.5.4-nightly-20231020":
-  version "0.5.4-nightly-20231020"
-  resolved "https://registry.yarnpkg.com/@phala/sdk/-/sdk-0.5.4-nightly-20231020.tgz#20a65587257119982c6e0c0080d5e83ccb04c0fb"
-  integrity sha512-RO2uG2CMjloSdPjFa3+OKmoMu9jMMd8f0RbV7WMh5C/FzhsX86i6/9Jd5zejUznMoc9Fcw3/e0kmU+bCYbPKDQ==
+"@phala/sdk@^0.5.4-nightly-20231101-1":
+  version "0.5.8"
+  resolved "https://registry.yarnpkg.com/@phala/sdk/-/sdk-0.5.8.tgz#faba2363f140545c34ba9f9bb9fbfe8af566a604"
+  integrity sha512-0Z3zVr3yDlYQWtV226FmQlseV/vgKiRWP5ngP7CppsqiP7i9DIz8K0qVX77YXHp5tR7+2FsaeZ20FHq88eB72A==
   dependencies:
     "@polkadot/api" "^10.9.1"
     "@polkadot/api-contract" "^10.9.1"
@@ -1677,11 +1676,6 @@ json-stringify-safe@^5.0.1:
   resolved "https://registry.yarnpkg.com/json-stringify-safe/-/json-stringify-safe-5.0.1.tgz#1296a2d58fd45f19a0f6ce01d65701e2c735b6eb"
   integrity sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==
 
-json5@^2.2.2:
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/json5/-/json5-2.2.3.tgz#78cd6f1a19bdc12b73db5ad0c61efd66c1e29283"
-  integrity sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==
-
 jsonfile@^6.0.1:
   version "6.1.0"
   resolved "https://registry.yarnpkg.com/jsonfile/-/jsonfile-6.1.0.tgz#bc55b2634793c679ec6403094eb13698a6ec0aae"
@@ -1875,11 +1869,6 @@ minimatch@^5.0.1, minimatch@^5.1.0:
   integrity sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==
   dependencies:
     brace-expansion "^2.0.1"
-
-minimist@^1.2.6:
-  version "1.2.8"
-  resolved "https://registry.yarnpkg.com/minimist/-/minimist-1.2.8.tgz#c1a464e7693302e082a075cee0c057741ac4772c"
-  integrity sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==
 
 mkdirp@^1.0.4:
   version "1.0.4"
@@ -2433,15 +2422,6 @@ ts-node@^10.9.1:
     make-error "^1.1.1"
     v8-compile-cache-lib "^3.0.1"
     yn "3.1.1"
-
-tsconfig-paths@^4.2.0:
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/tsconfig-paths/-/tsconfig-paths-4.2.0.tgz#ef78e19039133446d244beac0fd6a1632e2d107c"
-  integrity sha512-NoZ4roiN7LnbKn9QqE1amc9DJfzvZXxF4xDavcOWt1BPkdx+m+0gJuPM+S0vCe7zTJMYUP0R8pO2XMr+Y8oLIg==
-  dependencies:
-    json5 "^2.2.2"
-    minimist "^1.2.6"
-    strip-bom "^3.0.0"
 
 tslib@^1.9.0:
   version "1.14.1"

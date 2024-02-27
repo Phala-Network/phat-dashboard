@@ -2930,9 +2930,9 @@ checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
 name = "pink"
-version = "0.1.0-dev.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fba1ab25bf07903b6158166f4d84193bf7e38bed2760770f88b96c862d76a29"
+checksum = "407b0ad35404eb4b1833fa208701986f068603a2ac9db68436fb3ba370f25b17"
 dependencies = [
  "hex",
  "ink",
@@ -2958,9 +2958,9 @@ dependencies = [
 
 [[package]]
 name = "pink-macro"
-version = "0.1.2-dev.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0f973c8eb47129642b3f4e65df705c20d354af01e5eac9942180dca905189a9"
+checksum = "1823c9d133d8b3b16467571dff6d5cf3640e5c5a4e8dc57d35e53757c29065ae"
 dependencies = [
  "heck",
  "ink_ir",
@@ -2973,9 +2973,9 @@ dependencies = [
 
 [[package]]
 name = "pink-types"
-version = "0.1.0"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cbfce16d3b505cfe560e1278836e16f400274d04395773ceb7879029b409429"
+checksum = "ff127613c717b6c5b81c6726ad1d2d459daeab7cafaa4eaab58e52a15a35719b"
 dependencies = [
  "parity-scale-codec",
  "scale-info",
