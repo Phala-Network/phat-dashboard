@@ -10,8 +10,7 @@ mod brick_profile_factory {
     use brick_profile::BrickProfileRef;
     use ink::env::call::FromAccountId;
     use ink::ToAccountId;
-    use pink_extension as pink;
-    use pink_extension::chain_extension::signing;
+    use pink::chain_extension::signing;
     use scale::{Decode, Encode};
     use this_crate::{version_tuple, VersionTuple};
 

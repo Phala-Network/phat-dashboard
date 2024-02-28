@@ -10,7 +10,6 @@ use alloc::{
 };
 
 use ink::primitives::AccountId;
-use pink_macro::driver;
 
 /// An extension for Result<T, E> to log error conveniently.
 pub trait ResultExt {
@@ -32,7 +31,7 @@ impl<T, E: core::fmt::Debug> ResultExt for Result<T, E> {
     }
 }
 
-#[driver]
+#[pink::driver]
 #[ink::trait_definition]
 pub trait TagStack {
     #[ink(message)]

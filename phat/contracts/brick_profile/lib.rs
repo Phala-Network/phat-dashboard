@@ -15,8 +15,7 @@ mod brick_profile {
     use logging::info;
     #[cfg(test)]
     use pink::info;
-    use pink_extension as pink;
-    use pink_extension::chain_extension::signing;
+    use pink::chain_extension::signing;
     use pink_json as json;
     use pink_web3::{
         signing::Key,
@@ -722,7 +721,7 @@ mod brick_profile {
         #[ink::test]
         fn workflow_management_works() {
             let _ = env_logger::try_init();
-            pink_extension_runtime::mock_ext::mock_all_ext();
+            pink_chain_extension::mock_ext::mock_all_ext();
 
             let mut profile = BrickProfile::default();
 
@@ -777,7 +776,7 @@ mod brick_profile {
         #[ink::test]
         fn external_account_management_works() {
             let _ = env_logger::try_init();
-            pink_extension_runtime::mock_ext::mock_all_ext();
+            pink_chain_extension::mock_ext::mock_all_ext();
 
             let EnvVars { rpc, key } = config();
 
@@ -835,7 +834,7 @@ mod brick_profile {
         #[ink::test]
         fn workflow_auth_works() {
             let _ = env_logger::try_init();
-            pink_extension_runtime::mock_ext::mock_all_ext();
+            pink_chain_extension::mock_ext::mock_all_ext();
 
             let EnvVars { rpc, key: _ } = config();
 

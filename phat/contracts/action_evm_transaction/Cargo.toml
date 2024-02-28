@@ -15,16 +15,16 @@ scale-info = { version = "2", default-features = false, features = ["derive"], o
 primitive-types = { version = "0.12.2", default-features = false, features = ["codec", "scale-info"] }
 
 this-crate = "0.1.0"
-pink-extension = { version = "0.5", default-features = false }
+pink = { version = "0.4", default-features = false }
 pink-json = { git = "https://github.com/Phala-Network/pink-json.git", branch = "pink", default-features = false, features = ["de-number-as-str"] }
-pink-web3 = { version = "0.21", default-features = false, features = ["pink", "signing"] }
+pink-web3 = { version = "0.22", default-features = false, features = ["pink", "signing"] }
 ethabi = { version = "18", default-features = false, features = [
     "serde",
     "rlp",
 ]}
 
 [dev-dependencies]
-pink-extension-runtime = { version = "0.5", default-features = false }
+pink-chain-extension = { version = "0.1", default-features = false }
 env_logger = "0.9"
 hex = "0.4"
 
@@ -39,7 +39,7 @@ std = [
     "scale/std",
     "scale-info/std",
     "primitive-types/std",
-    "pink-extension/std",
+    "pink/std",
     "pink-json/std",
     "pink-web3/std",
 ]

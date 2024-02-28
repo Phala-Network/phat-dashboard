@@ -8,7 +8,6 @@ pub use action_evm_transaction::*;
 mod action_evm_transaction {
     use alloc::{format, str::FromStr, string::String, vec::Vec};
     use ethabi::{ParamType, Token};
-    use pink_extension as pink;
     use pink_json as json;
     use pink_web3::{
         transports::pink_http::PinkHttp,
@@ -165,7 +164,7 @@ mod action_evm_transaction {
         #[ink::test]
         fn build_transaction_works() {
             let _ = env_logger::try_init();
-            pink_extension_runtime::mock_ext::mock_all_ext();
+            pink_chain_extension::mock_ext::mock_all_ext();
 
             let rpc = String::from("test.rpc");
 

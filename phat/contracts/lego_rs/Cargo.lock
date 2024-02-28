@@ -2388,7 +2388,7 @@ dependencies = [
  "ink_e2e",
  "logging",
  "parity-scale-codec",
- "pink-extension",
+ "pink",
  "pink-json",
  "scale-info",
  "serde",
@@ -2504,8 +2504,7 @@ version = "0.1.0"
 dependencies = [
  "ink",
  "parity-scale-codec",
- "pink-extension",
- "pink-extension-macro",
+ "pink",
  "scale-info",
 ]
 
@@ -2930,25 +2929,38 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
-name = "pink-extension"
-version = "0.5.0"
+name = "pink"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe261c26b4018364320cf86615b6c82c068b3aa00ada4de3147842f97a20c548"
+checksum = "407b0ad35404eb4b1833fa208701986f068603a2ac9db68436fb3ba370f25b17"
 dependencies = [
+ "hex",
  "ink",
  "log",
  "num_enum",
  "parity-scale-codec",
- "pink-extension-macro",
+ "pink-macro",
+ "pink-types",
  "scale-info",
+ "serde",
  "this-crate",
 ]
 
 [[package]]
-name = "pink-extension-macro"
-version = "0.4.4"
+name = "pink-json"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d38ff5c86454de8be6134fcf510009d3a84e9bfc758970755458ba7bafaf496b"
+checksum = "c146010528d0b4f6a3d3255ef2a179e8ef25a1114dfb75542becf89def7c5232"
+dependencies = [
+ "ryu",
+ "serde",
+]
+
+[[package]]
+name = "pink-macro"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1823c9d133d8b3b16467571dff6d5cf3640e5c5a4e8dc57d35e53757c29065ae"
 dependencies = [
  "heck",
  "ink_ir",
@@ -2960,13 +2972,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "pink-json"
-version = "0.4.0"
+name = "pink-types"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c146010528d0b4f6a3d3255ef2a179e8ef25a1114dfb75542becf89def7c5232"
+checksum = "ff127613c717b6c5b81c6726ad1d2d459daeab7cafaa4eaab58e52a15a35719b"
 dependencies = [
- "ryu",
- "serde",
+ "parity-scale-codec",
+ "scale-info",
 ]
 
 [[package]]
